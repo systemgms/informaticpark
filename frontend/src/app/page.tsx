@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Building2, Package, MapPin, DollarSign, AlertTriangle, Clock } from "lucide-react";
+import { Users, Building2, Package, MapPin, DollarSign, AlertTriangle, Clock, ArrowRight } from "lucide-react";
 import { api } from "@/lib/api";
 import { Asset, AssetMovement } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,13 +96,13 @@ export default function HomePage() {
             api.assets.getAll(),
             api.locations.getAll(),
           ]);
-          const assetList: Asset[] = Array.isArray(assets) ? assets : [];
+          const assetList: Asset[] = assets.data || [];
           const totalValue = assetList.reduce((sum, a) => sum + (Number(a.currentValue) || 0), 0);
           setAdminStats({
-            users: Array.isArray(users) ? users.length : 0,
-            custodians: Array.isArray(custodians) ? custodians.length : 0,
+            users: users.data?.length || 0,
+            custodians: custodians.data?.length || 0,
             assets: assetList.length,
-            locations: Array.isArray(locations) ? locations.length : 0,
+            locations: locations.data?.length || 0,
             totalValue,
             sinCustodio: assetList.filter((a) => !a.custodianId).length,
             sinUbicacion: assetList.filter((a) => !a.locationId).length,
@@ -112,13 +112,13 @@ export default function HomePage() {
             api.assets.getAll(),
             api.movements.getPendingForMe(),
           ]);
-          const assetList: Asset[] = Array.isArray(assets) ? assets : [];
+          const assetList: Asset[] = assets.data || [];
           const propios = assetList.filter((a) => a.custodianId === user?.custodianId);
           setCustodianStats({
             assets: propios.length,
             totalValue: propios.reduce((sum, a) => sum + (Number(a.currentValue) || 0), 0),
           });
-          setPendingMovements(Array.isArray(pending) ? pending : []);
+          setPendingMovements(pending || []);
         }
       } catch {
         if (isAdmin) setAdminStats({ users: 0, custodians: 0, assets: 0, locations: 0, totalValue: 0, sinCustodio: 0, sinUbicacion: 0 });
@@ -128,14 +128,10 @@ export default function HomePage() {
       }
     }
     if (user !== null) loadStats();
-  }, [user]);
+  }, [user, isAdmin]);
 
   const fmt = (n: number) =>
     n.toLocaleString("es-EC", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
-
-  if (isAdmin && adminStats !== null || !isAdmin && custodianStats !== null || !loading) {
-    // render below
-  }
 
   return (
     <div className="space-y-8">
@@ -256,7 +252,9 @@ export default function HomePage() {
                         Enviado por: {m.registeredBy?.name ?? "—"}
                       </p>
                     </div>
-                    <span className="text-xs text-yellow-700 shrink-0">Ver traspaso →</span>
+                    <span className="text-xs text-yellow-700 shrink-0 inline-flex items-center gap-1">
+                      Ver traspaso <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                    </span>
                   </Link>
                 ))}
               </div>

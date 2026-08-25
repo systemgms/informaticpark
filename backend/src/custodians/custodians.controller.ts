@@ -6,30 +6,28 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { CustodiansService } from './custodians.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
-import { RolesGuard } from '../auth/roles.guard';
 import { CreateCustodianDto } from './dto/create-custodian.dto';
 import { UpdateCustodianDto } from './dto/update-custodian.dto';
 import { ParseIdPipe } from '../common/pipes/parse-id.pipe';
 import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
+import { MaxLengthPipe } from '../common/pipes/max-length.pipe';
 
 @ApiTags('custodians')
 @ApiBearerAuth('JWT')
 @Controller('custodians')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class CustodiansController {
   constructor(private readonly custodiansService: CustodiansService) {}
@@ -46,15 +44,40 @@ export class CustodiansController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Listar custodios' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Elementos por página',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Búsqueda por nombre o identificador',
+  })
   @ApiResponse({ status: 200, description: 'Lista de custodios' })
-  async findAll() {
-    return this.custodiansService.findAll();
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search', new MaxLengthPipe(100)) search?: string,
+  ) {
+    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+    const limitNum = Math.min(
+      100,
+      Math.max(1, parseInt(limit || '20', 10) || 20),
+    );
+    return this.custodiansService.findAll(pageNum, limitNum, search);
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Obtener custodio por ID' })
   @ApiParam({ name: 'id', description: 'ID del custodio' })
   @ApiResponse({ status: 200, description: 'Custodio encontrado' })

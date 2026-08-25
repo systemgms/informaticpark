@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { AuthGuard } from "@/components/auth-guard";
+import { ToastProvider } from "@/components/ui/toast";
 import Navbar from "@/components/navbar";
 
 const fontSans = FontSans({
@@ -31,8 +32,10 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AuthGuard>
-            <Navbar />
-            <main className="container mx-auto py-8 px-4">{children}</main>
+            <ToastProvider>
+              <Navbar />
+              <main className="container mx-auto py-8 px-4">{children}</main>
+            </ToastProvider>
           </AuthGuard>
         </AuthProvider>
       </body>

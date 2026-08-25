@@ -8,6 +8,7 @@ import {
   IsInt,
   MinLength,
   MaxLength,
+  Matches,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -29,6 +30,10 @@ export class CreateUserDto {
   @IsString()
   @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   @MaxLength(100)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
+    message:
+      'La contraseña debe contener al menos una mayúscula, una minúscula y un número',
+  })
   password!: string;
 
   @ApiPropertyOptional({ enum: ['ADMIN', 'USER'] })
@@ -46,7 +51,9 @@ export class CreateUserDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ description: 'ID del custodio vinculado (solo rol USER)' })
+  @ApiPropertyOptional({
+    description: 'ID del custodio vinculado (solo rol USER)',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

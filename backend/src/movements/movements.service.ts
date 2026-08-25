@@ -6,7 +6,9 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMovementDto } from './dto/create-movement.dto';
+import { CreateBulkMovementDto } from './dto/create-bulk-movement.dto';
 import { ConfirmMovementDto } from './dto/confirm-movement.dto';
+import { randomUUID } from 'crypto';
 
 const MOVEMENT_INCLUDE = {
   fromCustodian: true,
@@ -24,18 +26,44 @@ export class MovementsService {
   async create(
     assetId: number,
     dto: CreateMovementDto,
-    actaUrl: string | null,
     registeredByUserId?: number,
     callerRole?: string,
     callerCustodianId?: number | null,
   ) {
-    const asset = await this.prisma.asset.findUnique({ where: { id: assetId } });
-    if (!asset) throw new NotFoundException(`Activo con id ${assetId} no encontrado`);
+    const asset = await this.prisma.asset.findUnique({
+      where: { id: assetId },
+    });
+    if (!asset)
+      throw new NotFoundException(`Activo con id ${assetId} no encontrado`);
 
     if (callerRole !== 'ADMIN') {
       if (!callerCustodianId || asset.custodianId !== callerCustodianId) {
         throw new ForbiddenException(
           'Solo puedes registrar traspasos de activos bajo tu custodia',
+        );
+      }
+    }
+
+    // Validate destination custodian exists if provided
+    if (dto.toCustodianId) {
+      const custodian = await this.prisma.custodian.findUnique({
+        where: { id: dto.toCustodianId, isDeleted: false },
+      });
+      if (!custodian) {
+        throw new NotFoundException(
+          `Custodio destino con id ${dto.toCustodianId} no encontrado`,
+        );
+      }
+    }
+
+    // Validate destination location exists if provided
+    if (dto.toLocationId) {
+      const location = await this.prisma.location.findUnique({
+        where: { id: dto.toLocationId, isDeleted: false },
+      });
+      if (!location) {
+        throw new NotFoundException(
+          `Ubicación destino con id ${dto.toLocationId} no encontrada`,
         );
       }
     }
@@ -48,7 +76,6 @@ export class MovementsService {
         fromLocationId: asset.locationId,
         toLocationId: dto.toLocationId ?? null,
         note: dto.note,
-        actaUrl,
         registeredByUserId,
         status: 'PENDIENTE',
       },
@@ -60,7 +87,7 @@ export class MovementsService {
     assetId: number,
     movementId: number,
     dto: ConfirmMovementDto,
-    actaRecepcionUrl: string | null,
+    actaUrl: string | null,
     callerUserId?: number,
     callerRole?: string,
     callerCustodianId?: number | null,
@@ -91,15 +118,23 @@ export class MovementsService {
           status: 'COMPLETADO',
           confirmedAt: new Date(),
           confirmedByUserId: callerUserId,
-          actaRecepcionUrl,
-          ...(dto.note ? { note: movement.note ? `${movement.note} | Recepción: ${dto.note}` : dto.note } : {}),
+          actaUrl: actaUrl ?? movement.actaUrl,
+          ...(dto.note
+            ? {
+                note: movement.note
+                  ? `${movement.note} | Recepción: ${dto.note}`
+                  : dto.note,
+              }
+            : {}),
         },
         include: MOVEMENT_INCLUDE,
       });
 
       const updateData: Record<string, unknown> = {};
-      if (movement.toCustodianId !== undefined) updateData.custodianId = movement.toCustodianId;
-      if (movement.toLocationId !== undefined) updateData.locationId = movement.toLocationId;
+      if (movement.toCustodianId !== null)
+        updateData.custodianId = movement.toCustodianId;
+      if (movement.toLocationId !== null)
+        updateData.locationId = movement.toLocationId;
 
       if (Object.keys(updateData).length > 0) {
         await tx.asset.update({ where: { id: assetId }, data: updateData });
@@ -142,8 +177,11 @@ export class MovementsService {
   }
 
   async findAll(assetId: number) {
-    const asset = await this.prisma.asset.findUnique({ where: { id: assetId } });
-    if (!asset) throw new NotFoundException(`Activo con id ${assetId} no encontrado`);
+    const asset = await this.prisma.asset.findUnique({
+      where: { id: assetId },
+    });
+    if (!asset)
+      throw new NotFoundException(`Activo con id ${assetId} no encontrado`);
 
     return this.prisma.assetMovement.findMany({
       where: { assetId },
@@ -161,5 +199,170 @@ export class MovementsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async createBulk(
+    dto: CreateBulkMovementDto,
+    registeredByUserId?: number,
+    callerRole?: string,
+    callerCustodianId?: number | null,
+  ) {
+    const groupId = randomUUID();
+
+    const assets = await this.prisma.asset.findMany({
+      where: { id: { in: dto.assetIds } },
+    });
+
+    if (assets.length !== dto.assetIds.length) {
+      throw new NotFoundException('Uno o más activos no fueron encontrados');
+    }
+
+    if (callerRole !== 'ADMIN') {
+      for (const asset of assets) {
+        if (!callerCustodianId || asset.custodianId !== callerCustodianId) {
+          throw new ForbiddenException(
+            `No tienes permiso para traspasar el activo "${asset.assetName}" (id: ${asset.id})`,
+          );
+        }
+      }
+    }
+
+    const movements = await this.prisma.$transaction(
+      assets.map((asset) =>
+        this.prisma.assetMovement.create({
+          data: {
+            groupId,
+            assetId: asset.id,
+            fromCustodianId: asset.custodianId,
+            toCustodianId: dto.toCustodianId ?? null,
+            fromLocationId: asset.locationId,
+            toLocationId: dto.toLocationId ?? null,
+            note: dto.note,
+            registeredByUserId,
+            status: 'PENDIENTE',
+          },
+          include: MOVEMENT_INCLUDE,
+        }),
+      ),
+    );
+
+    return { groupId, movements };
+  }
+
+  async confirmBulk(
+    groupId: string,
+    dto: ConfirmMovementDto,
+    actaUrl: string | null,
+    callerUserId?: number,
+    callerRole?: string,
+    callerCustodianId?: number | null,
+  ) {
+    const movements = await this.prisma.assetMovement.findMany({
+      where: { groupId, status: 'PENDIENTE' },
+    });
+
+    if (movements.length === 0) {
+      throw new NotFoundException(
+        'Traspaso grupal no encontrado o ya procesado',
+      );
+    }
+
+    if (callerRole !== 'ADMIN') {
+      for (const movement of movements) {
+        if (
+          !callerCustodianId ||
+          movement.toCustodianId !== callerCustodianId
+        ) {
+          throw new ForbiddenException(
+            'Solo el custodio receptor puede confirmar este traspaso',
+          );
+        }
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Update all movements status in one query
+      const confirmed = await tx.assetMovement.updateMany({
+        where: { groupId, status: 'PENDIENTE' },
+        data: {
+          status: 'COMPLETADO',
+          confirmedAt: new Date(),
+          confirmedByUserId: callerUserId,
+          ...(actaUrl ? { actaUrl } : {}),
+          ...(dto.note ? { note: dto.note } : {}),
+        },
+      });
+
+      // Group assets by their target custodian/location for batch updates
+      const updatesByCustodian = new Map<number, number[]>();
+      const updatesByLocation = new Map<number, number[]>();
+
+      for (const movement of movements) {
+        if (movement.toCustodianId != null) {
+          const existing = updatesByCustodian.get(movement.toCustodianId) || [];
+          existing.push(movement.assetId);
+          updatesByCustodian.set(movement.toCustodianId, existing);
+        }
+        if (movement.toLocationId != null) {
+          const existing = updatesByLocation.get(movement.toLocationId) || [];
+          existing.push(movement.assetId);
+          updatesByLocation.set(movement.toLocationId, existing);
+        }
+      }
+
+      // Batch update assets by custodian
+      for (const [custodianId, assetIds] of updatesByCustodian) {
+        await tx.asset.updateMany({
+          where: { id: { in: assetIds } },
+          data: { custodianId },
+        });
+      }
+
+      // Batch update assets by location
+      for (const [locationId, assetIds] of updatesByLocation) {
+        await tx.asset.updateMany({
+          where: { id: { in: assetIds } },
+          data: { locationId },
+        });
+      }
+
+      return { groupId, count: confirmed.count };
+    });
+  }
+
+  async rejectBulk(
+    groupId: string,
+    callerRole?: string,
+    callerCustodianId?: number | null,
+  ) {
+    const movements = await this.prisma.assetMovement.findMany({
+      where: { groupId, status: 'PENDIENTE' },
+    });
+
+    if (movements.length === 0) {
+      throw new NotFoundException(
+        'Traspaso grupal no encontrado o ya procesado',
+      );
+    }
+
+    if (callerRole !== 'ADMIN') {
+      for (const movement of movements) {
+        if (
+          !callerCustodianId ||
+          movement.toCustodianId !== callerCustodianId
+        ) {
+          throw new ForbiddenException(
+            'Solo el custodio receptor puede rechazar este traspaso',
+          );
+        }
+      }
+    }
+
+    const rejected = await this.prisma.assetMovement.updateMany({
+      where: { groupId, status: 'PENDIENTE' },
+      data: { status: 'RECHAZADO' },
+    });
+
+    return { groupId, count: rejected.count };
   }
 }

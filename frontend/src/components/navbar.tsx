@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, LayoutDashboard, Clock, Package, Users, Building2, MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { LogOut, User as UserIcon, LayoutDashboard, Clock, Package, Users, Building2, MapPin, ArrowRightLeft } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 function getTokenExpiry(): number | null {
@@ -30,6 +30,7 @@ const adminLinks = [
   { href: "/admin/users", label: "Usuarios", icon: Users },
   { href: "/admin/custodians", label: "Custodios", icon: Building2 },
   { href: "/admin/assets", label: "Activos", icon: Package },
+  { href: "/admin/assets/traspasar", label: "Traspasar", icon: ArrowRightLeft },
   { href: "/admin/locations", label: "Ubicaciones", icon: MapPin },
 ];
 
@@ -42,15 +43,25 @@ export default function Navbar() {
   const pathname = usePathname();
   const navLinks = user?.role === "ADMIN" ? adminLinks : custodianLinks;
   const [remaining, setRemaining] = useState<number | null>(null);
+  const logoutCalledRef = useRef(false);
 
   useEffect(() => {
     if (!user) return;
     const expiry = getTokenExpiry();
     if (!expiry) return;
+    
+    logoutCalledRef.current = false;
+    
     const tick = () => {
       const secs = expiry - Math.floor(Date.now() / 1000);
-      if (secs <= 0) logout();
-      else setRemaining(secs);
+      if (secs <= 0) {
+        if (!logoutCalledRef.current) {
+          logoutCalledRef.current = true;
+          logout();
+        }
+      } else {
+        setRemaining(secs);
+      }
     };
     tick();
     const id = setInterval(tick, 1000);

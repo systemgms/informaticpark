@@ -7,6 +7,7 @@ import {
   IsInt,
   MinLength,
   MaxLength,
+  Matches,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -31,6 +32,10 @@ export class UpdateUserDto {
   @IsString()
   @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   @MaxLength(100)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
+    message:
+      'La contraseña debe contener al menos una mayúscula, una minúscula y un número',
+  })
   password?: string;
 
   @ApiPropertyOptional({ enum: ['ADMIN', 'USER'] })
@@ -38,7 +43,9 @@ export class UpdateUserDto {
   @IsEnum(['ADMIN', 'USER'])
   role?: 'ADMIN' | 'USER';
 
-  @ApiPropertyOptional({ description: 'ID del custodio vinculado (null para desvincular)' })
+  @ApiPropertyOptional({
+    description: 'ID del custodio vinculado (null para desvincular)',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

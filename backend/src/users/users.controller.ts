@@ -6,19 +6,18 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RolesGuard } from '../auth/roles.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ActivateUserDto } from './dto/activate-user.dto';
@@ -28,23 +27,57 @@ import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
 @ApiTags('users')
 @ApiBearerAuth('JWT')
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar usuarios (solo ADMIN)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Elementos por página',
+  })
+  @ApiQuery({
+    name: 'includeInactive',
+    required: false,
+    type: Boolean,
+    description: 'Incluir usuarios inactivos',
+  })
   @ApiResponse({ status: 200, description: 'Lista de usuarios' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @ApiResponse({ status: 403, description: 'Solo ADMIN' })
-  async findAll() {
-    const users = await this.usersService.findAll();
-    return users.map((u) => {
-      const safe = { ...(u as any) };
-      delete (safe as any).password;
-      return safe;
-    });
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+    const limitNum = Math.min(
+      100,
+      Math.max(1, parseInt(limit || '20', 10) || 20),
+    );
+    const includeInc = includeInactive === 'true';
+    const [users, total] = await Promise.all([
+      this.usersService.findAll(pageNum, limitNum, includeInc),
+      this.usersService.count(includeInc),
+    ]);
+    return {
+      data: users,
+      meta: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    };
   }
 
   @Get(':id')
@@ -53,13 +86,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Usuario encontrado' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async findOne(@Param('id', ParseIdPipe) id: number) {
-    const user = await this.usersService.findById(id);
-    if (!user) {
-      return null;
-    }
-    const safe = { ...(user as any) };
-    delete (safe as any).password;
-    return safe;
+    return this.usersService.findById(id);
   }
 
   @Post()
@@ -68,10 +95,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @ApiResponse({ status: 403, description: 'Solo ADMIN' })
   async create(@Body(TrimStringsPipe) dto: CreateUserDto) {
-    const user = await this.usersService.createUserAsAdmin(dto);
-    const safe = { ...(user as any) };
-    delete (safe as any).password;
-    return safe;
+    return this.usersService.createUserAsAdmin(dto);
   }
 
   @Patch(':id')
@@ -84,10 +108,7 @@ export class UsersController {
     @Param('id', ParseIdPipe) id: number,
     @Body(TrimStringsPipe) dto: UpdateUserDto,
   ) {
-    const user = await this.usersService.updateUserAsAdmin(id, dto);
-    const safe = { ...(user as any) };
-    delete (safe as any).password;
-    return safe;
+    return this.usersService.updateUserAsAdmin(id, dto);
   }
 
   @Patch(':id/activate')
@@ -100,10 +121,7 @@ export class UsersController {
     @Param('id', ParseIdPipe) id: number,
     @Body(TrimStringsPipe) dto: ActivateUserDto,
   ) {
-    const user = await this.usersService.setActive(id, dto.isActive);
-    const safe = { ...(user as any) };
-    delete (safe as any).password;
-    return safe;
+    return this.usersService.setActive(id, dto.isActive);
   }
 
   @Delete(':id')
@@ -113,9 +131,6 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @ApiResponse({ status: 403, description: 'Solo ADMIN' })
   async remove(@Param('id', ParseIdPipe) id: number) {
-    const user = await this.usersService.softDelete(id);
-    const safe = { ...(user as any) };
-    delete (safe as any).password;
-    return safe;
+    return this.usersService.softDelete(id);
   }
 }

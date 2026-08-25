@@ -1,209 +1,164 @@
-# Informaticpark — Backend
+# Informaticpark Backend
 
-API REST construida con **NestJS 11 + Prisma + PostgreSQL**. Corre en el puerto `4000`. Todas las rutas están prefijadas con `/api`. Documentación Swagger disponible en `/api/docs`.
+API REST para la gestión del parque informático.
+
+## Stack
+
+- NestJS 11
+- Prisma 7
+- PostgreSQL
+- Bun
+
+La API escucha en el puerto `4000` y utiliza el prefijo `/api`.
 
 ## Requisitos
 
-- Node.js >= 18
-- PostgreSQL
+- Bun `>= 1.1`
+- Docker y Docker Compose
 
-## Configuración
+## Inicio rápido
 
-Crea un archivo `.env` en la raíz del proyecto:
-
-```env
-DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/informaticpark"
-JWT_SECRET="tu_secreto_jwt"
-JWT_EXPIRES_IN="1h"
-```
-
-## Instalación y ejecución
+Desde la raíz del repositorio:
 
 ```bash
-# Instalar dependencias
-npm install
-
-# Ejecutar migraciones
-npm run prisma:migrate
-
-# Poblar con datos iniciales (admin@example.com / Admin123!)
-npm run prisma:seed
-
-# Desarrollo con hot reload (puerto 4000)
-npm run start:dev
-
-# Producción
-npm run build
-npm run start:prod
+docker compose up -d db
 ```
 
-## Comandos disponibles
+Configura las variables del backend:
 
 ```bash
-npm run start:dev       # Desarrollo con hot reload
-npm run start:debug     # Desarrollo con debugger
-npm run build           # Compila TypeScript + genera cliente Prisma
-npm run lint            # ESLint con auto-fix
-npm run format          # Prettier
-npm run test            # Tests unitarios
-npm run test:e2e        # Tests end-to-end
-npm run test:cov        # Cobertura de tests
-npm run prisma:migrate  # Ejecutar migraciones
-npm run prisma:seed     # Poblar base de datos
-npm run prisma:generate # Regenerar cliente Prisma
+cp backend/.env.example backend/.env
 ```
 
-## Autenticación
+Instala dependencias, prepara la base de datos y arranca la API:
 
-1. `POST /api/auth/login` — devuelve un JWT
-2. Todas las demás rutas requieren `Authorization: Bearer <token>`
-3. Las rutas de administrador requieren rol `ADMIN`
-
-## Esquema de base de datos
-
-### MER
-
-```mermaid
-erDiagram
-    User {
-        Int     id              PK
-        String  name
-        String  email           "unique"
-        String  password
-        Role    role            "ADMIN | USER"
-        Boolean isActive
-        DateTime createdAt
-        DateTime updatedAt
-    }
-
-    Location {
-        Int     id              PK
-        String  canton
-        String  parroquia
-        Float   lat
-        Float   lng
-        DateTime createdAt
-        DateTime updatedAt
-    }
-
-    Custodian {
-        Int     id              PK
-        String  fullName
-        String  identifier      "unique"
-        String  unit
-        Int     locationId      FK
-        DateTime createdAt
-        DateTime updatedAt
-    }
-
-    Asset {
-        Int      id               PK
-        String   code             "unique"
-        String   previousCode
-        String   assetName
-        String   brand
-        String   model
-        String   serialNumber
-        String   location
-        String   physicalLocation
-        DateTime entryDate
-        DateTime activationDate
-        String   accountCode
-        Decimal  initialValue     "12,2"
-        Decimal  currentValue     "12,2"
-        String   note
-        Int      custodianId      FK
-        Int      createdByUserId  FK
-        Int      locationId       FK
-        DateTime createdAt
-        DateTime updatedAt
-    }
-
-    User        ||--o{ Asset      : "registra"
-    Custodian   ||--o{ Asset      : "custodia"
-    Location    ||--o{ Asset      : "ubica"
-    Location    ||--o{ Custodian  : "ubica"
+```bash
+cd backend
+bun install
+bun run prisma:migrate
+bun run prisma:seed
+bun run start:dev
 ```
 
-### Modelos
+La API estará disponible en `http://localhost:4000/api`.
 
-#### `User`
+## Frontend local
 
-| Campo       | Tipo       | Descripción                              |
-|-------------|------------|------------------------------------------|
-| `id`        | `Int` PK   | Autoincremental                          |
-| `name`      | `String`   | Nombre completo                          |
-| `email`     | `String`   | Único                                    |
-| `password`  | `String`   | Hash bcrypt                              |
-| `role`      | `Role`     | `ADMIN` o `USER` (default: `USER`)       |
-| `isActive`  | `Boolean`  | Soft delete (default: `true`)            |
-| `createdAt` | `DateTime` |                                          |
-| `updatedAt` | `DateTime` |                                          |
+En otra terminal, desde la raíz:
 
-#### `Location`
+```bash
+cp frontend/.env.example frontend/.env
+cd frontend
+bun install
+bun run dev
+```
 
-| Campo       | Tipo       | Descripción                          |
-|-------------|------------|--------------------------------------|
-| `id`        | `Int` PK   | Autoincremental                      |
-| `canton`    | `String?`  | Cantón                               |
-| `parroquia` | `String?`  | Parroquia                            |
-| `lat`       | `Float?`   | Latitud                              |
-| `lng`       | `Float?`   | Longitud                             |
-| `createdAt` | `DateTime` |                                      |
-| `updatedAt` | `DateTime` |                                      |
-
-Relaciones: tiene muchos `Asset` y muchos `Custodian`.
-
-#### `Custodian`
-
-| Campo        | Tipo       | Descripción                          |
-|--------------|------------|--------------------------------------|
-| `id`         | `Int` PK   | Autoincremental                      |
-| `fullName`   | `String`   | Nombre completo                      |
-| `identifier` | `String`   | Identificador único (cédula/código)  |
-| `unit`       | `String?`  | Unidad o departamento                |
-| `locationId` | `Int?` FK  | Referencia a `Location`              |
-| `createdAt`  | `DateTime` |                                      |
-| `updatedAt`  | `DateTime` |                                      |
-
-Relaciones: pertenece a una `Location` (opcional, `SetNull` al borrar); tiene muchos `Asset`.
-
-#### `Asset`
-
-| Campo             | Tipo          | Descripción                                   |
-|-------------------|---------------|-----------------------------------------------|
-| `id`              | `Int` PK      | Autoincremental                               |
-| `code`            | `String?`     | Código único del activo                       |
-| `previousCode`    | `String?`     | Código anterior                               |
-| `assetName`       | `String`      | Nombre del bien                               |
-| `brand`           | `String?`     | Marca                                         |
-| `model`           | `String?`     | Modelo                                        |
-| `serialNumber`    | `String?`     | Número de serie                               |
-| `location`        | `String?`     | Ubicación textual                             |
-| `physicalLocation`| `String?`     | Ubicación física detallada                    |
-| `entryDate`       | `DateTime?`   | Fecha de ingreso                              |
-| `activationDate`  | `DateTime?`   | Fecha de activación                           |
-| `accountCode`     | `String?`     | Código contable                               |
-| `initialValue`    | `Decimal?`    | Valor inicial (12,2)                          |
-| `currentValue`    | `Decimal?`    | Valor actual (12,2)                           |
-| `note`            | `String?`     | Observaciones                                 |
-| `custodianId`     | `Int?` FK     | Referencia a `Custodian`                      |
-| `createdByUserId` | `Int?` FK     | Usuario que registró el activo                |
-| `locationId`      | `Int?` FK     | Referencia a `Location` (`SetNull` al borrar) |
-| `createdAt`       | `DateTime`    |                                               |
-| `updatedAt`       | `DateTime`    |                                               |
-
-### Enum `Role`
-
-| Valor   | Descripción              |
-|---------|--------------------------|
-| `ADMIN` | Acceso completo          |
-| `USER`  | Acceso solo a activos    |
+El frontend estará disponible en `http://localhost:3000`.
 
 ## Variables de entorno
 
-| Variable        | Default                | Descripción                  |
-|-----------------|------------------------|------------------------------|
-| `DATABASE_URL`  | —                      | Cadena de conexión PostgreSQL |
-| `JWT_SECRET`    | `changeme_jwt_secret`  | Clave de firma JWT           |
-| `JWT_EXPIRES_IN`| `1h`                   | TTL del token                |
+| Variable | Obligatoria | Descripción |
+|---|---:|---|
+| `DATABASE_URL` | Sí | Cadena de conexión PostgreSQL |
+| `DIRECT_URL` | No | Conexión Session Pooler para migraciones Prisma |
+| `JWT_SECRET` | Sí | Clave utilizada para firmar JWT |
+| `JWT_EXPIRES_IN` | No | Duración del token, por ejemplo `1h` |
+| `PORT` | No | Puerto HTTP; por defecto `4000` |
+| `CORS_ORIGINS` | No | Orígenes permitidos separados por comas |
+
+El archivo `backend/.env.example` contiene valores únicamente para desarrollo local. Nunca subas archivos `.env` ni secretos al repositorio.
+
+## Comandos
+
+| Comando | Uso |
+|---|---|
+| `bun run start:dev` | Desarrollo con recarga automática |
+| `bun run start:debug` | Desarrollo con depurador |
+| `bun run build` | Generar Prisma Client y compilar |
+| `bun run start:prod` | Ejecutar la compilación de producción |
+| `bun run lint` | Ejecutar ESLint |
+| `bun run format` | Formatear el código |
+| `bun run test` | Ejecutar pruebas unitarias |
+| `bun run test:e2e` | Ejecutar pruebas end-to-end |
+| `bun run test:cov` | Generar cobertura |
+| `bun run prisma:migrate` | Crear/aplicar migraciones en desarrollo |
+| `bun run prisma:seed` | Cargar datos iniciales |
+| `bun run prisma:generate` | Regenerar Prisma Client |
+
+## Base de datos con Docker
+
+El servicio `db` del `docker-compose.yml` crea PostgreSQL con estos valores locales:
+
+```text
+Host:     localhost
+Port:     5432
+Database: informaticpark
+User:     informaticpark
+```
+
+Los datos se guardan en el volumen `informaticpark-postgres`.
+
+Detener el contenedor conservando los datos:
+
+```bash
+docker compose stop db
+```
+
+Eliminar el contenedor y todos los datos locales:
+
+```bash
+docker compose down -v
+```
+
+## API
+
+### Autenticación
+
+- `POST /api/auth/login` — iniciar sesión y obtener un JWT.
+- `GET /api/auth/me` — consultar el usuario autenticado.
+
+Las rutas protegidas requieren:
+
+```http
+Authorization: Bearer <token>
+```
+
+Las operaciones administrativas requieren el rol `ADMIN`.
+
+### Recursos principales
+
+- `/api/assets` — activos informáticos.
+- `/api/custodians` — custodios.
+- `/api/locations` — ubicaciones.
+- `/api/users` — usuarios.
+- `/api/movements` — movimientos y traspasos.
+
+## Documentación interactiva
+
+Swagger está disponible únicamente fuera de producción:
+
+```text
+http://localhost:4000/api/docs
+```
+
+## Migraciones
+
+Para un entorno existente o de producción, utiliza:
+
+```bash
+bunx prisma migrate deploy
+```
+
+Las migraciones de producción deben ejecutarse como un paso controlado de despliegue, no de forma repetida en cada build.
+
+## Despliegue
+
+El backend incluye un handler para ejecutarse como función serverless en Vercel. Consulta [`../DEPLOYMENT.md`](../DEPLOYMENT.md) para el procedimiento completo. Antes de desplegar:
+
+1. Configura `DATABASE_URL` con la conexión de PostgreSQL, por ejemplo Supabase.
+2. Configura `JWT_SECRET` con un secreto único y seguro.
+3. Configura `CORS_ORIGINS` con el dominio real del frontend.
+4. Ejecuta las migraciones con `prisma migrate deploy` usando la conexión directa de producción.
+5. Verifica `bun run build` y las pruebas antes de publicar.
+
+No uses las credenciales de desarrollo en producción.

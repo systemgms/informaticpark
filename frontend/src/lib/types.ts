@@ -44,8 +44,8 @@ export interface AssetMovement {
   actaUrl?: string | null;
   status: MovementStatus;
   confirmedAt?: string | null;
-  actaRecepcionUrl?: string | null;
   assetId: number;
+  groupId?: string | null;
   fromCustodianId?: number | null;
   fromCustodian?: Custodian | null;
   toCustodianId?: number | null;

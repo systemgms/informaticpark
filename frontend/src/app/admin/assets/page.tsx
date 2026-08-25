@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Package, Pencil, Trash2, Plus, Search, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function AssetsAdminPage() {
   const { user } = useAuth();
@@ -25,6 +26,8 @@ export default function AssetsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [assetToDelete, setAssetToDelete] = useState<number | null>(null);
 
   useEffect(() => { loadAssets(); }, []);
 
@@ -32,8 +35,8 @@ export default function AssetsAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.assets.getAll();
-      setAssets(Array.isArray(data) ? data : []);
+      const response = await api.assets.getAll();
+      setAssets(response.data || []);
     } catch (err: any) {
       setError(err.message || "Error al cargar activos.");
     } finally {
@@ -41,13 +44,18 @@ export default function AssetsAdminPage() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("¿Eliminar este activo?")) return;
+  function handleDeleteClick(id: number) {
+    setAssetToDelete(id);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (assetToDelete === null) return;
     try {
-      await api.assets.delete(id);
+      await api.assets.delete(assetToDelete);
       loadAssets();
     } catch {
-      alert("Error al eliminar activo");
+      // Error handled silently - user will see the list refresh
     }
   }
 
@@ -163,7 +171,7 @@ export default function AssetsAdminPage() {
                         {user?.role === "ADMIN" ? (
                           <>
                             <Link href={`/admin/assets/${a.id}`}>
-                              <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8">
+                              <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8" aria-label="Editar activo">
                                 <Pencil className="w-3.5 h-3.5" />
                               </Button>
                             </Link>
@@ -171,7 +179,8 @@ export default function AssetsAdminPage() {
                               variant="ghost"
                               size="icon"
                               className="cursor-pointer h-8 w-8 hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleDelete(a.id)}
+                              onClick={() => handleDeleteClick(a.id)}
+                              aria-label="Eliminar activo"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
@@ -192,6 +201,15 @@ export default function AssetsAdminPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Eliminar activo"
+        description="¿Estás seguro de que deseas eliminar este activo? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

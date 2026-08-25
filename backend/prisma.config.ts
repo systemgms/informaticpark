@@ -5,6 +5,7 @@ dotenv.config();
 
 export default defineConfig({
   datasource: {
-    url: process.env.DATABASE_URL,
+    // Use the session/direct connection for migrations when configured.
+    url: process.env.DIRECT_URL || process.env.DATABASE_URL,
   },
 });

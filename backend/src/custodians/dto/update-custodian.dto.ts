@@ -1,10 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsString,
-  IsOptional,
-  IsInt,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsOptional, IsInt, MaxLength } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class UpdateCustodianDto {
@@ -19,7 +14,9 @@ export class UpdateCustodianDto {
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toUpperCase() : value,
+  )
   identifier?: string;
 
   @ApiPropertyOptional()

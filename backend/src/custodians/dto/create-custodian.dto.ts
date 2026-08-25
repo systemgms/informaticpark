@@ -1,10 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsString,
-  IsOptional,
-  IsInt,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsOptional, IsInt, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateCustodianDto {
@@ -17,7 +12,9 @@ export class CreateCustodianDto {
   @ApiProperty({ example: 'CC123456789' })
   @IsString()
   @MaxLength(50)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toUpperCase() : value,
+  )
   identifier!: string;
 
   @ApiPropertyOptional({ example: 'Area de Sistemas' })

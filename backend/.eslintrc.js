@@ -21,5 +21,60 @@ module.exports = {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/naming-convention': [
+      'warn',
+      {
+        selector: 'default',
+        format: ['camelCase'],
+      },
+      {
+        selector: 'variable',
+        format: ['camelCase', 'UPPER_CASE'],
+      },
+      {
+        selector: 'variable',
+        modifiers: ['exported'],
+        format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+      },
+      {
+        selector: 'function',
+        format: ['camelCase', 'PascalCase'],
+      },
+      {
+        selector: 'parameter',
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+      },
+      {
+        selector: 'parameterProperty',
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+      },
+      {
+        selector: 'memberLike',
+        modifiers: ['private'],
+        format: ['camelCase'],
+      },
+      {
+        selector: 'typeLike',
+        format: ['PascalCase'],
+      },
+      {
+        selector: 'enumMember',
+        format: ['PascalCase'],
+      },
+      {
+        selector: 'property',
+        format: null,
+      },
+      {
+        selector: 'import',
+        format: null,
+      },
+      {
+        selector: 'objectLiteralProperty',
+        format: null,
+      },
+    ],
   },
 };

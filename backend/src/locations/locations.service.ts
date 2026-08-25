@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
@@ -11,14 +12,53 @@ export class LocationsService {
     return this.prisma.location.create({ data: dto });
   }
 
-  async findAll() {
+  async findAll(page = 1, limit = 20, search?: string) {
+    const skip = (page - 1) * limit;
+    const where: Prisma.LocationWhereInput = {
+      isDeleted: false,
+      ...(search
+        ? {
+            OR: [
+              { canton: { contains: search, mode: 'insensitive' } },
+              { parroquia: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [locations, total] = await Promise.all([
+      this.prisma.location.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.location.count({ where }),
+    ]);
+
+    return {
+      data: locations,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async findAllWithoutPagination() {
     return this.prisma.location.findMany({
-      orderBy: { createdAt: 'desc' },
+      where: { isDeleted: false },
+      orderBy: { canton: 'asc' },
+      take: 500, // Hard limit to prevent unbounded data export
     });
   }
 
   async findOne(id: number) {
-    const location = await this.prisma.location.findUnique({ where: { id } });
+    const location = await this.prisma.location.findUnique({
+      where: { id, isDeleted: false },
+    });
     if (!location) {
       throw new NotFoundException(`Ubicación con id ${id} no encontrada`);
     }
@@ -32,6 +72,9 @@ export class LocationsService {
 
   async remove(id: number) {
     await this.findOne(id);
-    return this.prisma.location.delete({ where: { id } });
+    return this.prisma.location.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
   }
 }

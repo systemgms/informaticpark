@@ -9,6 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `backend/` — NestJS 11 + Prisma + PostgreSQL REST API (port **4000**, prefix `/api`)
 - `frontend/` — Next.js 15 App Router admin dashboard (port **3000**)
 
+Runtime: **Bun** (both development and production via Vercel).
+
 Each subdirectory has its own `CLAUDE.md` with detailed commands and architecture.
 
 ## Development setup
@@ -17,10 +19,10 @@ Run both servers in separate terminals:
 
 ```bash
 # Terminal 1 — backend
-cd backend && npm run start:dev
+cd backend && bun run start:dev
 
 # Terminal 2 — frontend
-cd frontend && npm run dev
+cd frontend && bun run dev
 ```
 
 **Required env files:**
@@ -40,8 +42,8 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:4000
 **First-time database setup:**
 ```bash
 cd backend
-npm run prisma:migrate
-npm run prisma:seed   # creates admin@example.com / Admin123!
+bun run prisma:migrate
+bun run prisma:seed   # creates admin@example.com / Admin123!
 ```
 
 ## Cross-cutting architecture
@@ -98,3 +100,25 @@ Every page is `"use client"` and fetches on mount via `useEffect` → `useState`
 ```
 
 There is no frontend page for Locations — the backend `LocationsModule` exists and the `api.locations.*` client is wired up, but no admin route has been built yet.
+
+## Code conventions
+
+### Language rules
+- **Variable names, function names, parameters, and internal logic MUST be in English**
+- **UI-facing strings, labels, error messages, and user-facing text are in Spanish** (the app is for Spanish-speaking users)
+- Prisma model and field names are in English; the Spanish UI maps them via the frontend
+
+### Naming conventions (enforced by ESLint)
+- **Variables / functions**: `camelCase` — e.g. `assetList`, `fetchAssets()`
+- **React components / exported decorators / classes / types / interfaces**: `PascalCase` — e.g. `AssetForm`, `CreateAssetDto`
+- **Constants**: `UPPER_SNAKE_CASE` — e.g. `API_TIMEOUT`
+- **Enum members**: `PascalCase` — e.g. `Role.ADMIN`
+- **Boolean variables**: prefix with `is`, `has`, `should`, `can` — e.g. `isActive`, `hasPermission`
+- **Private class members**: `camelCase` (no underscore prefix)
+- **Parameters**: `camelCase`, leading underscore allowed — e.g. `_id`, `userId`
+
+### Run lint before committing
+```bash
+cd backend && bun run lint
+cd frontend && bun run lint
+```

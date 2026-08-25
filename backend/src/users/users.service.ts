@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
+import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-
-type AppRole = 'ADMIN' | 'USER';
+import { USER_SELECT } from '../common/utils/user.util';
 
 @Injectable()
 export class UsersService {
@@ -12,29 +16,60 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  findById(id: number) {
-    return this.prisma.user.findUnique({ where: { id } });
+  async findById(id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: USER_SELECT,
+    });
+    if (!user) {
+      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+    }
+    return user;
   }
 
   async createUserAsAdmin(data: {
     name: string;
     email: string;
     password: string;
-    role?: AppRole;
+    role?: Role;
     isActive?: boolean;
     custodianId?: number;
   }) {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    // Validate custodian exists if provided
+    if (data.custodianId) {
+      const custodian = await this.prisma.custodian.findUnique({
+        where: { id: data.custodianId, isDeleted: false },
+      });
+      if (!custodian) {
+        throw new NotFoundException(
+          `Custodio con id ${data.custodianId} no encontrado`,
+        );
+      }
+      // Check if custodian is already linked to another user
+      const existingUser = await this.prisma.user.findUnique({
+        where: { custodianId: data.custodianId },
+      });
+      if (existingUser) {
+        throw new ConflictException(
+          'Este custodio ya está vinculado a otro usuario',
+        );
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 12);
 
     return this.prisma.user.create({
       data: {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role: (data.role || 'USER') as any,
+        role: data.role || Role.USER,
         isActive: data.isActive ?? true,
-        ...(data.custodianId !== undefined ? { custodianId: data.custodianId } : {}),
+        ...(data.custodianId !== undefined
+          ? { custodianId: data.custodianId }
+          : {}),
       },
+      select: USER_SELECT,
     });
   }
 
@@ -44,24 +79,50 @@ export class UsersService {
       name?: string;
       email?: string;
       password?: string;
-      role?: AppRole;
+      role?: Role;
       custodianId?: number | null;
     },
   ) {
-    const updateData: any = {
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.email !== undefined ? { email: data.email } : {}),
-      ...(data.role !== undefined ? { role: data.role } : {}),
-      ...('custodianId' in data ? { custodianId: data.custodianId ?? null } : {}),
-    };
+    // Validate custodian exists if provided
+    if (data.custodianId) {
+      const custodian = await this.prisma.custodian.findUnique({
+        where: { id: data.custodianId, isDeleted: false },
+      });
+      if (!custodian) {
+        throw new NotFoundException(
+          `Custodio con id ${data.custodianId} no encontrado`,
+        );
+      }
+      // Check if custodian is already linked to another user
+      const existingUser = await this.prisma.user.findFirst({
+        where: { custodianId: data.custodianId, id: { not: id } },
+      });
+      if (existingUser) {
+        throw new ConflictException(
+          'Este custodio ya está vinculado a otro usuario',
+        );
+      }
+    }
+
+    const updateData: Prisma.UserUpdateInput = {};
+
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.role !== undefined) updateData.role = data.role;
+    if ('custodianId' in data) {
+      updateData.custodian = data.custodianId
+        ? { connect: { id: data.custodianId } }
+        : { disconnect: true };
+    }
 
     if (data.password !== undefined) {
-      updateData.password = await bcrypt.hash(data.password, 10);
+      updateData.password = await bcrypt.hash(data.password, 12);
     }
 
     return this.prisma.user.update({
       where: { id },
       data: updateData,
+      select: USER_SELECT,
     });
   }
 
@@ -69,17 +130,28 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id },
       data: { isActive },
+      select: USER_SELECT,
     });
   }
 
-  // soft delete (por ahora): desactiva la cuenta
   softDelete(id: number) {
     return this.setActive(id, false);
   }
 
-  findAll() {
+  findAll(page = 1, limit = 20, includeInactive = false) {
+    const skip = (page - 1) * limit;
     return this.prisma.user.findMany({
+      where: includeInactive ? {} : { isActive: true },
+      select: USER_SELECT,
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    });
+  }
+
+  async count(includeInactive = false) {
+    return this.prisma.user.count({
+      where: includeInactive ? {} : { isActive: true },
     });
   }
 }

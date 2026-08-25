@@ -6,29 +6,28 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { AssetsService } from './assets.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Public } from '../auth/public.decorator';
 import { ParseIdPipe } from '../common/pipes/parse-id.pipe';
 import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
+import { MaxLengthPipe } from '../common/pipes/max-length.pipe';
 
 @ApiTags('assets')
 @ApiBearerAuth('JWT')
 @Controller('assets')
-@UseGuards(JwtAuthGuard)
 export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
 
@@ -46,15 +45,40 @@ export class AssetsController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Listar activos' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Elementos por página',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Búsqueda por nombre o código',
+  })
   @ApiResponse({ status: 200, description: 'Lista de activos' })
-  findAll() {
-    return this.assetsService.findAll();
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search', new MaxLengthPipe(100)) search?: string,
+  ) {
+    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+    const limitNum = Math.min(
+      100,
+      Math.max(1, parseInt(limit || '20', 10) || 20),
+    );
+    return this.assetsService.findAll(pageNum, limitNum, search);
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Obtener activo por ID' })
   @ApiParam({ name: 'id', description: 'ID del activo' })
   @ApiResponse({ status: 200, description: 'Activo encontrado' })

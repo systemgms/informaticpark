@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "@/lib/types";
 import { api } from "@/lib/api";
@@ -38,19 +38,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = (token: string, userData: User) => {
+  const login = useCallback((token: string, userData: User) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     router.push("/");
-  };
+  }, [router]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
     router.push("/login");
-  };
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>

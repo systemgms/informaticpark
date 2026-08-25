@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
-import { LayoutDashboard, LogIn } from "lucide-react";
+import { LayoutDashboard, LogIn, Info } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -95,6 +95,11 @@ export default function LoginPage() {
             </CardFooter>
           </form>
         </Card>
+
+        <div className="flex items-center gap-2 justify-center text-xs text-muted-foreground">
+          <Info className="w-3.5 h-3.5 shrink-0" />
+          <p>¿Olvidaste tu contraseña? Contacta al administrador.</p>
+        </div>
       </div>
     </div>
   );

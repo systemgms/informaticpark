@@ -1,9 +1,18 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { Public } from './public.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -11,6 +20,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Login' })
   @ApiResponse({ status: 200, description: 'Token y datos del usuario' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas' })

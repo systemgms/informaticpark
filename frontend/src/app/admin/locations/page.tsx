@@ -16,11 +16,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Pencil, Trash2, Plus, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function LocationsAdminPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [locationToDelete, setLocationToDelete] = useState<number | null>(null);
 
   useEffect(() => { loadLocations(); }, []);
 
@@ -28,8 +31,8 @@ export default function LocationsAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.locations.getAll();
-      setLocations(Array.isArray(data) ? data : []);
+      const response = await api.locations.getAll();
+      setLocations(response.data || []);
     } catch (err: any) {
       setError(err.message || "Error al cargar ubicaciones.");
     } finally {
@@ -37,13 +40,18 @@ export default function LocationsAdminPage() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("¿Eliminar esta ubicación? Los activos y custodios vinculados quedarán sin ubicación.")) return;
+  function handleDeleteClick(id: number) {
+    setLocationToDelete(id);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (locationToDelete === null) return;
     try {
-      await api.locations.delete(id);
+      await api.locations.delete(locationToDelete);
       loadLocations();
-    } catch (err: any) {
-      alert(err?.message || "Error al eliminar ubicación");
+    } catch {
+      // Error handled silently
     }
   }
 
@@ -120,7 +128,7 @@ export default function LocationsAdminPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Link href={`/admin/locations/${l.id}`}>
-                          <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8">
+                          <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8" aria-label="Editar ubicación">
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
                         </Link>
@@ -128,7 +136,8 @@ export default function LocationsAdminPage() {
                           variant="ghost"
                           size="icon"
                           className="cursor-pointer h-8 w-8 hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(l.id)}
+                          onClick={() => handleDeleteClick(l.id)}
+                          aria-label="Eliminar ubicación"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -141,6 +150,15 @@ export default function LocationsAdminPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Eliminar ubicación"
+        description="¿Estás seguro de que deseas eliminar esta ubicación? Los activos y custodios vinculados quedarán sin ubicación."
+        confirmLabel="Eliminar"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

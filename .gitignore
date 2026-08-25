@@ -8,3 +8,45 @@ frontend/server.log
 backend/pnpm-lock.yaml
 backend/pnpm-workspace.yaml
 frontend/pnpm-lock.yaml
+
+# Environment variables and local configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Secrets, credentials and private keys
+*.secret
+*.secrets
+*.credentials
+*.token
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.crt
+*.cer
+credentials/
+secrets/
+private/
+
+# Local deployment and container files
+.vercel/
+.docker/
+docker-compose.override.yml
+
+# Local databases and logs
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# Bun
+bun.lock
+bun.lockb
+
+# Build
+dist/
+.next/
+coverage/

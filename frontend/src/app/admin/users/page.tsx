@@ -17,11 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Plus, Pencil, Trash2, UserPlus, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function UsersAdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -29,8 +32,8 @@ export default function UsersAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.users.getAll();
-      setUsers(Array.isArray(data) ? data : []);
+      const response = await api.users.getAll();
+      setUsers(response.data || []);
     } catch (err: any) {
       setError(err.message || "Error al cargar usuarios.");
     } finally {
@@ -38,13 +41,18 @@ export default function UsersAdminPage() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("¿Eliminar este usuario?")) return;
+  function handleDeleteClick(id: number) {
+    setUserToDelete(id);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (userToDelete === null) return;
     try {
-      await api.users.delete(id);
+      await api.users.delete(userToDelete);
       loadUsers();
     } catch {
-      alert("Error al eliminar usuario");
+      // Error handled silently
     }
   }
 
@@ -128,7 +136,7 @@ export default function UsersAdminPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Link href={`/admin/users/${user.id}`}>
-                          <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8">
+                          <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8" aria-label="Editar usuario">
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
                         </Link>
@@ -136,7 +144,8 @@ export default function UsersAdminPage() {
                           variant="ghost"
                           size="icon"
                           className="cursor-pointer h-8 w-8 hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDeleteClick(user.id)}
+                          aria-label="Eliminar usuario"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -149,6 +158,15 @@ export default function UsersAdminPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Eliminar usuario"
+        description="¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

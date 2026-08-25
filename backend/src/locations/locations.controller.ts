@@ -6,35 +6,34 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { LocationsService } from './locations.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Public } from '../auth/public.decorator';
-import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { ParseIdPipe } from '../common/pipes/parse-id.pipe';
 import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
+import { MaxLengthPipe } from '../common/pipes/max-length.pipe';
 
 @ApiTags('locations')
 @ApiBearerAuth('JWT')
 @Controller('locations')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
 export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}
 
   @Post()
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Crear ubicación (solo ADMIN)' })
   @ApiBody({ type: CreateLocationDto })
   @ApiResponse({ status: 201, description: 'Ubicación creada' })
@@ -47,9 +46,46 @@ export class LocationsController {
   @Get()
   @Public()
   @ApiOperation({ summary: 'Listar ubicaciones' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Elementos por página',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Búsqueda por cantón o parroquia',
+  })
+  @ApiQuery({
+    name: 'all',
+    required: false,
+    type: Boolean,
+    description: 'Retornar todas las ubicaciones sin paginación',
+  })
   @ApiResponse({ status: 200, description: 'Lista de ubicaciones' })
-  async findAll() {
-    return this.locationsService.findAll();
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search', new MaxLengthPipe(100)) search?: string,
+    @Query('all') all?: string,
+  ) {
+    if (all === 'true') {
+      return this.locationsService.findAllWithoutPagination();
+    }
+    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+    const limitNum = Math.min(
+      100,
+      Math.max(1, parseInt(limit || '20', 10) || 20),
+    );
+    return this.locationsService.findAll(pageNum, limitNum, search);
   }
 
   @Get(':id')
@@ -63,6 +99,7 @@ export class LocationsController {
   }
 
   @Patch(':id')
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Actualizar ubicación (solo ADMIN)' })
   @ApiBody({ type: UpdateLocationDto })
   @ApiParam({ name: 'id', description: 'ID de la ubicación' })
@@ -76,6 +113,7 @@ export class LocationsController {
   }
 
   @Delete(':id')
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Eliminar ubicación (solo ADMIN)' })
   @ApiParam({ name: 'id', description: 'ID de la ubicación' })
   @ApiResponse({ status: 200, description: 'Ubicación eliminada' })

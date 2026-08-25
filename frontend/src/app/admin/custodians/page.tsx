@@ -17,12 +17,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, Pencil, Trash2, Plus, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function CustodiansAdminPage() {
   const router = useRouter();
   const [custodians, setCustodians] = useState<Custodian[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [custodianToDelete, setCustodianToDelete] = useState<number | null>(null);
 
   useEffect(() => { loadCustodians(); }, []);
 
@@ -30,8 +33,8 @@ export default function CustodiansAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.custodians.getAll();
-      setCustodians(Array.isArray(data) ? data : []);
+      const response = await api.custodians.getAll();
+      setCustodians(response.data || []);
     } catch (err: any) {
       setError(err.message || "Error al cargar custodios.");
     } finally {
@@ -39,13 +42,18 @@ export default function CustodiansAdminPage() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("¿Eliminar este custodio?")) return;
+  function handleDeleteClick(id: number) {
+    setCustodianToDelete(id);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (custodianToDelete === null) return;
     try {
-      await api.custodians.delete(id);
+      await api.custodians.delete(custodianToDelete);
       loadCustodians();
     } catch {
-      alert("Error al eliminar custodio");
+      // Error handled silently
     }
   }
 
@@ -122,7 +130,7 @@ export default function CustodiansAdminPage() {
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         <Link href={`/admin/custodians/${c.id}`}>
-                          <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8">
+                          <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8" aria-label="Editar custodio">
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
                         </Link>
@@ -130,7 +138,8 @@ export default function CustodiansAdminPage() {
                           variant="ghost"
                           size="icon"
                           className="cursor-pointer h-8 w-8 hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(c.id)}
+                          onClick={() => handleDeleteClick(c.id)}
+                          aria-label="Eliminar custodio"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -143,6 +152,15 @@ export default function CustodiansAdminPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Eliminar custodio"
+        description="¿Estás seguro de que deseas eliminar este custodio? Los activos y traspasos vinculados podrían verse afectados."
+        confirmLabel="Eliminar"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

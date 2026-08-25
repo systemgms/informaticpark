@@ -1,17 +1,15 @@
-import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { join } from 'path';
-import { mkdirSync } from 'fs';
 
-async function bootstrap() {
-  mkdirSync(join(process.cwd(), 'uploads', 'actas'), { recursive: true });
+export async function createApp() {
+  const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
+  app.use(helmet());
   app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
@@ -38,10 +36,33 @@ async function bootstrap() {
     .addTag('assets', 'CRUD de activos')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
 
-  app.enableCors();
+  // Only expose Swagger in development
+  if (process.env.NODE_ENV !== 'production') {
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
-  await app.listen(4000);
+  const allowedOrigins = configService
+    .get<string>('CORS_ORIGINS', 'http://localhost:3000')
+    .split(',');
+  app.enableCors({
+    origin: allowedOrigins,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
+
+  const port = configService.get<number>('PORT', 4000);
+  await app.init();
+  return { app, port };
 }
-bootstrap();
+
+async function bootstrap() {
+  const { app, port } = await createApp();
+  const logger = new Logger('Bootstrap');
+  await app.listen(port);
+  logger.log(`Application running on port ${port}`);
+}
+
+if (process.env.VERCEL !== '1') {
+  void bootstrap();
+}

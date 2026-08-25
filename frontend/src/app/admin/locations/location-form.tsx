@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ interface LocationFormProps {
 
 export function LocationForm({ locationId }: LocationFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const isEdit = !!locationId;
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -39,10 +41,33 @@ export function LocationForm({ locationId }: LocationFormProps) {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [locationId]);
+  }, [locationId, isEdit]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.canton.trim() && !formData.parroquia.trim()) {
+      toast("Debe ingresar al menos un cantón o parroquia", "error");
+      return;
+    }
+    
+    // Validate lat/lng ranges
+    if (formData.lat) {
+      const lat = parseFloat(formData.lat);
+      if (isNaN(lat) || lat < -90 || lat > 90) {
+        toast("La latitud debe estar entre -90 y 90", "error");
+        return;
+      }
+    }
+    if (formData.lng) {
+      const lng = parseFloat(formData.lng);
+      if (isNaN(lng) || lng < -180 || lng > 180) {
+        toast("La longitud debe estar entre -180 y 180", "error");
+        return;
+      }
+    }
+    
     setSaving(true);
     try {
       const payload = {
@@ -59,7 +84,7 @@ export function LocationForm({ locationId }: LocationFormProps) {
       router.push("/admin/locations");
       router.refresh();
     } catch (error: any) {
-      alert(error?.message || "Error al guardar ubicación");
+      toast(error?.message || "Error al guardar ubicación", "error");
     } finally {
       setSaving(false);
     }

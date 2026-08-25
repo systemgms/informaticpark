@@ -4,15 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Custodian, Role } from "@/lib/types";
+import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
-
-const SELECT_CLASS =
-  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface UserFormProps {
   userId?: number;
@@ -20,6 +19,7 @@ interface UserFormProps {
 
 export function UserForm({ userId }: UserFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const isEdit = !!userId;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,7 +40,7 @@ export function UserForm({ userId }: UserFormProps) {
           api.custodians.getAll(),
           isEdit ? api.users.getById(userId!) : Promise.resolve(null),
         ]);
-        setCustodians(custodiansData);
+        setCustodians(custodiansData.data);
         if (userData) {
           setFormData({
             name: userData.name,
@@ -58,10 +58,29 @@ export function UserForm({ userId }: UserFormProps) {
       }
     }
     load();
-  }, [userId]);
+  }, [userId, isEdit]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.name.trim()) {
+      toast("El nombre es requerido", "error");
+      return;
+    }
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast("El email es requerido y debe ser válido", "error");
+      return;
+    }
+    if (!isEdit && !formData.password) {
+      toast("La contraseña es requerida", "error");
+      return;
+    }
+    if (formData.password && formData.password.length < 8) {
+      toast("La contraseña debe tener al menos 8 caracteres", "error");
+      return;
+    }
+    
     setSaving(true);
     try {
       const payload: any = {
@@ -76,13 +95,13 @@ export function UserForm({ userId }: UserFormProps) {
       if (isEdit) {
         await api.users.update(userId!, payload);
       } else {
-        if (!formData.password) { alert("La contraseña es requerida"); return; }
+        if (!formData.password) { toast("La contraseña es requerida", "error"); return; }
         await api.users.create({ ...payload, password: formData.password });
       }
       router.push("/admin/users");
       router.refresh();
     } catch (error: any) {
-      alert(error?.message || "Error al guardar usuario");
+      toast(error?.message || "Error al guardar usuario", "error");
     } finally {
       setSaving(false);
     }
@@ -140,37 +159,32 @@ export function UserForm({ userId }: UserFormProps) {
                 />
               </div>
             )}
-            <div className="grid gap-2">
-              <Label htmlFor="role">Rol</Label>
-              <select
-                id="role"
-                className={SELECT_CLASS}
-                value={formData.role}
-                onChange={(e) =>
-                  setFormData({ ...formData, role: e.target.value as Role, custodianId: "" })
-                }
-              >
-                <option value={Role.USER}>Usuario (Custodio)</option>
-                <option value={Role.ADMIN}>Administrador</option>
-              </select>
-            </div>
+              <div className="grid gap-2">
+                <Label htmlFor="role">Rol</Label>
+                <Select value={formData.role} onValueChange={(value) =>
+                  setFormData({ ...formData, role: value as Role, custodianId: "" })
+                }>
+                  <SelectTrigger id="role"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={Role.USER}>Usuario (Custodio)</SelectItem>
+                    <SelectItem value={Role.ADMIN}>Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             {formData.role === Role.USER && (
               <div className="grid gap-2">
                 <Label htmlFor="custodianId">Custodio vinculado</Label>
-                <select
-                  id="custodianId"
-                  className={SELECT_CLASS}
-                  value={formData.custodianId}
-                  onChange={(e) => setFormData({ ...formData, custodianId: e.target.value })}
-                >
-                  <option value="">Sin custodio vinculado</option>
+                <Select value={formData.custodianId} onValueChange={(value) => setFormData({ ...formData, custodianId: value })}>
+                  <SelectTrigger id="custodianId"><SelectValue placeholder="Sin custodio vinculado" /></SelectTrigger>
+                  <SelectContent>
                   {custodians.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <SelectItem key={c.id} value={String(c.id)}>
                       {c.fullName} — {c.identifier}
                       {c.unit ? ` (${c.unit})` : ""}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-muted-foreground">
                   Vincula este usuario a un custodio para que pueda registrar traspasos de sus activos.
                 </p>

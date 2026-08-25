@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Custodian } from "@/lib/types";
+import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ interface CustodianFormProps {
 
 export function CustodianForm({ custodianId }: CustodianFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const isEdit = !!custodianId;
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -26,13 +27,7 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
     unit: "",
   });
 
-  useEffect(() => {
-    if (isEdit) {
-      loadCustodian();
-    }
-  }, [custodianId]);
-
-  async function loadCustodian() {
+  const loadCustodian = useCallback(async () => {
     try {
       const custodian = await api.custodians.getById(custodianId!);
       setFormData({
@@ -45,10 +40,27 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [custodianId]);
+
+  useEffect(() => {
+    if (isEdit) {
+      loadCustodian();
+    }
+  }, [custodianId, isEdit, loadCustodian]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.fullName.trim()) {
+      toast("El nombre completo es requerido", "error");
+      return;
+    }
+    if (!formData.identifier.trim()) {
+      toast("El identificador es requerido", "error");
+      return;
+    }
+    
     setSaving(true);
     try {
       if (isEdit) {
@@ -58,8 +70,8 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
       }
       router.push("/admin/custodians");
       router.refresh();
-    } catch (error) {
-      alert("Error al guardar custodio");
+    } catch (error: any) {
+      toast(error?.message || "Error al guardar custodio", "error");
     } finally {
       setSaving(false);
     }

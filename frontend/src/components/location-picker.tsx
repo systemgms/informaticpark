@@ -13,16 +13,20 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const onChangeRef = useRef(onChange);
+  const initialValueRef = useRef(value);
+  onChangeRef.current = onChange;
   const [locating, setLocating] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    if (!mapRef.current || leafletMapRef.current) return;
+    const mapElement = mapRef.current;
+    if (!mapElement || leafletMapRef.current) return;
 
     // Dynamic import to avoid SSR issues
     import("leaflet").then((L) => {
       // Guard against container already initialized (React Strict Mode / HMR)
-      if ((mapRef.current as any)._leaflet_id) return;
+      if ((mapElement as any)._leaflet_id) return;
       // Fix default icon paths broken by webpack
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -31,21 +35,22 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
 
-      const initialCenter: [number, number] = value
-        ? [value.lat, value.lng]
-        : [4.711, -74.0721]; // Bogotá por defecto
+       const initialValue = initialValueRef.current;
+       const initialCenter: [number, number] = initialValue
+         ? [initialValue.lat, initialValue.lng]
+         : [4.711, -74.0721]; // Bogotá por defecto
 
-      const map = L.map(mapRef.current!).setView(initialCenter, value ? 16 : 12);
+       const map = L.map(mapElement).setView(initialCenter, initialValue ? 16 : 12);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
 
-      if (value) {
-        markerRef.current = L.marker([value.lat, value.lng], { draggable: true }).addTo(map);
+       if (initialValue) {
+         markerRef.current = L.marker([initialValue.lat, initialValue.lng], { draggable: true }).addTo(map);
         markerRef.current.on("dragend", () => {
           const pos = markerRef.current.getLatLng();
-          onChange({ lat: parseFloat(pos.lat.toFixed(6)), lng: parseFloat(pos.lng.toFixed(6)) });
+          onChangeRef.current({ lat: parseFloat(pos.lat.toFixed(6)), lng: parseFloat(pos.lng.toFixed(6)) });
         });
       }
 
@@ -59,10 +64,10 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
           markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(map);
           markerRef.current.on("dragend", () => {
             const pos = markerRef.current.getLatLng();
-            onChange({ lat: parseFloat(pos.lat.toFixed(6)), lng: parseFloat(pos.lng.toFixed(6)) });
+            onChangeRef.current({ lat: parseFloat(pos.lat.toFixed(6)), lng: parseFloat(pos.lng.toFixed(6)) });
           });
         }
-        onChange(coords);
+         onChangeRef.current(coords);
       });
 
       leafletMapRef.current = map;
@@ -75,9 +80,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         leafletMapRef.current = null;
         markerRef.current = null;
       }
-      if (mapRef.current) {
-        delete (mapRef.current as any)._leaflet_id;
-      }
+       delete (mapElement as any)._leaflet_id;
     };
   }, []);
 
@@ -95,7 +98,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
           );
           markerRef.current.on("dragend", () => {
             const pos = markerRef.current.getLatLng();
-            onChange({ lat: parseFloat(pos.lat.toFixed(6)), lng: parseFloat(pos.lng.toFixed(6)) });
+            onChangeRef.current({ lat: parseFloat(pos.lat.toFixed(6)), lng: parseFloat(pos.lng.toFixed(6)) });
           });
         }
         leafletMapRef.current.setView([value.lat, value.lng], 16);

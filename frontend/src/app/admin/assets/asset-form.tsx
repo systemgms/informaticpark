@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Asset, Custodian, Location } from "@/lib/types";
+import { Custodian, Location } from "@/lib/types";
+import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, History, Save } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const LocationPicker = dynamic(
   () => import("@/components/location-picker").then((m) => m.LocationPicker),
@@ -47,15 +50,13 @@ const MORONA_SANTIAGO: Record<string, string[]> = {
   "Tiwintza": ["San José de Morona", "Santiago"],
 };
 
-const SELECT_CLASS =
-  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-
 interface AssetFormProps {
   assetId?: number;
 }
 
 export function AssetForm({ assetId }: AssetFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const isEdit = !!assetId;
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -80,33 +81,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
   });
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
-  useEffect(() => {
-    loadCustodians();
-    loadLocations();
-    if (isEdit) {
-      loadAsset();
-    }
-  }, [assetId]);
-
-  async function loadCustodians() {
-    try {
-      const data = await api.custodians.getAll();
-      setCustodians(data);
-    } catch (error) {
-      console.error("Error loading custodians:", error);
-    }
-  }
-
-  async function loadLocations() {
-    try {
-      const data = await api.locations.getAll();
-      setLocations(data);
-    } catch (error) {
-      console.error("Error loading locations:", error);
-    }
-  }
-
-  async function loadAsset() {
+  const loadAsset = useCallback(async () => {
     try {
       const asset = await api.assets.getById(assetId!);
       setFormData({
@@ -133,6 +108,32 @@ export function AssetForm({ assetId }: AssetFormProps) {
       console.error("Error loading asset:", error);
     } finally {
       setLoading(false);
+    }
+  }, [assetId]);
+
+  useEffect(() => {
+    loadCustodians();
+    loadLocations();
+    if (isEdit) {
+      loadAsset();
+    }
+  }, [assetId, isEdit, loadAsset]);
+
+  async function loadCustodians() {
+    try {
+      const data = await api.custodians.getAll();
+      setCustodians(data.data);
+    } catch (error) {
+      console.error("Error loading custodians:", error);
+    }
+  }
+
+  async function loadLocations() {
+    try {
+      const data = await api.locations.getAll();
+      setLocations(data.data);
+    } catch (error) {
+      console.error("Error loading locations:", error);
     }
   }
 
@@ -162,6 +163,21 @@ export function AssetForm({ assetId }: AssetFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.assetName.trim()) {
+      toast("El nombre del activo es requerido", "error");
+      return;
+    }
+    if (formData.initialValue && formData.initialValue < 0) {
+      toast("El valor inicial no puede ser negativo", "error");
+      return;
+    }
+    if (formData.currentValue && formData.currentValue < 0) {
+      toast("El valor actual no puede ser negativo", "error");
+      return;
+    }
+    
     setSaving(true);
     try {
       const locationId = await resolveLocationId();
@@ -190,7 +206,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
       router.push("/admin/assets");
       router.refresh();
     } catch (error: any) {
-      alert(error?.message || "Error al guardar activo");
+      toast(error?.message || "Error al guardar activo", "error");
     } finally {
       setSaving(false);
     }
@@ -240,38 +256,29 @@ export function AssetForm({ assetId }: AssetFormProps) {
               
               <div className="grid gap-2">
                 <Label htmlFor="canton">Cantón</Label>
-                <select
-                  id="canton"
-                  className={SELECT_CLASS}
-                  value={formData.canton}
-                  onChange={(e) =>
-                    setFormData({ ...formData, canton: e.target.value, parroquia: "" })
-                  }
-                >
-                  <option value="">Seleccionar cantón</option>
+                <Select value={formData.canton} onValueChange={(value) =>
+                  setFormData({ ...formData, canton: value, parroquia: "" })
+                }>
+                  <SelectTrigger id="canton"><SelectValue placeholder="Seleccionar cantón" /></SelectTrigger>
+                  <SelectContent>
                   {Object.keys(MORONA_SANTIAGO).map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
-                </select>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="parroquia">Parroquia</Label>
-                <select
-                  id="parroquia"
-                  className={SELECT_CLASS}
-                  value={formData.parroquia}
-                  onChange={(e) =>
-                    setFormData({ ...formData, parroquia: e.target.value })
-                  }
-                  disabled={!formData.canton}
-                >
-                  <option value="">
-                    {formData.canton ? "Seleccionar parroquia" : "Seleccione un cantón primero"}
-                  </option>
+                <Select value={formData.parroquia} onValueChange={(value) =>
+                  setFormData({ ...formData, parroquia: value })
+                } disabled={!formData.canton}>
+                  <SelectTrigger id="parroquia"><SelectValue placeholder={formData.canton ? "Seleccionar parroquia" : "Seleccione un cantón primero"} /></SelectTrigger>
+                  <SelectContent>
                   {parroquias.map((p) => (
-                    <option key={p} value={p}>{p}</option>
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
-                </select>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
@@ -336,19 +343,16 @@ export function AssetForm({ assetId }: AssetFormProps) {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="custodianId">Custodio Responsable</Label>
-                  <select
-                    id="custodianId"
-                    className={SELECT_CLASS}
-                    value={formData.custodianId}
-                    onChange={(e) => setFormData({ ...formData, custodianId: e.target.value })}
-                  >
-                    <option value="">Seleccionar Custodio</option>
+                  <Select value={formData.custodianId} onValueChange={(value) => setFormData({ ...formData, custodianId: value })}>
+                    <SelectTrigger id="custodianId"><SelectValue placeholder="Seleccionar Custodio" /></SelectTrigger>
+                    <SelectContent>
                     {custodians.map((c) => (
-                      <option key={c.id} value={c.id}>
+                      <SelectItem key={c.id} value={String(c.id)}>
                         {c.fullName} ({c.identifier})
-                      </option>
+                      </SelectItem>
                     ))}
-                  </select>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="initialValue">Valor Inicial</Label>
@@ -373,9 +377,8 @@ export function AssetForm({ assetId }: AssetFormProps) {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="note">Notas / Observaciones</Label>
-                <textarea
+                <Textarea
                   id="note"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.note}
                   onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                 />

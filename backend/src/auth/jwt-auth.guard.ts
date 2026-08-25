@@ -4,6 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from './public.decorator';
@@ -13,6 +14,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
+    private readonly configService: ConfigService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -32,8 +34,10 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
+      const secret = this.configService.get<string>('JWT_SECRET');
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET,
+        secret,
+        algorithms: ['HS256'],
       });
 
       request.user = payload;

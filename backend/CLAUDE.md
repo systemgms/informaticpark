@@ -6,26 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-npm run start:dev        # Start with hot reload (port 4000)
-npm run start:debug      # Start with debugger
+bun run start:dev        # Start with hot reload (port 4000)
+bun run start:debug      # Start with debugger
 
 # Build
-npm run build            # Generates Prisma client + compiles TypeScript
+bun run build            # Generates Prisma client + compiles TypeScript
 
 # Code quality
-npm run lint             # ESLint with auto-fix
-npm run format           # Prettier formatting
+bun run lint             # ESLint with auto-fix
+bun run format           # Prettier formatting
 
 # Testing
-npm run test             # Unit tests
-npm run test:watch       # Watch mode
-npm run test:cov         # Coverage report
-npm run test:e2e         # E2E tests
+bun run test             # Unit tests
+bun run test:watch       # Watch mode
+bun run test:cov         # Coverage report
+bun run test:e2e         # E2E tests
 
 # Database
-npm run prisma:migrate   # Run migrations
-npm run prisma:seed      # Seed with initial data (admin@example.com / Admin123!)
-npm run prisma:generate  # Regenerate Prisma client after schema changes
+bun run prisma:migrate   # Run migrations
+bun run prisma:seed      # Seed with initial data (admin@example.com / Admin123!)
+bun run prisma:generate  # Regenerate Prisma client after schema changes
 ```
 
 ## Architecture

@@ -8,12 +8,12 @@
   "scripts": {
     "build": "prisma generate && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start": "bun run nest start",
+    "start:dev": "bun run nest start --watch",
+    "start:debug": "bun run nest start --debug --watch",
+    "start:prod": "bun run dist/main",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma migrate deploy && prisma generate && nest build",
+    "vercel-build": "bunx prisma generate && bun run nest build",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -21,28 +21,32 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "prisma db seed",
+    "prisma:seed": "bun run prisma/seed.ts",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.2",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.14",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/platform-express": "^11.1.2",
     "@nestjs/swagger": "^11.2.6",
+    "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
+    "@vercel/blob": "^2.6.1",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "dotenv": "^17.4.2",
+    "helmet": "^8.3.0",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "bun run prisma/seed.ts"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.2",
