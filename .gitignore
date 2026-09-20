@@ -43,8 +43,8 @@ docker-compose.override.yml
 *.log
 
 # Bun
-bun.lock
-bun.lockb
+/bun.lock
+/bun.lockb
 
 # Build
 dist/
