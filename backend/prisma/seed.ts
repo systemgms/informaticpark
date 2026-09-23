@@ -39,6 +39,18 @@ async function main() {
     },
   });
 
+  // Configuración de marca por defecto
+  await prisma.brandSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      appName: 'Parque Informático',
+      primaryColor: '#4f46e5',
+      secondaryColor: '#6366f1',
+      accentColor: '#e0e7ff',
+    },
+  });
+
   // Activo de ejemplo
   const adminUser = await prisma.user.findFirst({
     where: { email: adminEmail },

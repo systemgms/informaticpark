@@ -10,6 +10,7 @@ import { CustodiansModule } from './custodians/custodians.module';
 import { LocationsModule } from './locations/locations.module';
 import { MovementsModule } from './movements/movements.module';
 import { HealthModule } from './health/health.module';
+import { BrandSettingsModule } from './brand-settings/brand-settings.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
@@ -38,6 +39,7 @@ import { RolesGuard } from './auth/roles.guard';
     CustodiansModule,
     LocationsModule,
     MovementsModule,
+    BrandSettingsModule,
   ],
   controllers: [],
   providers: [

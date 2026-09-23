@@ -3,6 +3,7 @@ import { put } from '@vercel/blob';
 import { BadRequestException } from '@nestjs/common';
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png'];
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ico', '.svg', '.webp'];
 
 export function fileFilter(
   _req: any,
@@ -15,6 +16,23 @@ export function fileFilter(
     cb(
       new BadRequestException(
         'Solo se permiten archivos PDF, JPG y PNG',
+      ) as unknown as Error,
+      false,
+    );
+  }
+}
+
+export function imageFileFilter(
+  _req: any,
+  file: Express.Multer.File,
+  cb: (error: Error | null, acceptFile: boolean) => void,
+) {
+  if (IMAGE_EXTENSIONS.includes(extname(file.originalname).toLowerCase())) {
+    cb(null, true);
+  } else {
+    cb(
+      new BadRequestException(
+        'Solo se permiten imágenes JPG, PNG, ICO, SVG o WEBP',
       ) as unknown as Error,
       false,
     );
