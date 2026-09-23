@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "bun --bun next dev",
     "build": "next build",
+    "build:cf": "opennextjs-cloudflare build && cp .open-next/worker.js .open-next/assets/_worker.js",
     "start": "bun --bun next start",
     "lint": "eslint src/",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
