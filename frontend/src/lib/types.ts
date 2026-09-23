@@ -87,3 +87,17 @@ export interface Asset {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface BrandSettings {
+  id: number;
+  appName: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type BrandSettingsUpdate = Partial<Omit<BrandSettings, 'id' | 'createdAt' | 'updatedAt'>>;

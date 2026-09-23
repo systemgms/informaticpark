@@ -1,4 +1,4 @@
-import { User, Custodian, Location, Asset, AssetMovement } from "./types";
+import { User, Custodian, Location, Asset, AssetMovement, BrandSettings, BrandSettingsUpdate } from "./types";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 const API_URL = `${BACKEND_URL}/api`;
@@ -218,6 +218,13 @@ export const api = {
       fetcherMultipart<AssetMovement[]>(`/movements/bulk/${groupId}/confirm`, formData, 'PATCH'),
     rejectBulk: (groupId: string) =>
       fetcher<AssetMovement[]>(`/movements/bulk/${groupId}/reject`, { method: "PATCH" }),
+  },
+  brandSettings: {
+    get: () => fetcher<BrandSettings>("/brand-settings"),
+    update: (data: BrandSettingsUpdate) =>
+      fetcher<BrandSettings>("/brand-settings", { method: "PATCH", body: JSON.stringify(data) }),
+    uploadFile: (formData: FormData) =>
+      fetcherMultipart<{ url: string; type: string }>("/brand-settings/upload", formData),
   },
 };
 

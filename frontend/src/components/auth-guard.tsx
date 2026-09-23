@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth-provider";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-const ADMIN_ONLY_PATHS = ["/admin/users", "/admin/custodians", "/admin/locations"];
+const ADMIN_ONLY_PATHS = ["/admin/users", "/admin/custodians", "/admin/locations", "/admin/brand"];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

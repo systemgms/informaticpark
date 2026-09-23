@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
+import { useBrand } from "@/components/brand-provider";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, LayoutDashboard, Clock, Package, Users, Building2, MapPin, ArrowRightLeft } from "lucide-react";
+import { LogOut, User as UserIcon, LayoutDashboard, Clock, Package, Users, Building2, MapPin, ArrowRightLeft, Palette } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ const adminLinks = [
   { href: "/admin/assets", label: "Activos", icon: Package },
   { href: "/admin/assets/traspasar", label: "Traspasar", icon: ArrowRightLeft },
   { href: "/admin/locations", label: "Ubicaciones", icon: MapPin },
+  { href: "/admin/brand", label: "Marca", icon: Palette },
 ];
 
 const custodianLinks = [
@@ -40,6 +42,7 @@ const custodianLinks = [
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { brand } = useBrand();
   const pathname = usePathname();
   const navLinks = user?.role === "ADMIN" ? adminLinks : custodianLinks;
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -77,8 +80,12 @@ export default function Navbar() {
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 font-bold text-base shrink-0">
-            <LayoutDashboard className="w-5 h-5 text-primary" />
-            <span className="hidden sm:block">Parque Informático</span>
+            {brand?.logoUrl ? (
+              <img src={brand.logoUrl} alt="" className="h-6 w-auto object-contain" />
+            ) : (
+              <LayoutDashboard className="w-5 h-5 text-primary" />
+            )}
+            <span className="hidden sm:block">{brand?.appName || "Parque Informático"}</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-1">

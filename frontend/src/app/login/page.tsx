@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
+import { useBrand } from "@/components/brand-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
-import { LayoutDashboard, LogIn, Info } from "lucide-react";
+import { LogIn, Info, LayoutDashboard } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { login } = useAuth();
+  const { brand } = useBrand();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +37,13 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="p-3 rounded-xl bg-primary/10">
-            <LayoutDashboard className="w-8 h-8 text-primary" />
+            {brand?.logoUrl ? (
+              <img src={brand.logoUrl} alt="" className="h-10 w-auto object-contain" />
+            ) : (
+              <LayoutDashboard className="w-8 h-8 text-primary" />
+            )}
           </div>
-          <h1 className="text-2xl font-bold">Parque Informático</h1>
+          <h1 className="text-2xl font-bold">{brand?.appName || "Parque Informático"}</h1>
           <p className="text-sm text-muted-foreground">GPMS — Morona Santiago</p>
         </div>
 

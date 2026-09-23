@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { AuthGuard } from "@/components/auth-guard";
+import { BrandProvider } from "@/components/brand-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import Navbar from "@/components/navbar";
 
@@ -13,8 +14,8 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: "Parque Informatico GPMS",
-  description: "Aplicativo para la localizacion de equipos infomaticos",
+  title: "Parque Informático",
+  description: "Aplicativo para la localización de equipos informáticos",
 };
 
 export default function RootLayout({
@@ -30,17 +31,19 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
-        <AuthProvider>
-          <AuthGuard>
-            <ToastProvider>
-              <Navbar />
-              <main className="container mx-auto py-8 px-4">
-                {/* Children rendered directly - error handling at higher level */}
-                {children}
-              </main>
-            </ToastProvider>
-          </AuthGuard>
-        </AuthProvider>
+        <BrandProvider>
+          <AuthProvider>
+            <AuthGuard>
+              <ToastProvider>
+                <Navbar />
+                <main className="container mx-auto py-8 px-4">
+                  {/* Children rendered directly - error handling at higher level */}
+                  {children}
+                </main>
+              </ToastProvider>
+            </AuthGuard>
+          </AuthProvider>
+        </BrandProvider>
       </body>
     </html>
   );
