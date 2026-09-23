@@ -1,0 +1,48 @@
+- generic [active] [ref=f2e1]:
+  - button "Open Next.js Dev Tools" [ref=f2e7] [cursor=pointer]
+  - alert [ref=f2e11]
+  - navigation [ref=f2e42]:
+    - generic [ref=f2e43]:
+      - link "Parque Informático" [ref=f2e45] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f2e52]:
+        - generic [ref=f2e53]:
+          - generic [ref=f2e57]: Administrador
+          - generic [ref=f2e58]: ADMIN
+          - generic [ref=f2e59]: 60:00
+        - button "Salir" [ref=f2e63] [cursor=pointer]
+  - main [ref=f2e12]:
+    - generic [ref=f2e68]:
+      - generic [ref=f2e69]:
+        - heading "Panel de Administración" [level=1] [ref=f2e70]
+        - paragraph [ref=f2e71]: Parque Informático — GPMS Morona Santiago
+      - generic [ref=f2e72]:
+        - link [ref=f2e73] [cursor=pointer]:
+          - /url: /admin/assets
+          - generic [ref=f2e77]:
+            - paragraph [ref=f2e78]: Activos
+            - paragraph [ref=f2e79]: "1"
+            - paragraph [ref=f2e80]: Total de bienes registrados
+        - generic [ref=f2e89]:
+          - paragraph [ref=f2e90]: Valor total del parque
+          - paragraph [ref=f2e91]: $0,00
+          - paragraph [ref=f2e92]: Suma del valor actual de todos los activos
+        - link [ref=f2e96] [cursor=pointer]:
+          - /url: /admin/custodians
+          - generic [ref=f2e100]:
+            - paragraph [ref=f2e101]: Custodios
+            - paragraph [ref=f2e102]: "1"
+            - paragraph [ref=f2e103]: Responsables de activos registrados
+        - link [ref=f2e109] [cursor=pointer]:
+          - /url: /admin/users
+          - generic [ref=f2e113]:
+            - paragraph [ref=f2e114]: Usuarios
+            - paragraph [ref=f2e115]: "1"
+            - paragraph [ref=f2e116]: Cuentas de acceso al sistema
+        - link [ref=f2e123] [cursor=pointer]:
+          - /url: /admin/locations
+          - generic [ref=f2e127]:
+            - paragraph [ref=f2e128]: Ubicaciones
+            - paragraph [ref=f2e129]: "0"
+            - paragraph [ref=f2e130]: Cantones y parroquias registradas
+      - generic [ref=f2e135]: 1 activos sin ubicación asignada

@@ -6,7 +6,9 @@ import {
 } from '@nestjs/common';
 
 @Injectable()
-export class MaxLengthPipe implements PipeTransform<string | undefined, string | undefined> {
+export class MaxLengthPipe
+  implements PipeTransform<string | undefined, string | undefined>
+{
   constructor(private readonly maxLength: number) {}
 
   transform(value: string | undefined, metadata: ArgumentMetadata) {

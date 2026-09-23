@@ -9,6 +9,7 @@ import { AssetsModule } from './assets/assets.module';
 import { CustodiansModule } from './custodians/custodians.module';
 import { LocationsModule } from './locations/locations.module';
 import { MovementsModule } from './movements/movements.module';
+import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
@@ -30,6 +31,7 @@ import { RolesGuard } from './auth/roles.guard';
     ConfigModule.forRoot({ isGlobal: true }),
     JwtConfigModule,
     PrismaModule,
+    HealthModule,
     UsersModule,
     AuthModule,
     AssetsModule,

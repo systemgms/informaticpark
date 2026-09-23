@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLocationDto } from './dto/create-location.dto';
@@ -6,7 +7,17 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 
 @Injectable()
 export class LocationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly maxExportLimit: number;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.maxExportLimit = this.configService.get<number>(
+      'LOCATIONS_MAX_EXPORT',
+      500,
+    );
+  }
 
   async create(dto: CreateLocationDto) {
     return this.prisma.location.create({ data: dto });
@@ -48,10 +59,11 @@ export class LocationsService {
   }
 
   async findAllWithoutPagination() {
+    const limit = Math.min(this.maxExportLimit, 1000); // Cap at 1000 max to prevent abuse
     return this.prisma.location.findMany({
       where: { isDeleted: false },
       orderBy: { canton: 'asc' },
-      take: 500, // Hard limit to prevent unbounded data export
+      take: limit,
     });
   }
 

@@ -15,6 +15,9 @@ describe('AssetsService', () => {
       delete: jest.Mock;
       count: jest.Mock;
     };
+    assetMovement: {
+      count: jest.Mock;
+    };
   };
 
   const mockAsset = {
@@ -51,6 +54,9 @@ describe('AssetsService', () => {
         create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
+        count: jest.fn(),
+      },
+      assetMovement: {
         count: jest.fn(),
       },
     };
@@ -199,6 +205,7 @@ describe('AssetsService', () => {
   describe('remove', () => {
     it('should soft-delete an asset', async () => {
       prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.assetMovement.count.mockResolvedValue(0);
       prisma.asset.update.mockResolvedValue({ ...mockAsset, isDeleted: true });
 
       await service.remove(1);

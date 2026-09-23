@@ -115,6 +115,7 @@ describe('LocationsService', () => {
       expect(prisma.location.findMany).toHaveBeenCalledWith({
         where: { isDeleted: false },
         orderBy: { canton: 'asc' },
+        take: 500,
       });
     });
   });

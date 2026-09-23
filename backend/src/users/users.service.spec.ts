@@ -14,6 +14,9 @@ describe('UsersService', () => {
       update: jest.Mock;
       count: jest.Mock;
     };
+    custodian: {
+      findUnique: jest.Mock;
+    };
   };
 
   const mockUser = {
@@ -35,6 +38,9 @@ describe('UsersService', () => {
         create: jest.fn(),
         update: jest.fn(),
         count: jest.fn(),
+      },
+      custodian: {
+        findUnique: jest.fn(),
       },
     };
 
@@ -83,12 +89,12 @@ describe('UsersService', () => {
       });
     });
 
-    it('should return null if user not found', async () => {
+    it('should throw NotFoundException if user not found', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      const result = await service.findById(999);
-
-      expect(result).toBeNull();
+      await expect(service.findById(999)).rejects.toThrow(
+        'Usuario con id 999 no encontrado',
+      );
     });
   });
 
@@ -206,6 +212,7 @@ describe('UsersService', () => {
 
       expect(result).toEqual(users);
       expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: { isActive: true },
         select: USER_SELECT,
         orderBy: { createdAt: 'desc' },
         skip: 0,

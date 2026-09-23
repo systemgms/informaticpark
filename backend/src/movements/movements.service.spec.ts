@@ -22,6 +22,12 @@ describe('MovementsService', () => {
       update: jest.Mock;
       updateMany: jest.Mock;
     };
+    custodian: {
+      findUnique: jest.Mock;
+    };
+    location: {
+      findUnique: jest.Mock;
+    };
     $transaction: jest.Mock;
   };
 
@@ -71,6 +77,12 @@ describe('MovementsService', () => {
         update: jest.fn(),
         updateMany: jest.fn(),
       },
+      custodian: {
+        findUnique: jest.fn(),
+      },
+      location: {
+        findUnique: jest.fn(),
+      },
       $transaction: jest.fn(),
     };
 
@@ -91,6 +103,7 @@ describe('MovementsService', () => {
   describe('create', () => {
     it('should create a movement for ADMIN', async () => {
       prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.custodian.findUnique.mockResolvedValue({ id: 2 });
       prisma.assetMovement.create.mockResolvedValue(mockMovement);
 
       const result = await service.create(
@@ -121,6 +134,7 @@ describe('MovementsService', () => {
 
     it('should allow custodian to move their own asset', async () => {
       prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.custodian.findUnique.mockResolvedValue({ id: 2 });
       prisma.assetMovement.create.mockResolvedValue(mockMovement);
 
       const result = await service.create(

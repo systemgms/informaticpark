@@ -15,6 +15,12 @@ describe('CustodiansService', () => {
       delete: jest.Mock;
       count: jest.Mock;
     };
+    asset: {
+      count: jest.Mock;
+    };
+    assetMovement: {
+      count: jest.Mock;
+    };
   };
 
   const mockCustodian = {
@@ -37,6 +43,12 @@ describe('CustodiansService', () => {
         create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
+        count: jest.fn(),
+      },
+      asset: {
+        count: jest.fn(),
+      },
+      assetMovement: {
         count: jest.fn(),
       },
     };
@@ -171,6 +183,8 @@ describe('CustodiansService', () => {
   describe('remove', () => {
     it('should soft-delete a custodian', async () => {
       prisma.custodian.findUnique.mockResolvedValue(mockCustodian);
+      prisma.asset.count.mockResolvedValue(0);
+      prisma.assetMovement.count.mockResolvedValue(0);
       prisma.custodian.update.mockResolvedValue({
         ...mockCustodian,
         isDeleted: true,

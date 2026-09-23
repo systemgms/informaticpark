@@ -34,7 +34,10 @@ export default function RootLayout({
           <AuthGuard>
             <ToastProvider>
               <Navbar />
-              <main className="container mx-auto py-8 px-4">{children}</main>
+              <main className="container mx-auto py-8 px-4">
+                {/* Children rendered directly - error handling at higher level */}
+                {children}
+              </main>
             </ToastProvider>
           </AuthGuard>
         </AuthProvider>
@@ -42,5 +45,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-

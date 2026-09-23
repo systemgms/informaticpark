@@ -1,0 +1,21 @@
+- generic [active] [ref=f2e1]:
+  - button "Open Next.js Dev Tools" [ref=f2e7] [cursor=pointer]
+  - alert [ref=f2e11]
+  - main [ref=f2e12]:
+    - generic [ref=f2e14]:
+      - generic [ref=f2e15]:
+        - heading "Parque Informático" [level=1] [ref=f2e22]
+        - paragraph [ref=f2e23]: GPMS — Morona Santiago
+      - generic [ref=f2e24]:
+        - paragraph [ref=f2e26]: Ingresa tus credenciales para acceder al panel
+        - generic [ref=f2e27]:
+          - generic [ref=f2e28]:
+            - generic [ref=f2e29]:
+              - text: Email
+              - textbox "Email" [ref=f2e30]:
+                - /placeholder: correo@infopark.com
+            - generic [ref=f2e31]:
+              - text: Contraseña
+              - textbox "Contraseña" [ref=f2e32]
+          - button "Ingresar" [ref=f2e34] [cursor=pointer]
+      - paragraph [ref=f2e41]: ¿Olvidaste tu contraseña? Contacta al administrador.

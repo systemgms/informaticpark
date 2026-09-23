@@ -69,7 +69,9 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
       localStorage.removeItem("user");
       window.location.href = "/login";
     }
-    const error = await response.json().catch(() => ({ message: "Ocurrió un error" }));
+    const error = (await response
+      .json()
+      .catch(() => ({ message: "Ocurrió un error" }))) as { message?: string };
     throw new Error(error.message || `Error ${response.status}: ${response.statusText}`);
   }
 
@@ -121,7 +123,9 @@ async function fetcherMultipart<T>(endpoint: string, body: FormData, method = 'P
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    const error = await response.json().catch(() => ({ message: 'Ocurrió un error' }));
+    const error = (await response
+      .json()
+      .catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
     throw new Error(error.message || `Error ${response.status}`);
   }
   return response.json();

@@ -2,35 +2,63 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api";
-import { Custodian, Role } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Role } from "@/lib/types";
 
-interface UserFormProps {
-  userId?: number;
-}
+const createUserSchema = z.object({
+  name: z.string().min(1, "Nombre requerido").max(100, "Máximo 100 caracteres"),
+  email: z.string().email("Email inválido").max(100, "Máximo 100 caracteres"),
+  password: z
+    .string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(100, "Máximo 100 caracteres"),
+  role: z.enum(["ADMIN", "USER"], "Rol inválido"),
+  isActive: z.boolean(),
+  custodianId: z.string().optional(),
+});
 
-export function UserForm({ userId }: UserFormProps) {
+type CreateUserFormValues = z.infer<typeof createUserSchema>;
+
+export function UserForm({ userId }: { userId?: number }) {
   const router = useRouter();
   const { toast } = useToast();
   const isEdit = !!userId;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [custodians, setCustodians] = useState<Custodian[]>([]);
-  const [formData, setFormData] = useState({
+  const [custodians, setCustodians] = useState<{ id: number; identifier: string }[]>([]);
+  const [formValues, setFormValues] = useState<CreateUserFormValues>({
     name: "",
     email: "",
     password: "",
-    role: Role.USER,
+    role: "USER",
     isActive: true,
-    custodianId: "" as string,
+    custodianId: "",
+  });
+
+  const {
+    register,
+    formState: { errors },
+  } = useForm<CreateUserFormValues>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "USER",
+      isActive: true,
+      custodianId: "",
+    },
   });
 
   useEffect(() => {
@@ -40,9 +68,12 @@ export function UserForm({ userId }: UserFormProps) {
           api.custodians.getAll(),
           isEdit ? api.users.getById(userId!) : Promise.resolve(null),
         ]);
-        setCustodians(custodiansData.data);
+        setCustodians(custodiansData.data.map((c) => ({
+          id: c.id,
+          identifier: c.identifier,
+        })));
         if (userData) {
-          setFormData({
+          setFormValues({
             name: userData.name,
             email: userData.email,
             password: "",
@@ -60,43 +91,46 @@ export function UserForm({ userId }: UserFormProps) {
     load();
   }, [userId, isEdit]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmitFn(e: React.FormEvent) {
     e.preventDefault();
-    
-    // Basic validation
-    if (!formData.name.trim()) {
+
+    // Usar validación del schema a través de react-hook-form
+    if (!formValues.name.trim()) {
       toast("El nombre es requerido", "error");
       return;
     }
-    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (!formValues.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.email)) {
       toast("El email es requerido y debe ser válido", "error");
       return;
     }
-    if (!isEdit && !formData.password) {
+    if (!isEdit && !formValues.password) {
       toast("La contraseña es requerida", "error");
       return;
     }
-    if (formData.password && formData.password.length < 8) {
+    if (formValues.password && formValues.password.length < 8) {
       toast("La contraseña debe tener al menos 8 caracteres", "error");
       return;
     }
-    
+
     setSaving(true);
     try {
       const payload: any = {
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-        isActive: formData.isActive,
-        custodianId: formData.custodianId ? Number(formData.custodianId) : null,
+        name: formValues.name,
+        email: formValues.email,
+        role: formValues.role,
+        isActive: formValues.isActive,
+        custodianId: formValues.custodianId ? Number(formValues.custodianId) : null,
       };
-      if (formData.password) payload.password = formData.password;
+      if (formValues.password) payload.password = formValues.password;
 
       if (isEdit) {
         await api.users.update(userId!, payload);
       } else {
-        if (!formData.password) { toast("La contraseña es requerida", "error"); return; }
-        await api.users.create({ ...payload, password: formData.password });
+        if (!formValues.password) {
+          toast("La contraseña es requerida", "error");
+          return;
+        }
+        await api.users.create({ ...payload, password: formValues.password });
       }
       router.push("/admin/users");
       router.refresh();
@@ -127,62 +161,87 @@ export function UserForm({ userId }: UserFormProps) {
           <CardTitle>Información del Usuario</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmitFn} className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Nombre Completo</Label>
               <Input
                 id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                {...register("name", { required: "Nombre requerido" })}
                 required
               />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+              )}
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                {...register("email", { required: "Email requerido" })}
                 required
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+              )}
             </div>
+
             {!isEdit && (
               <div className="grid gap-2">
                 <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
                   type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  {...register("password", {
+                    required: "Contraseña requerida",
+                    minLength: {
+                      value: 8,
+                      message: "Mínimo 8 caracteres",
+                    },
+                  })}
                   required
                 />
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
             )}
-              <div className="grid gap-2">
-                <Label htmlFor="role">Rol</Label>
-                <Select value={formData.role} onValueChange={(value) =>
-                  setFormData({ ...formData, role: value as Role, custodianId: "" })
-                }>
-                  <SelectTrigger id="role"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={Role.USER}>Usuario (Custodio)</SelectItem>
-                    <SelectItem value={Role.ADMIN}>Administrador</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            {formData.role === Role.USER && (
+
+            <div className="grid gap-2">
+              <Label htmlFor="role">Rol</Label>
+              <Select
+                value={formValues.role}
+                onValueChange={(value: string) =>
+                  setFormValues({ ...formValues, role: value as Role })
+                }
+              >
+                <SelectTrigger id="role"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={Role.USER}>Usuario (Custodio)</SelectItem>
+                  <SelectItem value={Role.ADMIN}>Administrador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formValues.role === Role.USER && (
               <div className="grid gap-2">
                 <Label htmlFor="custodianId">Custodio vinculado</Label>
-                <Select value={formData.custodianId} onValueChange={(value) => setFormData({ ...formData, custodianId: value })}>
+                <Select
+                  value={formValues.custodianId}
+                  onValueChange={(value: string) =>
+                    setFormValues({ ...formValues, custodianId: value })
+                  }
+                >
                   <SelectTrigger id="custodianId"><SelectValue placeholder="Sin custodio vinculado" /></SelectTrigger>
                   <SelectContent>
-                  {custodians.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.fullName} — {c.identifier}
-                      {c.unit ? ` (${c.unit})` : ""}
-                    </SelectItem>
-                  ))}
+                    {custodians.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.identifier}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
@@ -190,15 +249,19 @@ export function UserForm({ userId }: UserFormProps) {
                 </p>
               </div>
             )}
+
             <div className="flex items-center gap-2">
               <input
                 id="isActive"
                 type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                checked={formValues.isActive}
+                onChange={(e) =>
+                  setFormValues({ ...formValues, isActive: e.target.checked })
+                }
               />
               <Label htmlFor="isActive">Usuario Activo</Label>
             </div>
+
             <Button type="submit" className="w-full" disabled={saving}>
               <Save className="w-4 h-4 mr-2" />
               {saving ? "Guardando..." : "Guardar Usuario"}
@@ -207,5 +270,5 @@ export function UserForm({ userId }: UserFormProps) {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
