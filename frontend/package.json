@@ -16,7 +16,6 @@
     "test:cov": "vitest run --coverage"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.9.1",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-select": "^2.3.7",
@@ -28,11 +27,9 @@
     "next": "^16.1.6",
     "react": "^18",
     "react-dom": "^18",
-    "react-hook-form": "^7.53.0",
     "react-leaflet": "^4.2.1",
     "tailwind-merge": "^2.5.2",
-    "tailwindcss-animate": "^1.0.7",
-    "zod": "^4.6.5"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "1.18.1",
