@@ -16,6 +16,7 @@ describe('MovementsService', () => {
       findUnique: jest.Mock;
       findMany: jest.Mock;
       update: jest.Mock;
+      updateMany: jest.Mock;
     };
     assetMovement: {
       findUnique: jest.Mock;
@@ -73,6 +74,7 @@ describe('MovementsService', () => {
         findUnique: jest.fn(),
         findMany: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
       },
       assetMovement: {
         findUnique: jest.fn(),
@@ -398,6 +400,117 @@ describe('MovementsService', () => {
       prisma.asset.findUnique.mockResolvedValue(null);
 
       await expect(service.findAll(999)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('confirmBulk', () => {
+    const mockGroupMovement = {
+      ...mockMovement,
+      id: 10,
+      assetId: 1,
+      groupId: 'group-1',
+    };
+
+    it('should confirm all movements in a group and append the note per movement', async () => {
+      prisma.assetMovement.findMany.mockResolvedValue([mockGroupMovement]);
+      const txMovementUpdate = jest.fn().mockResolvedValue({});
+      const txAssetUpdateMany = jest.fn().mockResolvedValue({ count: 1 });
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          const tx = {
+            assetMovement: {
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+              update: txMovementUpdate,
+            },
+            asset: {
+              findMany: jest.fn().mockResolvedValue([
+                {
+                  ...mockAsset,
+                  custodianId: mockGroupMovement.fromCustodianId,
+                  locationId: mockGroupMovement.fromLocationId,
+                },
+              ]),
+              updateMany: txAssetUpdateMany,
+            },
+          };
+          return fn(tx as unknown as typeof prisma);
+        },
+      );
+
+      const result = await service.confirmBulk(
+        'group-1',
+        { note: 'Recibido' },
+        null,
+        2,
+        'USER',
+        2,
+      );
+
+      expect(result).toEqual({ groupId: 'group-1', count: 1 });
+      expect(txMovementUpdate).toHaveBeenCalledWith({
+        where: { id: mockGroupMovement.id },
+        data: { note: `${mockGroupMovement.note} | Recepción: Recibido` },
+      });
+      expect(txAssetUpdateMany).toHaveBeenCalledWith({
+        where: { id: { in: [mockGroupMovement.assetId] } },
+        data: { custodianId: mockGroupMovement.toCustodianId },
+      });
+    });
+
+    it('should throw BadRequestException if updateMany reports fewer rows than the pre-read movements, without touching any asset', async () => {
+      prisma.assetMovement.findMany.mockResolvedValue([mockGroupMovement]);
+      const txAssetFindMany = jest.fn();
+      const txAssetUpdateMany = jest.fn();
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          const tx = {
+            assetMovement: {
+              updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+              update: jest.fn(),
+            },
+            asset: {
+              findMany: txAssetFindMany,
+              updateMany: txAssetUpdateMany,
+            },
+          };
+          return fn(tx as unknown as typeof prisma);
+        },
+      );
+
+      await expect(
+        service.confirmBulk('group-1', { note: 'Test' }, null, 1, 'ADMIN'),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(txAssetFindMany).not.toHaveBeenCalled();
+      expect(txAssetUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException if an asset custodian/location changed since the movement was created, without touching any asset', async () => {
+      prisma.assetMovement.findMany.mockResolvedValue([mockGroupMovement]);
+      const txAssetUpdateMany = jest.fn();
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          const tx = {
+            assetMovement: {
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+              update: jest.fn(),
+            },
+            asset: {
+              findMany: jest
+                .fn()
+                .mockResolvedValue([{ ...mockAsset, custodianId: 999 }]),
+              updateMany: txAssetUpdateMany,
+            },
+          };
+          return fn(tx as unknown as typeof prisma);
+        },
+      );
+
+      await expect(
+        service.confirmBulk('group-1', { note: 'Test' }, null, 2, 'USER', 2),
+      ).rejects.toThrow(ConflictException);
+
+      expect(txAssetUpdateMany).not.toHaveBeenCalled();
     });
   });
 

@@ -112,6 +112,24 @@ export class MovementsService {
     }
   }
 
+  private ensureAssetMatchesMovementOrigin(
+    currentAsset: { custodianId: number | null; locationId: number | null },
+    movement: { fromCustodianId: number | null; fromLocationId: number | null },
+    assetInfo?: { id: number; assetName: string },
+  ): void {
+    const isSameCustodian =
+      currentAsset.custodianId === movement.fromCustodianId;
+    const isSameLocation = currentAsset.locationId === movement.fromLocationId;
+    if (isSameCustodian && isSameLocation) {
+      return;
+    }
+
+    const message = assetInfo
+      ? `El activo "${assetInfo.assetName}" (id: ${assetInfo.id}) cambió de ubicación o custodio desde que se creó el traspaso`
+      : 'El activo cambió de ubicación o custodio desde que se creó el traspaso';
+    throw new ConflictException(message);
+  }
+
   async confirm(
     assetId: number,
     movementId: number,
@@ -166,15 +184,7 @@ export class MovementsService {
         throw new NotFoundException(`Activo con id ${assetId} no encontrado`);
       }
 
-      const isSameCustodian =
-        currentAsset.custodianId === movement.fromCustodianId;
-      const isSameLocation =
-        currentAsset.locationId === movement.fromLocationId;
-      if (!isSameCustodian || !isSameLocation) {
-        throw new ConflictException(
-          'El activo cambió de ubicación o custodio desde que se creó el traspaso',
-        );
-      }
+      this.ensureAssetMatchesMovementOrigin(currentAsset, movement);
 
       const updateData: Record<string, unknown> = {};
       if (movement.toCustodianId !== null)
@@ -368,7 +378,7 @@ export class MovementsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Update all movements status in one query
+      // Update all movements status in one query, guarded against a concurrent confirm/reject
       const confirmed = await tx.assetMovement.updateMany({
         where: { groupId, status: 'PENDIENTE' },
         data: {
@@ -376,9 +386,48 @@ export class MovementsService {
           confirmedAt: new Date(),
           confirmedByUserId: callerUserId,
           ...(actaUrl ? { actaUrl } : {}),
-          ...(dto.note ? { note: dto.note } : {}),
         },
       });
+
+      if (confirmed.count !== movements.length) {
+        throw new BadRequestException('Este traspaso ya fue procesado');
+      }
+
+      const assetIds = movements.map((movement) => movement.assetId);
+      const currentAssets = await tx.asset.findMany({
+        where: { id: { in: assetIds } },
+      });
+      const currentAssetById = new Map(
+        currentAssets.map((asset) => [asset.id, asset]),
+      );
+
+      for (const movement of movements) {
+        const currentAsset = currentAssetById.get(movement.assetId);
+        if (!currentAsset) {
+          throw new NotFoundException(
+            `Activo con id ${movement.assetId} no encontrado`,
+          );
+        }
+        this.ensureAssetMatchesMovementOrigin(currentAsset, movement, {
+          id: currentAsset.id,
+          assetName: currentAsset.assetName,
+        });
+      }
+
+      if (dto.note) {
+        await Promise.all(
+          movements.map((movement) =>
+            tx.assetMovement.update({
+              where: { id: movement.id },
+              data: {
+                note: movement.note
+                  ? `${movement.note} | Recepción: ${dto.note}`
+                  : dto.note,
+              },
+            }),
+          ),
+        );
+      }
 
       // Group assets by their target custodian/location for batch updates
       const updatesByCustodian = new Map<number, number[]>();
@@ -386,29 +435,29 @@ export class MovementsService {
 
       for (const movement of movements) {
         if (movement.toCustodianId != null) {
-          const existing = updatesByCustodian.get(movement.toCustodianId) || [];
+          const existing = updatesByCustodian.get(movement.toCustodianId) ?? [];
           existing.push(movement.assetId);
           updatesByCustodian.set(movement.toCustodianId, existing);
         }
         if (movement.toLocationId != null) {
-          const existing = updatesByLocation.get(movement.toLocationId) || [];
+          const existing = updatesByLocation.get(movement.toLocationId) ?? [];
           existing.push(movement.assetId);
           updatesByLocation.set(movement.toLocationId, existing);
         }
       }
 
       // Batch update assets by custodian
-      for (const [custodianId, assetIds] of updatesByCustodian) {
+      for (const [custodianId, assetIdsForCustodian] of updatesByCustodian) {
         await tx.asset.updateMany({
-          where: { id: { in: assetIds } },
+          where: { id: { in: assetIdsForCustodian } },
           data: { custodianId },
         });
       }
 
       // Batch update assets by location
-      for (const [locationId, assetIds] of updatesByLocation) {
+      for (const [locationId, assetIdsForLocation] of updatesByLocation) {
         await tx.asset.updateMany({
-          where: { id: { in: assetIds } },
+          where: { id: { in: assetIdsForLocation } },
           data: { locationId },
         });
       }
