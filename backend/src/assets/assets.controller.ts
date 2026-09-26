@@ -83,6 +83,13 @@ export class AssetsController {
     return this.assetsService.findAll(pageNum, limitNum, search, req?.user);
   }
 
+  @Get('stats')
+  @ApiOperation({ summary: 'Obtener estadísticas agregadas de activos' })
+  @ApiResponse({ status: 200, description: 'Estadísticas de activos' })
+  stats(@Req() req?: { user: AuthUser }) {
+    return this.assetsService.stats(req?.user);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener activo por ID' })
   @ApiParam({ name: 'id', description: 'ID del activo' })

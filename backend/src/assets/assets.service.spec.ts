@@ -14,6 +14,7 @@ describe('AssetsService', () => {
       update: jest.Mock;
       delete: jest.Mock;
       count: jest.Mock;
+      aggregate: jest.Mock;
     };
     assetMovement: {
       count: jest.Mock;
@@ -55,6 +56,7 @@ describe('AssetsService', () => {
         update: jest.fn(),
         delete: jest.fn(),
         count: jest.fn(),
+        aggregate: jest.fn(),
       },
       assetMovement: {
         count: jest.fn(),
@@ -190,6 +192,79 @@ describe('AssetsService', () => {
       expect(prisma.asset.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { isDeleted: false } }),
       );
+    });
+  });
+
+  describe('stats', () => {
+    it('should return totals for an ADMIN caller across all assets', async () => {
+      prisma.asset.count
+        .mockResolvedValueOnce(10) // total
+        .mockResolvedValueOnce(2) // withoutCustodian
+        .mockResolvedValueOnce(3); // withoutLocation
+      prisma.asset.aggregate.mockResolvedValue({
+        _sum: { currentValue: new Prisma.Decimal(4500) },
+      });
+
+      const result = await service.stats({ role: 'ADMIN', custodianId: null });
+
+      expect(result).toEqual({
+        total: 10,
+        totalValue: 4500,
+        withoutCustodian: 2,
+        withoutLocation: 3,
+      });
+      expect(prisma.asset.count).toHaveBeenNthCalledWith(1, {
+        where: { isDeleted: false },
+      });
+    });
+
+    it('should scope totals to the caller custodian for a USER caller', async () => {
+      prisma.asset.count
+        .mockResolvedValueOnce(4)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(1);
+      prisma.asset.aggregate.mockResolvedValue({
+        _sum: { currentValue: new Prisma.Decimal(1200) },
+      });
+
+      const result = await service.stats({ role: 'USER', custodianId: 7 });
+
+      expect(result).toEqual({
+        total: 4,
+        totalValue: 1200,
+        withoutCustodian: 0,
+        withoutLocation: 1,
+      });
+      expect(prisma.asset.count).toHaveBeenNthCalledWith(1, {
+        where: { isDeleted: false, custodianId: 7 },
+      });
+    });
+
+    it('should return zeros without querying when a USER caller has no custodian', async () => {
+      const result = await service.stats({ role: 'USER', custodianId: null });
+
+      expect(result).toEqual({
+        total: 0,
+        totalValue: 0,
+        withoutCustodian: 0,
+        withoutLocation: 0,
+      });
+      expect(prisma.asset.count).not.toHaveBeenCalled();
+      expect(prisma.asset.aggregate).not.toHaveBeenCalled();
+    });
+
+    it('should return zero totalValue when the sum is null', async () => {
+      prisma.asset.count
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0);
+      prisma.asset.aggregate.mockResolvedValue({
+        _sum: { currentValue: null },
+      });
+
+      const result = await service.stats({ role: 'ADMIN', custodianId: null });
+
+      expect(result.totalValue).toBe(0);
     });
   });
 

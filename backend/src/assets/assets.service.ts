@@ -152,6 +152,44 @@ export class AssetsService {
     };
   }
 
+  async stats(caller?: AuthUser) {
+    const isRestrictedCaller = !!caller && caller.role !== 'ADMIN';
+
+    if (isRestrictedCaller && !caller?.custodianId) {
+      return {
+        total: 0,
+        totalValue: 0,
+        withoutCustodian: 0,
+        withoutLocation: 0,
+      };
+    }
+
+    const where: Prisma.AssetWhereInput = {
+      isDeleted: false,
+      ...(isRestrictedCaller ? { custodianId: caller?.custodianId } : {}),
+    };
+
+    const [total, aggregate, withoutCustodian, withoutLocation] =
+      await Promise.all([
+        this.prisma.asset.count({ where }),
+        this.prisma.asset.aggregate({
+          where,
+          _sum: { currentValue: true },
+        }),
+        this.prisma.asset.count({ where: { ...where, custodianId: null } }),
+        this.prisma.asset.count({ where: { ...where, locationId: null } }),
+      ]);
+
+    return {
+      total,
+      totalValue: aggregate._sum.currentValue
+        ? Number(aggregate._sum.currentValue)
+        : 0,
+      withoutCustodian,
+      withoutLocation,
+    };
+  }
+
   async findOne(id: number, caller?: AuthUser) {
     const asset = await this.prisma.asset.findUnique({
       where: { id, isDeleted: false },
