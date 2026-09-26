@@ -3,7 +3,9 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { MovementsService } from './movements.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -17,6 +19,8 @@ describe('MovementsService', () => {
     };
     assetMovement: {
       findUnique: jest.Mock;
+      findUniqueOrThrow: jest.Mock;
+      findFirst: jest.Mock;
       findMany: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;
@@ -72,6 +76,8 @@ describe('MovementsService', () => {
       },
       assetMovement: {
         findUnique: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
+        findFirst: jest.fn(),
         findMany: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
@@ -103,6 +109,7 @@ describe('MovementsService', () => {
   describe('create', () => {
     it('should create a movement for ADMIN', async () => {
       prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.assetMovement.findFirst.mockResolvedValue(null);
       prisma.custodian.findUnique.mockResolvedValue({ id: 2 });
       prisma.assetMovement.create.mockResolvedValue(mockMovement);
 
@@ -114,6 +121,34 @@ describe('MovementsService', () => {
       );
 
       expect(result).toEqual(mockMovement);
+    });
+
+    it('should throw ConflictException if the asset already has a pending movement', async () => {
+      prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.custodian.findUnique.mockResolvedValue({ id: 2 });
+      prisma.assetMovement.findFirst.mockResolvedValue(mockMovement);
+
+      await expect(
+        service.create(1, { toCustodianId: 2 }, 1, 'ADMIN'),
+      ).rejects.toThrow(ConflictException);
+
+      expect(prisma.assetMovement.create).not.toHaveBeenCalled();
+    });
+
+    it('should map a P2002 race error to ConflictException', async () => {
+      prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.assetMovement.findFirst.mockResolvedValue(null);
+      prisma.custodian.findUnique.mockResolvedValue({ id: 2 });
+      prisma.assetMovement.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+          code: 'P2002',
+          clientVersion: '7.5.0',
+        }),
+      );
+
+      await expect(
+        service.create(1, { toCustodianId: 2 }, 1, 'ADMIN'),
+      ).rejects.toThrow(ConflictException);
     });
 
     it('should throw NotFoundException if asset not found', async () => {
@@ -134,6 +169,7 @@ describe('MovementsService', () => {
 
     it('should allow custodian to move their own asset', async () => {
       prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.assetMovement.findFirst.mockResolvedValue(null);
       prisma.custodian.findUnique.mockResolvedValue({ id: 2 });
       prisma.assetMovement.create.mockResolvedValue(mockMovement);
 
@@ -168,6 +204,7 @@ describe('MovementsService', () => {
 
     it('should create a movement per asset for ADMIN', async () => {
       prisma.asset.findMany.mockResolvedValue([mockAsset]);
+      prisma.assetMovement.findMany.mockResolvedValue([]);
       prisma.$transaction.mockResolvedValue([mockMovement]);
 
       const result = await service.createBulk(
@@ -181,22 +218,42 @@ describe('MovementsService', () => {
         movements: [mockMovement],
       });
     });
+
+    it('should throw ConflictException naming the asset if it already has a pending movement', async () => {
+      prisma.asset.findMany.mockResolvedValue([mockAsset]);
+      prisma.assetMovement.findMany.mockResolvedValue([
+        { ...mockMovement, assetId: mockAsset.id },
+      ]);
+
+      await expect(
+        service.createBulk({ assetIds: [1], toCustodianId: 2 }, 1, 'ADMIN'),
+      ).rejects.toThrow(ConflictException);
+
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
   });
 
   describe('confirm', () => {
     it('should confirm a pending movement', async () => {
       prisma.assetMovement.findUnique.mockResolvedValue(mockMovement);
+      const txAssetUpdate = jest.fn().mockResolvedValue({});
       prisma.$transaction.mockImplementation(
         async (fn: (tx: typeof prisma) => Promise<unknown>) => {
           const tx = {
             assetMovement: {
-              update: jest.fn().mockResolvedValue({
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+              findUniqueOrThrow: jest.fn().mockResolvedValue({
                 ...mockMovement,
                 status: 'COMPLETADO',
               }),
             },
             asset: {
-              update: jest.fn().mockResolvedValue({}),
+              findUnique: jest.fn().mockResolvedValue({
+                ...mockAsset,
+                custodianId: mockMovement.fromCustodianId,
+                locationId: mockMovement.fromLocationId,
+              }),
+              update: txAssetUpdate,
             },
           };
           return fn(tx as unknown as typeof prisma);
@@ -214,6 +271,13 @@ describe('MovementsService', () => {
       );
 
       expect(result.status).toBe('COMPLETADO');
+      expect(txAssetUpdate).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          custodianId: mockMovement.toCustodianId,
+          locationId: mockMovement.toLocationId,
+        },
+      });
     });
 
     it('should throw NotFoundException if movement not found', async () => {
@@ -224,15 +288,59 @@ describe('MovementsService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if movement already processed', async () => {
-      prisma.assetMovement.findUnique.mockResolvedValue({
-        ...mockMovement,
-        status: 'COMPLETADO',
-      });
+    it('should throw BadRequestException if updateMany reports the movement was already processed, without touching the asset', async () => {
+      prisma.assetMovement.findUnique.mockResolvedValue(mockMovement);
+      const txAssetUpdate = jest.fn();
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          const tx = {
+            assetMovement: {
+              updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+              findUniqueOrThrow: jest.fn(),
+            },
+            asset: {
+              findUnique: jest.fn(),
+              update: txAssetUpdate,
+            },
+          };
+          return fn(tx as unknown as typeof prisma);
+        },
+      );
 
       await expect(
         service.confirm(1, 1, { note: 'Test' }, null, 1, 'ADMIN'),
       ).rejects.toThrow(BadRequestException);
+
+      expect(txAssetUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException if the asset custodian/location changed since the movement was created, without touching the asset', async () => {
+      prisma.assetMovement.findUnique.mockResolvedValue(mockMovement);
+      const txAssetUpdate = jest.fn();
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          const tx = {
+            assetMovement: {
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+              findUniqueOrThrow: jest.fn(),
+            },
+            asset: {
+              findUnique: jest.fn().mockResolvedValue({
+                ...mockAsset,
+                custodianId: 999,
+              }),
+              update: txAssetUpdate,
+            },
+          };
+          return fn(tx as unknown as typeof prisma);
+        },
+      );
+
+      await expect(
+        service.confirm(1, 1, { note: 'Test' }, null, 2, 'USER', 2),
+      ).rejects.toThrow(ConflictException);
+
+      expect(txAssetUpdate).not.toHaveBeenCalled();
     });
 
     it('should throw ForbiddenException if non-admin tries to confirm movement for another custodian', async () => {
@@ -247,7 +355,8 @@ describe('MovementsService', () => {
   describe('reject', () => {
     it('should reject a pending movement', async () => {
       prisma.assetMovement.findUnique.mockResolvedValue(mockMovement);
-      prisma.assetMovement.update.mockResolvedValue({
+      prisma.assetMovement.updateMany.mockResolvedValue({ count: 1 });
+      prisma.assetMovement.findUniqueOrThrow.mockResolvedValue({
         ...mockMovement,
         status: 'RECHAZADO',
       });
@@ -265,11 +374,9 @@ describe('MovementsService', () => {
       );
     });
 
-    it('should throw BadRequestException if movement already processed', async () => {
-      prisma.assetMovement.findUnique.mockResolvedValue({
-        ...mockMovement,
-        status: 'COMPLETADO',
-      });
+    it('should throw BadRequestException if updateMany reports the movement was already processed', async () => {
+      prisma.assetMovement.findUnique.mockResolvedValue(mockMovement);
+      prisma.assetMovement.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(service.reject(1, 1, 'ADMIN')).rejects.toThrow(
         BadRequestException,

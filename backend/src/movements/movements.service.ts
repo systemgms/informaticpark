@@ -3,7 +3,9 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMovementDto } from './dto/create-movement.dto';
 import { CreateBulkMovementDto } from './dto/create-bulk-movement.dto';
@@ -74,19 +76,40 @@ export class MovementsService {
       }
     }
 
-    return this.prisma.assetMovement.create({
-      data: {
-        assetId,
-        fromCustodianId: asset.custodianId,
-        toCustodianId: dto.toCustodianId ?? null,
-        fromLocationId: asset.locationId,
-        toLocationId: dto.toLocationId ?? null,
-        note: dto.note,
-        registeredByUserId,
-        status: 'PENDIENTE',
-      },
-      include: MOVEMENT_INCLUDE,
+    const pendingMovement = await this.prisma.assetMovement.findFirst({
+      where: { assetId, status: 'PENDIENTE' },
     });
+    if (pendingMovement) {
+      throw new ConflictException(
+        `El activo "${asset.assetName}" (id: ${asset.id}) ya tiene un traspaso pendiente`,
+      );
+    }
+
+    try {
+      return await this.prisma.assetMovement.create({
+        data: {
+          assetId,
+          fromCustodianId: asset.custodianId,
+          toCustodianId: dto.toCustodianId ?? null,
+          fromLocationId: asset.locationId,
+          toLocationId: dto.toLocationId ?? null,
+          note: dto.note,
+          registeredByUserId,
+          status: 'PENDIENTE',
+        },
+        include: MOVEMENT_INCLUDE,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          `El activo "${asset.assetName}" (id: ${asset.id}) ya tiene un traspaso pendiente`,
+        );
+      }
+      throw error;
+    }
   }
 
   async confirm(
@@ -105,9 +128,6 @@ export class MovementsService {
     if (!movement || movement.assetId !== assetId) {
       throw new NotFoundException('Traspaso no encontrado');
     }
-    if (movement.status !== 'PENDIENTE') {
-      throw new BadRequestException('Este traspaso ya fue procesado');
-    }
 
     if (callerRole !== 'ADMIN') {
       if (!callerCustodianId || movement.toCustodianId !== callerCustodianId) {
@@ -118,8 +138,8 @@ export class MovementsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const confirmed = await tx.assetMovement.update({
-        where: { id: movementId },
+      const updateResult = await tx.assetMovement.updateMany({
+        where: { id: movementId, assetId, status: 'PENDIENTE' },
         data: {
           status: 'COMPLETADO',
           confirmedAt: new Date(),
@@ -133,8 +153,28 @@ export class MovementsService {
               }
             : {}),
         },
-        include: MOVEMENT_INCLUDE,
       });
+
+      if (updateResult.count !== 1) {
+        throw new BadRequestException('Este traspaso ya fue procesado');
+      }
+
+      const currentAsset = await tx.asset.findUnique({
+        where: { id: assetId },
+      });
+      if (!currentAsset) {
+        throw new NotFoundException(`Activo con id ${assetId} no encontrado`);
+      }
+
+      const isSameCustodian =
+        currentAsset.custodianId === movement.fromCustodianId;
+      const isSameLocation =
+        currentAsset.locationId === movement.fromLocationId;
+      if (!isSameCustodian || !isSameLocation) {
+        throw new ConflictException(
+          'El activo cambió de ubicación o custodio desde que se creó el traspaso',
+        );
+      }
 
       const updateData: Record<string, unknown> = {};
       if (movement.toCustodianId !== null)
@@ -146,7 +186,10 @@ export class MovementsService {
         await tx.asset.update({ where: { id: assetId }, data: updateData });
       }
 
-      return confirmed;
+      return tx.assetMovement.findUniqueOrThrow({
+        where: { id: movementId },
+        include: MOVEMENT_INCLUDE,
+      });
     });
   }
 
@@ -163,9 +206,6 @@ export class MovementsService {
     if (!movement || movement.assetId !== assetId) {
       throw new NotFoundException('Traspaso no encontrado');
     }
-    if (movement.status !== 'PENDIENTE') {
-      throw new BadRequestException('Este traspaso ya fue procesado');
-    }
 
     if (callerRole !== 'ADMIN') {
       if (!callerCustodianId || movement.toCustodianId !== callerCustodianId) {
@@ -175,9 +215,17 @@ export class MovementsService {
       }
     }
 
-    return this.prisma.assetMovement.update({
-      where: { id: movementId },
+    const rejected = await this.prisma.assetMovement.updateMany({
+      where: { id: movementId, assetId, status: 'PENDIENTE' },
       data: { status: 'RECHAZADO' },
+    });
+
+    if (rejected.count !== 1) {
+      throw new BadRequestException('Este traspaso ya fue procesado');
+    }
+
+    return this.prisma.assetMovement.findUniqueOrThrow({
+      where: { id: movementId },
       include: MOVEMENT_INCLUDE,
     });
   }
@@ -239,26 +287,53 @@ export class MovementsService {
       }
     }
 
-    const movements = await this.prisma.$transaction(
-      assets.map((asset) =>
-        this.prisma.assetMovement.create({
-          data: {
-            groupId,
-            assetId: asset.id,
-            fromCustodianId: asset.custodianId,
-            toCustodianId: dto.toCustodianId ?? null,
-            fromLocationId: asset.locationId,
-            toLocationId: dto.toLocationId ?? null,
-            note: dto.note,
-            registeredByUserId,
-            status: 'PENDIENTE',
-          },
-          include: MOVEMENT_INCLUDE,
-        }),
-      ),
-    );
+    const pendingMovements = await this.prisma.assetMovement.findMany({
+      where: { assetId: { in: dto.assetIds }, status: 'PENDIENTE' },
+    });
+    if (pendingMovements.length > 0) {
+      const pendingAssetIds = new Set(
+        pendingMovements.map((movement) => movement.assetId),
+      );
+      const pendingAsset = assets.find((asset) =>
+        pendingAssetIds.has(asset.id),
+      );
+      throw new ConflictException(
+        `El activo "${pendingAsset?.assetName}" (id: ${pendingAsset?.id}) ya tiene un traspaso pendiente`,
+      );
+    }
 
-    return { groupId, movements };
+    try {
+      const movements = await this.prisma.$transaction(
+        assets.map((asset) =>
+          this.prisma.assetMovement.create({
+            data: {
+              groupId,
+              assetId: asset.id,
+              fromCustodianId: asset.custodianId,
+              toCustodianId: dto.toCustodianId ?? null,
+              fromLocationId: asset.locationId,
+              toLocationId: dto.toLocationId ?? null,
+              note: dto.note,
+              registeredByUserId,
+              status: 'PENDIENTE',
+            },
+            include: MOVEMENT_INCLUDE,
+          }),
+        ),
+      );
+
+      return { groupId, movements };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'Uno o más activos ya tienen un traspaso pendiente',
+        );
+      }
+      throw error;
+    }
   }
 
   async confirmBulk(
