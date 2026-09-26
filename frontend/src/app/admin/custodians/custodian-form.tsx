@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Save } from 'lucide-react';
+import Link from 'next/link';
 
 interface CustodianFormProps {
   custodianId?: number;
@@ -19,12 +19,12 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEdit = !!custodianId;
-  const [loading, setLoading] = useState(isEdit);
-  const [saving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEdit);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "",
-    identifier: "",
-    unit: "",
+    fullName: '',
+    identifier: '',
+    unit: '',
   });
 
   const loadCustodian = useCallback(async () => {
@@ -33,14 +33,14 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
       setFormData({
         fullName: custodian.fullName,
         identifier: custodian.identifier,
-        unit: custodian.unit || "",
+        unit: custodian.unit || '',
       });
-    } catch (error) {
-      console.error("Error loading custodian:", error);
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Error al cargar el custodio', 'error');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [custodianId]);
+  }, [custodianId, toast]);
 
   useEffect(() => {
     if (isEdit) {
@@ -50,34 +50,34 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     // Basic validation
     if (!formData.fullName.trim()) {
-      toast("El nombre completo es requerido", "error");
+      toast('El nombre completo es requerido', 'error');
       return;
     }
     if (!formData.identifier.trim()) {
-      toast("El identificador es requerido", "error");
+      toast('El identificador es requerido', 'error');
       return;
     }
-    
-    setSaving(true);
+
+    setIsSaving(true);
     try {
       if (isEdit) {
         await api.custodians.update(custodianId!, formData);
       } else {
         await api.custodians.create(formData);
       }
-      router.push("/admin/custodians");
+      router.push('/admin/custodians');
       router.refresh();
-    } catch (error: any) {
-      toast(error?.message || "Error al guardar custodio", "error");
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Error al guardar custodio', 'error');
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
-  if (loading) return <div>Cargando...</div>;
+  if (isLoading) return <div>Cargando...</div>;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -87,9 +87,7 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">
-          {isEdit ? "Editar Custodio" : "Nuevo Custodio"}
-        </h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Custodio' : 'Nuevo Custodio'}</h1>
       </div>
 
       <Card>
@@ -124,9 +122,9 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={saving}>
+            <Button type="submit" className="w-full" disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {saving ? "Guardando..." : "Guardar Custodio"}
+              {isSaving ? 'Guardando...' : 'Guardar Custodio'}
             </Button>
           </form>
         </CardContent>

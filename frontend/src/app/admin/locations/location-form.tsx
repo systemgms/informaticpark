@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Save } from 'lucide-react';
+import Link from 'next/link';
 
 interface LocationFormProps {
   locationId?: number;
@@ -19,78 +19,84 @@ export function LocationForm({ locationId }: LocationFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEdit = !!locationId;
-  const [loading, setLoading] = useState(isEdit);
-  const [saving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEdit);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    canton: "",
-    parroquia: "",
-    lat: "",
-    lng: "",
+    canton: '',
+    parroquia: '',
+    lat: '',
+    lng: '',
   });
 
   useEffect(() => {
-    if (!isEdit) { setLoading(false); return; }
-    api.locations.getById(locationId!)
+    if (!isEdit) {
+      setIsLoading(false);
+      return;
+    }
+    api.locations
+      .getById(locationId!)
       .then((loc) => {
         setFormData({
-          canton: loc.canton ?? "",
-          parroquia: loc.parroquia ?? "",
-          lat: loc.lat != null ? String(loc.lat) : "",
-          lng: loc.lng != null ? String(loc.lng) : "",
+          canton: loc.canton ?? '',
+          parroquia: loc.parroquia ?? '',
+          lat: loc.lat != null ? String(loc.lat) : '',
+          lng: loc.lng != null ? String(loc.lng) : '',
         });
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [locationId, isEdit]);
+      .catch((error: unknown) => {
+        toast(error instanceof Error ? error.message : 'Error al cargar la ubicación', 'error');
+      })
+      .finally(() => setIsLoading(false));
+  }, [locationId, isEdit, toast]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     // Basic validation
     if (!formData.canton.trim() && !formData.parroquia.trim()) {
-      toast("Debe ingresar al menos un cantón o parroquia", "error");
+      toast('Debe ingresar al menos un cantón o parroquia', 'error');
       return;
     }
-    
+
     // Validate lat/lng ranges
     if (formData.lat) {
       const lat = parseFloat(formData.lat);
       if (isNaN(lat) || lat < -90 || lat > 90) {
-        toast("La latitud debe estar entre -90 y 90", "error");
+        toast('La latitud debe estar entre -90 y 90', 'error');
         return;
       }
     }
     if (formData.lng) {
       const lng = parseFloat(formData.lng);
       if (isNaN(lng) || lng < -180 || lng > 180) {
-        toast("La longitud debe estar entre -180 y 180", "error");
+        toast('La longitud debe estar entre -180 y 180', 'error');
         return;
       }
     }
-    
-    setSaving(true);
+
+    setIsSaving(true);
     try {
       const payload = {
         canton: formData.canton || undefined,
         parroquia: formData.parroquia || undefined,
-        lat: formData.lat !== "" ? parseFloat(formData.lat) : undefined,
-        lng: formData.lng !== "" ? parseFloat(formData.lng) : undefined,
+        lat: formData.lat !== '' ? parseFloat(formData.lat) : undefined,
+        lng: formData.lng !== '' ? parseFloat(formData.lng) : undefined,
       };
       if (isEdit) {
         await api.locations.update(locationId!, payload);
       } else {
         await api.locations.create(payload);
       }
-      router.push("/admin/locations");
+      router.push('/admin/locations');
       router.refresh();
-    } catch (error: any) {
-      toast(error?.message || "Error al guardar ubicación", "error");
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Error al guardar ubicación', 'error');
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
-  if (loading) return <div>Cargando...</div>;
+  if (isLoading) return <div>Cargando...</div>;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -100,9 +106,7 @@ export function LocationForm({ locationId }: LocationFormProps) {
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">
-          {isEdit ? "Editar Ubicación" : "Nueva Ubicación"}
-        </h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Ubicación' : 'Nueva Ubicación'}</h1>
       </div>
 
       <Card>
@@ -155,9 +159,9 @@ export function LocationForm({ locationId }: LocationFormProps) {
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={saving}>
+            <Button type="submit" className="w-full" disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {saving ? "Guardando..." : "Guardar Ubicación"}
+              {isSaving ? 'Guardando...' : 'Guardar Ubicación'}
             </Button>
           </form>
         </CardContent>

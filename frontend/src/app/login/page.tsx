@@ -1,34 +1,34 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { api } from "@/lib/api";
-import { useAuth } from "@/components/auth-provider";
-import { useBrand } from "@/components/brand-provider";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
-import { LogIn, Info, LayoutDashboard } from "lucide-react";
+import { useState } from 'react';
+import { api } from '@/lib/api';
+import { useAuth } from '@/components/auth-provider';
+import { useBrand } from '@/components/brand-provider';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import { LogIn, Info, LayoutDashboard } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const { brand } = useBrand();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    setIsLoading(true);
+    setError('');
     try {
       const response = await api.auth.login({ email, password });
       login(response.accessToken, response.user);
-    } catch (err: any) {
-      setError(err.message || "Credenciales incorrectas");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Credenciales incorrectas');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -38,20 +38,19 @@ export default function LoginPage() {
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="p-3 rounded-xl bg-primary/10">
             {brand?.logoUrl ? (
-              <img src={brand.logoUrl} alt="" className="h-10 w-auto object-contain" />
+              // eslint-disable-next-line @next/next/no-img-element -- logo URL is admin-uploaded/dynamic; next/image optimization needs extra loader config on the Cloudflare Workers deploy target
+              <img src={brand.logoUrl} alt="Logotipo de la aplicación" className="h-10 w-auto object-contain" />
             ) : (
               <LayoutDashboard className="w-8 h-8 text-primary" />
             )}
           </div>
-          <h1 className="text-2xl font-bold">{brand?.appName || "Parque Informático"}</h1>
+          <h1 className="text-2xl font-bold">{brand?.appName || 'Parque Informático'}</h1>
           <p className="text-sm text-muted-foreground">GPMS — Morona Santiago</p>
         </div>
 
         <Card className="shadow-sm">
           <CardHeader className="pb-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Ingresa tus credenciales para acceder al panel
-            </p>
+            <p className="text-sm text-muted-foreground text-center">Ingresa tus credenciales para acceder al panel</p>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
@@ -85,8 +84,8 @@ export default function LoginPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full cursor-pointer" type="submit" disabled={loading}>
-                {loading ? (
+              <Button className="w-full cursor-pointer" type="submit" disabled={isLoading}>
+                {isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                     Iniciando sesión...

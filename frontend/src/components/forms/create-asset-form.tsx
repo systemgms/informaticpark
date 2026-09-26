@@ -1,190 +1,184 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { api } from '@/lib/api';
 
-const createAssetSchema = z.object({
-  assetName: z.string().min(1, "Nombre requerido").max(200, "Máximo 200 caracteres"),
-  code: z.string().max(50, "Máximo 50 caracteres").optional(),
-  brand: z.string().max(100, "Máximo 100 caracteres").optional(),
-  model: z.string().max(100, "Máximo 100 caracteres").optional(),
-  serialNumber: z.string().max(100, "Máximo 100 caracteres").optional(),
-  location: z.string().max(200, "Máximo 200 caracteres").optional(),
-  physicalLocation: z.string().max(200, "Máximo 200 caracteres").optional(),
-  accountCode: z.string().max(50, "Máximo 50 caracteres").optional(),
-  note: z.string().max(500, "Máximo 500 caracteres").optional(),
-  initialValue: z.number().min(0, "Valor debe ser ≥ 0").optional(),
-  currentValue: z.number().min(0, "Valor debe ser ≥ 0").optional(),
-  custodianId: z.number().optional(),
-  locationId: z.number().optional(),
-});
+interface CreateAssetFormData {
+  assetName: string;
+  code: string;
+  brand: string;
+  model: string;
+  serialNumber: string;
+  location: string;
+  physicalLocation: string;
+  accountCode: string;
+  note: string;
+  initialValue: string;
+  currentValue: string;
+  custodianId: string;
+  locationId: string;
+}
 
-type CreateAssetFormValues = z.infer<typeof createAssetSchema>;
+type CreateAssetFormErrors = Partial<Record<keyof CreateAssetFormData, string>>;
+
+const INITIAL_FORM_DATA: CreateAssetFormData = {
+  assetName: '',
+  code: '',
+  brand: '',
+  model: '',
+  serialNumber: '',
+  location: '',
+  physicalLocation: '',
+  accountCode: '',
+  note: '',
+  initialValue: '',
+  currentValue: '',
+  custodianId: '',
+  locationId: '',
+};
+
+function validate(formData: CreateAssetFormData): CreateAssetFormErrors {
+  const errors: CreateAssetFormErrors = {};
+  if (!formData.assetName.trim()) errors.assetName = 'Nombre requerido';
+  else if (formData.assetName.length > 200) errors.assetName = 'Máximo 200 caracteres';
+  if (formData.code.length > 50) errors.code = 'Máximo 50 caracteres';
+  if (formData.brand.length > 100) errors.brand = 'Máximo 100 caracteres';
+  if (formData.model.length > 100) errors.model = 'Máximo 100 caracteres';
+  if (formData.serialNumber.length > 100) errors.serialNumber = 'Máximo 100 caracteres';
+  if (formData.location.length > 200) errors.location = 'Máximo 200 caracteres';
+  if (formData.note.length > 500) errors.note = 'Máximo 500 caracteres';
+  if (!formData.locationId.trim()) errors.locationId = 'Ubicación requerida';
+  if (!formData.custodianId.trim()) errors.custodianId = 'Custodio requerido';
+  if (!formData.initialValue.trim()) errors.initialValue = 'Valor requerido';
+  else if (Number(formData.initialValue) < 0) errors.initialValue = 'Valor debe ser ≥ 0';
+  if (!formData.currentValue.trim()) errors.currentValue = 'Valor requerido';
+  else if (Number(formData.currentValue) < 0) errors.currentValue = 'Valor debe ser ≥ 0';
+  return errors;
+}
 
 export function CreateAssetForm() {
-  const [isSubmitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [formData, setFormData] = useState<CreateAssetFormData>(INITIAL_FORM_DATA);
+  const [fieldErrors, setFieldErrors] = useState<CreateAssetFormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isDirty = JSON.stringify(formData) !== JSON.stringify(INITIAL_FORM_DATA);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty },
-    reset,
-  } = useForm<CreateAssetFormValues>({
-    resolver: zodResolver(createAssetSchema),
-    defaultValues: {
-      assetName: "",
-      code: "",
-      brand: "",
-      model: "",
-      serialNumber: "",
-      location: "",
-      physicalLocation: "",
-      accountCode: "",
-      note: "",
-      initialValue: undefined,
-      currentValue: undefined,
-      custodianId: undefined,
-      locationId: undefined,
-    },
-  });
+  function handleChange(field: keyof CreateAssetFormData) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    };
+  }
 
-  const onSubmit = async (data: CreateAssetFormValues) => {
-    setSubmitting(true);
+  function handleCancel() {
+    setFormData(INITIAL_FORM_DATA);
+    setFieldErrors({});
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
-    setSuccess(false);
+    setIsSuccess(false);
 
+    const errors = validate(formData);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setIsSubmitting(true);
     try {
       await api.assets.create({
-        assetName: data.assetName,
-        code: data.code ?? undefined,
+        assetName: formData.assetName,
+        code: formData.code || undefined,
         previousCode: undefined,
-        brand: data.brand ?? undefined,
-        model: data.model ?? undefined,
-        serialNumber: data.serialNumber ?? undefined,
-        location: data.location ?? undefined,
-        physicalLocation: data.physicalLocation ?? undefined,
-        accountCode: data.accountCode ?? undefined,
-        note: data.note ?? undefined,
-        initialValue: data.initialValue ?? undefined,
-        currentValue: data.currentValue ?? undefined,
-        custodianId: data.custodianId ?? undefined,
-        locationId: data.locationId ?? undefined,
+        brand: formData.brand || undefined,
+        model: formData.model || undefined,
+        serialNumber: formData.serialNumber || undefined,
+        location: formData.location || undefined,
+        physicalLocation: formData.physicalLocation || undefined,
+        accountCode: formData.accountCode || undefined,
+        note: formData.note || undefined,
+        initialValue: formData.initialValue ? Number(formData.initialValue) : undefined,
+        currentValue: formData.currentValue ? Number(formData.currentValue) : undefined,
+        custodianId: formData.custodianId ? Number(formData.custodianId) : undefined,
+        locationId: formData.locationId ? Number(formData.locationId) : undefined,
       });
 
-      setSuccess(true);
-      reset();
-    } catch (err: any) {
-      setError(err.message || "Error al crear el activo");
+      setIsSuccess(true);
+      setFormData(INITIAL_FORM_DATA);
+      setFieldErrors({});
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al crear el activo');
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6">Crear Nuevo Activo</h2>
 
-      {error && (
-        <div className="mb-4 p-3 rounded bg-red-100 border border-red-400 text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="mb-4 p-3 rounded bg-red-100 border border-red-400 text-red-700">{error}</div>}
 
-      {success && (
+      {isSuccess && (
         <div className="mb-4 p-3 rounded bg-green-100 border border-green-400 text-green-700">
           Activo creado exitosamente
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2">Nombre del activo*</label>
           <Input
-            {...register("assetName", { required: "Nombre requerido" })}
+            value={formData.assetName}
+            onChange={handleChange('assetName')}
             placeholder="Ej: Computadora portátil"
           />
-          {errors.assetName && (
-            <p className="mt-1 text-sm text-red-600">{errors.assetName.message}</p>
-          )}
+          {fieldErrors.assetName && <p className="mt-1 text-sm text-red-600">{fieldErrors.assetName}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Código (opcional)</label>
-          <Input
-            {...register("code", { maxLength: 50 })}
-            placeholder="Ej: ACT-0001"
-          />
-          {errors.code && (
-            <p className="mt-1 text-sm text-red-600">{errors.code.message}</p>
-          )}
+          <Input value={formData.code} onChange={handleChange('code')} placeholder="Ej: ACT-0001" />
+          {fieldErrors.code && <p className="mt-1 text-sm text-red-600">{fieldErrors.code}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Marca</label>
-            <Input {...register("brand", { maxLength: 100 })} placeholder="Ej: Dell" />
-            {errors.brand && (
-              <p className="mt-1 text-sm text-red-600">{errors.brand.message}</p>
-            )}
+            <Input value={formData.brand} onChange={handleChange('brand')} placeholder="Ej: Dell" />
+            {fieldErrors.brand && <p className="mt-1 text-sm text-red-600">{fieldErrors.brand}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Modelo</label>
-            <Input {...register("model", { maxLength: 100 })} placeholder="Ej: XPS 13" />
-            {errors.model && (
-              <p className="mt-1 text-sm text-red-600">{errors.model.message}</p>
-            )}
+            <Input value={formData.model} onChange={handleChange('model')} placeholder="Ej: XPS 13" />
+            {fieldErrors.model && <p className="mt-1 text-sm text-red-600">{fieldErrors.model}</p>}
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Número de serie</label>
-          <Input
-            {...register("serialNumber", { maxLength: 100 })}
-            placeholder="Ej: CNU12345678"
-          />
-          {errors.serialNumber && (
-            <p className="mt-1 text-sm text-red-600">{errors.serialNumber.message}</p>
-          )}
+          <Input value={formData.serialNumber} onChange={handleChange('serialNumber')} placeholder="Ej: CNU12345678" />
+          {fieldErrors.serialNumber && <p className="mt-1 text-sm text-red-600">{fieldErrors.serialNumber}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Ubicación actual</label>
-          <Input
-            {...register("location", { maxLength: 200 })}
-            placeholder="Ej: Almacén principal"
-          />
-          {errors.location && (
-            <p className="mt-1 text-sm text-red-600">{errors.location.message}</p>
-          )}
+          <Input value={formData.location} onChange={handleChange('location')} placeholder="Ej: Almacén principal" />
+          {fieldErrors.location && <p className="mt-1 text-sm text-red-600">{fieldErrors.location}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Ubicación FK</label>
-            <Input
-              {...register("locationId", { required: "Ubicación requerida" })}
-              placeholder="ID ubicación"
-            />
-            {errors.locationId && (
-              <p className="mt-1 text-sm text-red-600">{errors.locationId.message}</p>
-            )}
+            <Input value={formData.locationId} onChange={handleChange('locationId')} placeholder="ID ubicación" />
+            {fieldErrors.locationId && <p className="mt-1 text-sm text-red-600">{fieldErrors.locationId}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Custodio FK</label>
-            <Input
-              {...register("custodianId", { required: "Custodio requerido" })}
-              placeholder="ID custodio"
-            />
-            {errors.custodianId && (
-              <p className="mt-1 text-sm text-red-600">{errors.custodianId.message}</p>
-            )}
+            <Input value={formData.custodianId} onChange={handleChange('custodianId')} placeholder="ID custodio" />
+            {fieldErrors.custodianId && <p className="mt-1 text-sm text-red-600">{fieldErrors.custodianId}</p>}
           </div>
         </div>
 
@@ -192,48 +186,45 @@ export function CreateAssetForm() {
           <label className="block text-sm font-medium mb-2">Valor inicial</label>
           <Input
             type="number"
-            {...register("initialValue", { required: "Valor requerido" })}
+            value={formData.initialValue}
+            onChange={handleChange('initialValue')}
             placeholder="0.00"
           />
-          {errors.initialValue && (
-            <p className="mt-1 text-sm text-red-600">{errors.initialValue.message}</p>
-          )}
+          {fieldErrors.initialValue && <p className="mt-1 text-sm text-red-600">{fieldErrors.initialValue}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Valor actual</label>
           <Input
             type="number"
-            {...register("currentValue", { required: "Valor requerido" })}
+            value={formData.currentValue}
+            onChange={handleChange('currentValue')}
             placeholder="0.00"
           />
-          {errors.currentValue && (
-            <p className="mt-1 text-sm text-red-600">{errors.currentValue.message}</p>
-          )}
+          {fieldErrors.currentValue && <p className="mt-1 text-sm text-red-600">{fieldErrors.currentValue}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Nota</label>
           <textarea
-            {...register("note", { maxLength: 500 })}
+            value={formData.note}
+            onChange={handleChange('note')}
             placeholder="Observaciones adicionales"
             rows={3}
             className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
-          {errors.note && (
-            <p className="mt-1 text-sm text-red-600">{errors.note.message}</p>
-          )}
+          {fieldErrors.note && <p className="mt-1 text-sm text-red-600">{fieldErrors.note}</p>}
         </div>
 
         <div className="flex gap-3 mt-6">
-          <Button type="button" onClick={() => reset()} disabled={!isDirty}>
+          <Button type="button" onClick={handleCancel} disabled={!isDirty}>
             Cancelar
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Guardando..." : "Crear Activo"}
+            {isSubmitting ? 'Guardando...' : 'Crear Activo'}
           </Button>
         </div>
       </form>
     </div>
-  )
+  );
 }

@@ -1,21 +1,14 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { Custodian, Asset } from "@/lib/types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Pencil } from "lucide-react";
-import Link from "next/link";
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { Custodian, Asset } from '@/lib/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Pencil } from 'lucide-react';
+import Link from 'next/link';
 
 export default function CustodianAssetsPage() {
   const params = useParams();
@@ -23,7 +16,7 @@ export default function CustodianAssetsPage() {
   const id = parseInt(params.id as string);
 
   const [custodian, setCustodian] = useState<Custodian | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,16 +24,16 @@ export default function CustodianAssetsPage() {
       try {
         const data = await api.custodians.getById(id);
         setCustodian(data);
-      } catch (err: any) {
-        setError(err.message || "Error al cargar el custodio.");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error al cargar el custodio.');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     load();
   }, [id]);
 
-  if (loading) return <p className="text-center py-8">Cargando...</p>;
+  if (isLoading) return <p className="text-center py-8">Cargando...</p>;
   if (error) return <p className="text-center py-8 text-destructive">{error}</p>;
   if (!custodian) return null;
 
@@ -55,7 +48,8 @@ export default function CustodianAssetsPage() {
         <div>
           <h1 className="text-3xl font-bold">{custodian.fullName}</h1>
           <p className="text-muted-foreground text-sm">
-            {custodian.identifier}{custodian.unit ? ` · ${custodian.unit}` : ""}
+            {custodian.identifier}
+            {custodian.unit ? ` · ${custodian.unit}` : ''}
           </p>
         </div>
         <Link href={`/admin/custodians/${id}`} className="ml-auto">
@@ -69,10 +63,7 @@ export default function CustodianAssetsPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Equipos asignados{" "}
-            <span className="text-muted-foreground font-normal text-base">
-              ({assets.length})
-            </span>
+            Equipos asignados <span className="text-muted-foreground font-normal text-base">({assets.length})</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -101,12 +92,12 @@ export default function CustodianAssetsPage() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => router.push(`/admin/assets/${asset.id}`)}
                   >
-                    <TableCell>{asset.code ?? "—"}</TableCell>
+                    <TableCell>{asset.code ?? '—'}</TableCell>
                     <TableCell className="font-medium">{asset.assetName}</TableCell>
-                    <TableCell>{asset.brand ?? "—"}</TableCell>
-                    <TableCell>{asset.model ?? "—"}</TableCell>
-                    <TableCell>{asset.serialNumber ?? "—"}</TableCell>
-                    <TableCell>{asset.location ?? "—"}</TableCell>
+                    <TableCell>{asset.brand ?? '—'}</TableCell>
+                    <TableCell>{asset.model ?? '—'}</TableCell>
+                    <TableCell>{asset.serialNumber ?? '—'}</TableCell>
+                    <TableCell>{asset.location ?? '—'}</TableCell>
                   </TableRow>
                 ))
               )}
