@@ -147,6 +147,40 @@ describe('MovementsService', () => {
 
       expect(result).toEqual(mockMovement);
     });
+
+    it('should throw BadRequestException if neither toCustodianId nor toLocationId is provided', async () => {
+      await expect(
+        service.create(1, { note: 'Sin destino' }, 1, 'ADMIN'),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.asset.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createBulk', () => {
+    it('should throw BadRequestException if neither toCustodianId nor toLocationId is provided', async () => {
+      await expect(
+        service.createBulk({ assetIds: [1], note: 'Sin destino' }, 1, 'ADMIN'),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.asset.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should create a movement per asset for ADMIN', async () => {
+      prisma.asset.findMany.mockResolvedValue([mockAsset]);
+      prisma.$transaction.mockResolvedValue([mockMovement]);
+
+      const result = await service.createBulk(
+        { assetIds: [1], toCustodianId: 2 },
+        1,
+        'ADMIN',
+      );
+
+      expect(result).toEqual({
+        groupId: expect.any(String),
+        movements: [mockMovement],
+      });
+    });
   });
 
   describe('confirm', () => {

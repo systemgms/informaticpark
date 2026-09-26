@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreateBulkMovementDto {
   @ApiProperty({
@@ -8,6 +15,7 @@ export class CreateBulkMovementDto {
     type: [Number],
   })
   @IsArray()
+  @ArrayNotEmpty()
   @IsInt({ each: true })
   @Min(1, { each: true })
   @Type(() => Number)

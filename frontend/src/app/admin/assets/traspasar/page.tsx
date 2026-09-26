@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Package, Search, CheckSquare, Square, Send, AlertCircle } from "lucide-react";
 
-export default function TraspasarPage() {
+export default function BulkTransferPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -28,11 +28,11 @@ export default function TraspasarPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [custodians, setCustodians] = useState<Custodian[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [saving, setSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [form, setForm] = useState({
     toCustodianId: "",
@@ -51,8 +51,8 @@ export default function TraspasarPage() {
         setCustodians(c.data);
         setLocations(l.data);
       })
-      .catch((err) => setError(err.message || "Error al cargar datos"))
-      .finally(() => setLoading(false));
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Error al cargar datos"))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const visibleAssets =
@@ -89,25 +89,27 @@ export default function TraspasarPage() {
       toast("Selecciona al menos un activo para traspasar.", "error");
       return;
     }
-    setSaving(true);
+    setIsSaving(true);
     try {
-      const fd = new FormData();
-      fd.append("assetIds", JSON.stringify([...selectedIds]));
-      if (form.toCustodianId) fd.append("toCustodianId", form.toCustodianId);
-      if (form.toLocationId) fd.append("toLocationId", form.toLocationId);
-      if (form.note) fd.append("note", form.note);
-      await api.movements.createBulk(fd);
+      const payload: { assetIds: number[]; toCustodianId?: number; toLocationId?: number; note?: string } = {
+        assetIds: [...selectedIds],
+      };
+      if (form.toCustodianId) payload.toCustodianId = Number(form.toCustodianId);
+      if (form.toLocationId) payload.toLocationId = Number(form.toLocationId);
+      if (form.note) payload.note = form.note;
+      await api.movements.createBulk(payload);
       toast(`Traspaso masivo registrado: ${selectedIds.size} activo(s).`, "success");
       router.push("/admin/assets");
-    } catch (err: any) {
-      toast(err?.message || "Error al registrar traspaso masivo", "error");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error al registrar traspaso masivo";
+      toast(message, "error");
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
-  const allSelected = filteredAssets.length > 0 && selectedIds.size === filteredAssets.length;
-  const someSelected = selectedIds.size > 0 && !allSelected;
+  const isAllSelected = filteredAssets.length > 0 && selectedIds.size === filteredAssets.length;
+  const hasPartialSelection = selectedIds.size > 0 && !isAllSelected;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -145,7 +147,7 @@ export default function TraspasarPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {!loading && (
+            {!isLoading && (
               <span className="text-sm text-muted-foreground whitespace-nowrap">
                 {filteredAssets.length} {filteredAssets.length === 1 ? "activo" : "activos"}
               </span>
@@ -158,9 +160,9 @@ export default function TraspasarPage() {
                 <TableRow className="bg-muted/40">
                   <TableHead className="w-10">
                     <button onClick={toggleSelectAll} className="cursor-pointer">
-                      {allSelected ? (
+                      {isAllSelected ? (
                         <CheckSquare className="w-4 h-4 text-primary" />
-                      ) : someSelected ? (
+                      ) : hasPartialSelection ? (
                         <div className="w-4 h-4 border-2 border-primary rounded flex items-center justify-center">
                           <div className="w-2 h-0.5 bg-primary rounded" />
                         </div>
@@ -177,7 +179,7 @@ export default function TraspasarPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
                       <TableCell><Skeleton className="w-4 h-4" /></TableCell>
@@ -272,9 +274,9 @@ export default function TraspasarPage() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={saving} className="cursor-pointer">
+                <Button type="submit" disabled={isSaving} className="cursor-pointer">
                   <Send className="w-4 h-4 mr-2" />
-                  {saving ? "Registrando..." : `Traspasar ${selectedIds.size} activo(s)`}
+                  {isSaving ? "Registrando..." : `Traspasar ${selectedIds.size} activo(s)`}
                 </Button>
                 <Button
                   type="button"

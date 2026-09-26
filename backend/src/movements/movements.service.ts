@@ -30,6 +30,12 @@ export class MovementsService {
     callerRole?: string,
     callerCustodianId?: number | null,
   ) {
+    if (!dto.toCustodianId && !dto.toLocationId) {
+      throw new BadRequestException(
+        'Debe indicar un custodio o una ubicación de destino',
+      );
+    }
+
     const asset = await this.prisma.asset.findUnique({
       where: { id: assetId },
     });
@@ -207,6 +213,12 @@ export class MovementsService {
     callerRole?: string,
     callerCustodianId?: number | null,
   ) {
+    if (!dto.toCustodianId && !dto.toLocationId) {
+      throw new BadRequestException(
+        'Debe indicar un custodio o una ubicación de destino',
+      );
+    }
+
     const groupId = randomUUID();
 
     const assets = await this.prisma.asset.findMany({

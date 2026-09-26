@@ -34,7 +34,7 @@ function StatusBadge({ status }: { status: MovementStatus }) {
   );
 }
 
-export default function HistorialPage() {
+export default function AssetMovementHistoryPage() {
   const { id } = useParams<{ id: string }>();
   const assetId = parseInt(id);
   const { user } = useAuth();
@@ -44,9 +44,9 @@ export default function HistorialPage() {
   const [movements, setMovements] = useState<AssetMovement[]>([]);
   const [custodians, setCustodians] = useState<Custodian[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [rejecting, setRejecting] = useState<{ movementId: number; groupId?: string | null } | null>(null);
 
@@ -68,9 +68,12 @@ export default function HistorialPage() {
       api.locations.getAll(),
     ])
       .then(([a, m, c, l]) => { setAsset(a); setMovements(m); setCustodians(c.data); setLocations(l.data); })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [assetId]);
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Error al cargar el historial";
+        toast(message, "error");
+      })
+      .finally(() => setIsLoading(false));
+  }, [assetId, toast]);
 
   const filteredMovements = useMemo(() => {
     return movements.filter((m) => {
@@ -101,31 +104,32 @@ export default function HistorialPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
+    setIsSaving(true);
     try {
-      const fd = new FormData();
-      if (form.toCustodianId) fd.append("toCustodianId", form.toCustodianId);
-      if (form.toLocationId) fd.append("toLocationId", form.toLocationId);
-      if (form.note) fd.append("note", form.note);
-      const newMovement = await api.movements.create(assetId, fd);
+      const payload: { toCustodianId?: number; toLocationId?: number; note?: string } = {};
+      if (form.toCustodianId) payload.toCustodianId = Number(form.toCustodianId);
+      if (form.toLocationId) payload.toLocationId = Number(form.toLocationId);
+      if (form.note) payload.note = form.note;
+      const newMovement = await api.movements.create(assetId, payload);
       setMovements((prev) => [newMovement, ...prev]);
       setForm({ toCustodianId: "", toLocationId: "", note: "" });
-      setShowForm(false);
+      setIsFormVisible(false);
       toast("Traspaso registrado exitosamente", "success");
-    } catch (error: any) {
-      toast(error?.message || "Error al registrar traspaso", "error");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al registrar traspaso";
+      toast(message, "error");
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
   async function handleConfirm(movementId: number, groupId?: string | null) {
-    setSaving(true);
+    setIsSaving(true);
     try {
       const fd = new FormData();
       if (confirmForm.note) fd.append("note", confirmForm.note);
       if (confirmForm.acta) fd.append("acta", confirmForm.acta);
-      
+
       if (groupId) {
         await api.movements.confirmBulk(groupId, fd);
         const updated = await api.movements.getByAsset(assetId);
@@ -134,21 +138,22 @@ export default function HistorialPage() {
         const updated = await api.movements.confirm(assetId, movementId, fd);
         setMovements((prev) => prev.map((m) => (m.id === movementId ? updated : m)));
       }
-      
+
       const updatedAsset = await api.assets.getById(assetId);
       setAsset(updatedAsset);
       setConfirmingId(null);
       setConfirmForm({ note: "", acta: null });
       toast("Recepción confirmada exitosamente", "success");
-    } catch (error: any) {
-      toast(error?.message || "Error al confirmar recepción", "error");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al confirmar recepción";
+      toast(message, "error");
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
   async function handleReject(movementId: number, groupId?: string | null) {
-    setSaving(true);
+    setIsSaving(true);
     try {
       if (groupId) {
         await api.movements.rejectBulk(groupId);
@@ -159,10 +164,11 @@ export default function HistorialPage() {
         setMovements((prev) => prev.map((m) => (m.id === movementId ? updated : m)));
       }
       toast("Traspaso rechazado", "info");
-    } catch (error: any) {
-      toast(error?.message || "Error al rechazar traspaso", "error");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al rechazar traspaso";
+      toast(message, "error");
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
@@ -191,7 +197,7 @@ export default function HistorialPage() {
 
   const canInitiate = isAdmin || (!!user?.custodianId && asset?.custodianId === user?.custodianId);
 
-  if (loading) return <div className="p-6">Cargando...</div>;
+  if (isLoading) return <div className="p-6">Cargando...</div>;
   if (!asset) return <div className="p-6">Activo no encontrado</div>;
 
   return (
@@ -214,7 +220,7 @@ export default function HistorialPage() {
             </Button>
           )}
           {canInitiate && (
-            <Button onClick={() => setShowForm((v) => !v)}>
+            <Button onClick={() => setIsFormVisible((v) => !v)}>
               <Plus className="w-4 h-4 mr-2" />
               Nuevo Traspaso
             </Button>
@@ -222,7 +228,7 @@ export default function HistorialPage() {
         </div>
       </div>
 
-      {showForm && (
+      {isFormVisible && (
         <Card>
           <CardHeader><CardTitle>Iniciar Traspaso</CardTitle></CardHeader>
           <CardContent>
@@ -256,8 +262,8 @@ export default function HistorialPage() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={saving}>{saving ? "Guardando..." : "Registrar Traspaso"}</Button>
-                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+                <Button type="submit" disabled={isSaving}>{isSaving ? "Guardando..." : "Registrar Traspaso"}</Button>
+                <Button type="button" variant="outline" onClick={() => setIsFormVisible(false)}>Cancelar</Button>
               </div>
             </form>
           </CardContent>
@@ -274,14 +280,14 @@ export default function HistorialPage() {
           <div className="flex flex-wrap gap-4">
             <div className="grid gap-2">
               <Label className="text-xs">Estado</Label>
-                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as MovementStatus | "")}>
-                  <SelectTrigger className="w-40"><SelectValue placeholder="Todos" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PENDIENTE">Pendiente</SelectItem>
-                    <SelectItem value="COMPLETADO">Completado</SelectItem>
-                    <SelectItem value="RECHAZADO">Rechazado</SelectItem>
-                  </SelectContent>
-                </Select>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as MovementStatus | "")}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Todos" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PENDIENTE">Pendiente</SelectItem>
+                  <SelectItem value="COMPLETADO">Completado</SelectItem>
+                  <SelectItem value="RECHAZADO">Rechazado</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <Label className="text-xs">Desde</Label>
@@ -370,11 +376,11 @@ export default function HistorialPage() {
                       {canAct && !isConfirming && (
                         <div className="flex gap-2 pt-1 border-t">
                           <Button size="sm" onClick={() => setConfirmingId(m.id)}>
-                            <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> 
+                            <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
                             {m.groupId ? "Confirmar grupo" : "Confirmar recepción"}
                           </Button>
-                           <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10" onClick={() => setRejecting({ movementId: m.id, groupId: m.groupId })} disabled={saving}>
-                            <XCircle className="w-3.5 h-3.5 mr-1.5" /> 
+                          <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10" onClick={() => setRejecting({ movementId: m.id, groupId: m.groupId })} disabled={isSaving}>
+                            <XCircle className="w-3.5 h-3.5 mr-1.5" />
                             {m.groupId ? "Rechazar grupo" : "Rechazar"}
                           </Button>
                         </div>
@@ -394,8 +400,8 @@ export default function HistorialPage() {
                             <Input placeholder="Estado del bien al recibirlo, etc." value={confirmForm.note} onChange={(e) => setConfirmForm({ ...confirmForm, note: e.target.value })} />
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleConfirm(m.id, m.groupId)} disabled={saving}>
-                              {saving ? "Guardando..." : "Confirmar"}
+                            <Button size="sm" onClick={() => handleConfirm(m.id, m.groupId)} disabled={isSaving}>
+                              {isSaving ? "Guardando..." : "Confirmar"}
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => setConfirmingId(null)}>Cancelar</Button>
                           </div>
