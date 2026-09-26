@@ -5,7 +5,7 @@
 - Strict mode is enabled — no implicit `any`
 - Prefer interfaces over types for object shapes
 - No explicit `any` — use `unknown` and narrow
-- Enum members: `PascalCase`
+- Enum members: `PascalCase`. Exception: enums that mirror a Prisma enum (e.g. `Role.ADMIN`, `Role.USER`) keep the database values as member names.
 - Constants: `UPPER_SNAKE_CASE`
 
 ## Naming

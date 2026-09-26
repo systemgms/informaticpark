@@ -112,7 +112,8 @@ There is no frontend page for Locations — the backend `LocationsModule` exists
 - **Variables / functions**: `camelCase` — e.g. `assetList`, `fetchAssets()`
 - **React components / exported decorators / classes / types / interfaces**: `PascalCase` — e.g. `AssetForm`, `CreateAssetDto`
 - **Constants**: `UPPER_SNAKE_CASE` — e.g. `API_TIMEOUT`
-- **Enum members**: `PascalCase` — e.g. `Role.ADMIN`
+- **Enum members**: `PascalCase` — e.g. `SortDirection.Ascending`
+  - Exception: enums that mirror a Prisma enum keep the database values as member names (e.g. `Role.ADMIN`, `Role.USER`), so frontend, backend, and DB spell them the same way.
 - **Boolean variables**: prefix with `is`, `has`, `should`, `can` — e.g. `isActive`, `hasPermission`
 - **Private class members**: `camelCase` (no underscore prefix)
 - **Parameters**: `camelCase`, leading underscore allowed — e.g. `_id`, `userId`
