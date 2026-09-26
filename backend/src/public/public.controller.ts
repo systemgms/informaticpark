@@ -4,6 +4,7 @@ import { Public } from '../auth/public.decorator';
 import { AssetsService } from '../assets/assets.service';
 import { CustodiansService } from '../custodians/custodians.service';
 import { MaxLengthPipe } from '../common/pipes/max-length.pipe';
+import { parsePagination } from '../common/pagination/parse-pagination';
 
 // Anonymous, read-only endpoints for the public inventory pages. Each item
 // exposes a narrow field set on purpose — no custodian or identifier data.
@@ -44,11 +45,7 @@ export class PublicController {
     @Query('limit') limit?: string,
     @Query('search', new MaxLengthPipe(100)) search?: string,
   ) {
-    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
-    const limitNum = Math.min(
-      100,
-      Math.max(1, parseInt(limit || '20', 10) || 20),
-    );
+    const { page: pageNum, limit: limitNum } = parsePagination(page, limit);
     return this.assetsService.findPublic(pageNum, limitNum, search);
   }
 
@@ -80,11 +77,7 @@ export class PublicController {
     @Query('limit') limit?: string,
     @Query('search', new MaxLengthPipe(100)) search?: string,
   ) {
-    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
-    const limitNum = Math.min(
-      100,
-      Math.max(1, parseInt(limit || '20', 10) || 20),
-    );
+    const { page: pageNum, limit: limitNum } = parsePagination(page, limit);
     return this.custodiansService.findPublic(pageNum, limitNum, search);
   }
 }

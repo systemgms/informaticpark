@@ -24,6 +24,7 @@ import { ActivateUserDto } from './dto/activate-user.dto';
 import { ParseIdPipe } from '../common/pipes/parse-id.pipe';
 import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
 import { MaxLengthPipe } from '../common/pipes/max-length.pipe';
+import { parsePagination } from '../common/pagination/parse-pagination';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT')
@@ -67,11 +68,7 @@ export class UsersController {
     @Query('includeInactive') includeInactive?: string,
     @Query('search', new MaxLengthPipe(100)) search?: string,
   ) {
-    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
-    const limitNum = Math.min(
-      100,
-      Math.max(1, parseInt(limit || '20', 10) || 20),
-    );
+    const { page: pageNum, limit: limitNum } = parsePagination(page, limit);
     const shouldIncludeInactive = includeInactive === 'true';
     const [users, total] = await Promise.all([
       this.usersService.findAll(

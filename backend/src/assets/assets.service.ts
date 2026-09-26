@@ -114,16 +114,7 @@ export class AssetsService {
     const where: Prisma.AssetWhereInput = {
       isDeleted: false,
       ...(isRestrictedCaller ? { custodianId: caller?.custodianId } : {}),
-      ...(search
-        ? {
-            OR: [
-              { assetName: { contains: search, mode: 'insensitive' } },
-              { code: { contains: search, mode: 'insensitive' } },
-              { brand: { contains: search, mode: 'insensitive' } },
-              { model: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
+      ...this.buildAssetSearchFilter(search),
     };
 
     const [assets, total] = await Promise.all([
@@ -315,16 +306,7 @@ export class AssetsService {
     const skip = (page - 1) * limit;
     const where: Prisma.AssetWhereInput = {
       isDeleted: false,
-      ...(search
-        ? {
-            OR: [
-              { assetName: { contains: search, mode: 'insensitive' } },
-              { code: { contains: search, mode: 'insensitive' } },
-              { brand: { contains: search, mode: 'insensitive' } },
-              { model: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
+      ...this.buildAssetSearchFilter(search),
     };
 
     const [assets, total] = await Promise.all([
@@ -358,6 +340,20 @@ export class AssetsService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  private buildAssetSearchFilter(search?: string): Prisma.AssetWhereInput {
+    if (!search) {
+      return {};
+    }
+    return {
+      OR: [
+        { assetName: { contains: search, mode: 'insensitive' } },
+        { code: { contains: search, mode: 'insensitive' } },
+        { brand: { contains: search, mode: 'insensitive' } },
+        { model: { contains: search, mode: 'insensitive' } },
+      ],
     };
   }
 

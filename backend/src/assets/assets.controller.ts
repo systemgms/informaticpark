@@ -26,6 +26,7 @@ import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
 import { MaxLengthPipe } from '../common/pipes/max-length.pipe';
 import { Roles } from '../auth/roles.decorator';
 import { AuthUser } from '../common/types/auth-user.type';
+import { parsePagination } from '../common/pagination/parse-pagination';
 
 @ApiTags('assets')
 @ApiBearerAuth('JWT')
@@ -75,11 +76,7 @@ export class AssetsController {
     @Query('search', new MaxLengthPipe(100)) search?: string,
     @Req() req?: { user: AuthUser },
   ) {
-    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
-    const limitNum = Math.min(
-      100,
-      Math.max(1, parseInt(limit || '20', 10) || 20),
-    );
+    const { page: pageNum, limit: limitNum } = parsePagination(page, limit);
     return this.assetsService.findAll(pageNum, limitNum, search, req?.user);
   }
 
