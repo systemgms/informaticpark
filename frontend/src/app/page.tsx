@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Users, Building2, Package, MapPin, DollarSign, AlertTriangle, Clock, ArrowRight } from "lucide-react";
-import { api } from "@/lib/api";
-import { Asset, AssetMovement } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/components/auth-provider";
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Users, Building2, Package, MapPin, DollarSign, AlertTriangle, Clock, ArrowRight } from 'lucide-react';
+import { api } from '@/lib/api';
+import { AssetMovement } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/components/auth-provider';
 
 interface AdminStats {
   users: number;
@@ -15,8 +15,8 @@ interface AdminStats {
   assets: number;
   locations: number;
   totalValue: number;
-  sinCustodio: number;
-  sinUbicacion: number;
+  withoutCustodian: number;
+  withoutLocation: number;
 }
 
 interface CustodianStats {
@@ -24,30 +24,24 @@ interface CustodianStats {
   totalValue: number;
 }
 
-function StatCard({
-  href,
-  icon: Icon,
-  color,
-  label,
-  value,
-  sub,
-  loading,
-}: {
+interface StatCardProps {
   href?: string;
   icon: React.ElementType;
   color: string;
   label: string;
   value: string | number;
   sub?: string;
-  loading: boolean;
-}) {
+  isLoading: boolean;
+}
+
+function StatCard({ href, icon: Icon, color, label, value, sub, isLoading }: StatCardProps) {
   const content = (
-    <Card className={href ? "hover:shadow-md hover:border-primary/30 transition-all cursor-pointer h-full" : "h-full"}>
+    <Card className={href ? 'hover:shadow-md hover:border-primary/30 transition-all cursor-pointer h-full' : 'h-full'}>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            {loading ? (
+            {isLoading ? (
               <Skeleton className="h-9 w-24 mt-1" />
             ) : (
               <p className="text-4xl font-bold mt-1 tabular-nums">{value}</p>
@@ -62,10 +56,21 @@ function StatCard({
     </Card>
   );
 
-  return href ? <Link href={href} className="group">{content}</Link> : content;
+  return href ? (
+    <Link href={href} className="group">
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 }
 
-function AlertCard({ label, value }: { label: string; value: number }) {
+interface AlertCardProps {
+  label: string;
+  value: number;
+}
+
+function AlertCard({ label, value }: AlertCardProps) {
   if (value === 0) return null;
   return (
     <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm">
@@ -79,66 +84,66 @@ function AlertCard({ label, value }: { label: string; value: number }) {
 
 export default function HomePage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === 'ADMIN';
 
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [custodianStats, setCustodianStats] = useState<CustodianStats | null>(null);
   const [pendingMovements, setPendingMovements] = useState<AssetMovement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadStats() {
       try {
         if (isAdmin) {
-          const [users, custodians, assets, locations] = await Promise.all([
-            api.users.getAll(),
-            api.custodians.getAll(),
-            api.assets.getAll(),
-            api.locations.getAll(),
+          const [users, custodians, locations, stats] = await Promise.all([
+            api.users.getAll({ limit: 1 }),
+            api.custodians.getAll({ limit: 1 }),
+            api.locations.getAll({ limit: 1 }),
+            api.assets.getStats(),
           ]);
-          const assetList: Asset[] = assets.data || [];
-          const totalValue = assetList.reduce((sum, a) => sum + (Number(a.currentValue) || 0), 0);
           setAdminStats({
-            users: users.data?.length || 0,
-            custodians: custodians.data?.length || 0,
-            assets: assetList.length,
-            locations: locations.data?.length || 0,
-            totalValue,
-            sinCustodio: assetList.filter((a) => !a.custodianId).length,
-            sinUbicacion: assetList.filter((a) => !a.locationId).length,
+            users: users.meta.total,
+            custodians: custodians.meta.total,
+            assets: stats.total,
+            locations: locations.meta.total,
+            totalValue: stats.totalValue,
+            withoutCustodian: stats.withoutCustodian,
+            withoutLocation: stats.withoutLocation,
           });
         } else {
-          const [assets, pending] = await Promise.all([
-            api.assets.getAll(),
-            api.movements.getPendingForMe(),
-          ]);
-          const assetList: Asset[] = assets.data || [];
-          const propios = assetList.filter((a) => a.custodianId === user?.custodianId);
+          const [stats, pending] = await Promise.all([api.assets.getStats(), api.movements.getPendingForMe()]);
           setCustodianStats({
-            assets: propios.length,
-            totalValue: propios.reduce((sum, a) => sum + (Number(a.currentValue) || 0), 0),
+            assets: stats.total,
+            totalValue: stats.totalValue,
           });
           setPendingMovements(pending || []);
         }
       } catch {
-        if (isAdmin) setAdminStats({ users: 0, custodians: 0, assets: 0, locations: 0, totalValue: 0, sinCustodio: 0, sinUbicacion: 0 });
+        if (isAdmin)
+          setAdminStats({
+            users: 0,
+            custodians: 0,
+            assets: 0,
+            locations: 0,
+            totalValue: 0,
+            withoutCustodian: 0,
+            withoutLocation: 0,
+          });
         else setCustodianStats({ assets: 0, totalValue: 0 });
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     if (user !== null) loadStats();
   }, [user, isAdmin]);
 
   const fmt = (n: number) =>
-    n.toLocaleString("es-EC", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+    n.toLocaleString('es-EC', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {isAdmin ? "Panel de Administración" : "Mis Activos"}
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">{isAdmin ? 'Panel de Administración' : 'Mis Activos'}</h1>
         <p className="text-muted-foreground mt-1">Parque Informático — GPMS Morona Santiago</p>
       </div>
 
@@ -152,15 +157,15 @@ export default function HomePage() {
               label="Activos"
               value={adminStats?.assets ?? 0}
               sub="Total de bienes registrados"
-              loading={loading}
+              isLoading={isLoading}
             />
             <StatCard
               icon={DollarSign}
               color="text-emerald-600 bg-emerald-50"
               label="Valor total del parque"
-              value={loading ? "—" : fmt(adminStats?.totalValue ?? 0)}
+              value={isLoading ? '—' : fmt(adminStats?.totalValue ?? 0)}
               sub="Suma del valor actual de todos los activos"
-              loading={loading}
+              isLoading={isLoading}
             />
             <StatCard
               href="/admin/custodians"
@@ -169,7 +174,7 @@ export default function HomePage() {
               label="Custodios"
               value={adminStats?.custodians ?? 0}
               sub="Responsables de activos registrados"
-              loading={loading}
+              isLoading={isLoading}
             />
             <StatCard
               href="/admin/users"
@@ -178,7 +183,7 @@ export default function HomePage() {
               label="Usuarios"
               value={adminStats?.users ?? 0}
               sub="Cuentas de acceso al sistema"
-              loading={loading}
+              isLoading={isLoading}
             />
             <StatCard
               href="/admin/locations"
@@ -187,20 +192,14 @@ export default function HomePage() {
               label="Ubicaciones"
               value={adminStats?.locations ?? 0}
               sub="Cantones y parroquias registradas"
-              loading={loading}
+              isLoading={isLoading}
             />
           </div>
 
-          {!loading && adminStats && (
+          {!isLoading && adminStats && (
             <div className="flex flex-col gap-2">
-              <AlertCard
-                label="activos sin custodio asignado"
-                value={adminStats.sinCustodio}
-              />
-              <AlertCard
-                label="activos sin ubicación asignada"
-                value={adminStats.sinUbicacion}
-              />
+              <AlertCard label="activos sin custodio asignado" value={adminStats.withoutCustodian} />
+              <AlertCard label="activos sin ubicación asignada" value={adminStats.withoutLocation} />
             </div>
           )}
         </>
@@ -214,24 +213,25 @@ export default function HomePage() {
               label="Mis activos"
               value={custodianStats?.assets ?? 0}
               sub="Bienes bajo tu custodia"
-              loading={loading}
+              isLoading={isLoading}
             />
             <StatCard
               icon={DollarSign}
               color="text-emerald-600 bg-emerald-50"
               label="Valor total"
-              value={loading ? "—" : fmt(custodianStats?.totalValue ?? 0)}
+              value={isLoading ? '—' : fmt(custodianStats?.totalValue ?? 0)}
               sub="Valor actual de tus activos"
-              loading={loading}
+              isLoading={isLoading}
             />
           </div>
 
-          {!loading && pendingMovements.length > 0 && (
+          {!isLoading && pendingMovements.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-yellow-700">
                 <Clock className="w-4 h-4" />
                 <span className="font-semibold text-sm">
-                  {pendingMovements.length} traspaso{pendingMovements.length > 1 ? "s" : ""} pendiente{pendingMovements.length > 1 ? "s" : ""} de confirmar
+                  {pendingMovements.length} traspaso{pendingMovements.length > 1 ? 's' : ''} pendiente
+                  {pendingMovements.length > 1 ? 's' : ''} de confirmar
                 </span>
               </div>
               <div className="flex flex-col gap-2">
@@ -245,12 +245,8 @@ export default function HomePage() {
                       <span className="font-medium text-yellow-900">
                         {m.asset?.assetName ?? `Activo #${m.assetId}`}
                       </span>
-                      {m.asset?.code && (
-                        <span className="text-yellow-700 ml-2 font-mono text-xs">{m.asset.code}</span>
-                      )}
-                      <p className="text-yellow-700 text-xs mt-0.5">
-                        Enviado por: {m.registeredBy?.name ?? "—"}
-                      </p>
+                      {m.asset?.code && <span className="text-yellow-700 ml-2 font-mono text-xs">{m.asset.code}</span>}
+                      <p className="text-yellow-700 text-xs mt-0.5">Enviado por: {m.registeredBy?.name ?? '—'}</p>
                     </div>
                     <span className="text-xs text-yellow-700 shrink-0 inline-flex items-center gap-1">
                       Ver traspaso <ArrowRight className="h-3 w-3" aria-hidden="true" />

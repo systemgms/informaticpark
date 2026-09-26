@@ -1,30 +1,76 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { api } from "@/lib/api";
-import { Asset, AssetMovement, Custodian, Location, MovementStatus } from "@/lib/types";
-import { useAuth } from "@/components/auth-provider";
-import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { ConfirmDialog } from "@/components/confirm-dialog";
-import { ArrowLeft, ArrowRight, FileText, Plus, CheckCircle, XCircle, Clock, Users, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { api } from '@/lib/api';
+import { Asset, AssetMovement, MovementStatus } from '@/lib/types';
+import { useCustodianOptions } from '@/hooks/use-custodian-options';
+import { useLocationOptions } from '@/hooks/use-location-options';
+import { useAuth } from '@/components/auth-provider';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import {
+  ArrowLeft,
+  ArrowRight,
+  FileText,
+  Plus,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Users,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
-const STATUS_CONFIG: Record<MovementStatus, { label: string; icon: React.ElementType; class: string }> = {
-  PENDIENTE:  { label: "Pendiente",  icon: Clock,        class: "text-yellow-700 bg-yellow-50 border-yellow-200" },
-  COMPLETADO: { label: "Completado", icon: CheckCircle,  class: "text-green-700 bg-green-50 border-green-200" },
-  RECHAZADO:  { label: "Rechazado",  icon: XCircle,      class: "text-red-700 bg-red-50 border-red-200" },
+interface StatusConfigEntry {
+  label: string;
+  icon: React.ElementType;
+  class: string;
+}
+
+const STATUS_CONFIG: Record<MovementStatus, StatusConfigEntry> = {
+  PENDIENTE: { label: 'Pendiente', icon: Clock, class: 'text-yellow-700 bg-yellow-50 border-yellow-200' },
+  COMPLETADO: { label: 'Completado', icon: CheckCircle, class: 'text-green-700 bg-green-50 border-green-200' },
+  RECHAZADO: { label: 'Rechazado', icon: XCircle, class: 'text-red-700 bg-red-50 border-red-200' },
 };
 
 const ITEMS_PER_PAGE = 10;
 
-function StatusBadge({ status }: { status: MovementStatus }) {
+interface StatusBadgeProps {
+  status: MovementStatus;
+}
+
+interface RejectingMovement {
+  movementId: number;
+  groupId?: string | null;
+}
+
+interface MovementFormValues {
+  toCustodianId: string;
+  toLocationId: string;
+  note: string;
+}
+
+interface ConfirmFormValues {
+  note: string;
+  acta: File | null;
+}
+
+interface MovementPayload {
+  toCustodianId?: number;
+  toLocationId?: number;
+  note?: string;
+}
+
+function StatusBadge({ status }: StatusBadgeProps) {
   const { label, icon: Icon, class: cls } = STATUS_CONFIG[status];
   return (
     <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded border ${cls}`}>
@@ -36,41 +82,39 @@ function StatusBadge({ status }: { status: MovementStatus }) {
 
 export default function AssetMovementHistoryPage() {
   const { id } = useParams<{ id: string }>();
-  const assetId = parseInt(id);
+  const assetId = Number(id);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const [asset, setAsset] = useState<Asset | null>(null);
   const [movements, setMovements] = useState<AssetMovement[]>([]);
-  const [custodians, setCustodians] = useState<Custodian[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
+  const { custodians } = useCustodianOptions();
+  const { locations } = useLocationOptions();
   const [isLoading, setIsLoading] = useState(true);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
-  const [rejecting, setRejecting] = useState<{ movementId: number; groupId?: string | null } | null>(null);
+  const [rejecting, setRejecting] = useState<RejectingMovement | null>(null);
 
-  const [form, setForm] = useState({ toCustodianId: "", toLocationId: "", note: "" });
-  const [confirmForm, setConfirmForm] = useState({ note: "", acta: null as File | null });
+  const [form, setForm] = useState<MovementFormValues>({ toCustodianId: '', toLocationId: '', note: '' });
+  const [confirmForm, setConfirmForm] = useState<ConfirmFormValues>({ note: '', acta: null });
 
-  const [statusFilter, setStatusFilter] = useState<MovementStatus | "">("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [statusFilter, setStatusFilter] = useState<MovementStatus | ''>('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
-    Promise.all([
-      api.assets.getById(assetId),
-      api.movements.getByAsset(assetId),
-      api.custodians.getAll(),
-      api.locations.getAll(),
-    ])
-      .then(([a, m, c, l]) => { setAsset(a); setMovements(m); setCustodians(c.data); setLocations(l.data); })
+    Promise.all([api.assets.getById(assetId), api.movements.getByAsset(assetId)])
+      .then(([a, m]) => {
+        setAsset(a);
+        setMovements(m);
+      })
       .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : "Error al cargar el historial";
-        toast(message, "error");
+        const message = err instanceof Error ? err.message : 'Error al cargar el historial';
+        toast(message, 'error');
       })
       .finally(() => setIsLoading(false));
   }, [assetId, toast]);
@@ -80,7 +124,7 @@ export default function AssetMovementHistoryPage() {
       if (statusFilter && m.status !== statusFilter) return false;
       if (dateFrom) {
         const mDate = new Date(m.createdAt);
-        if (mDate < new Date(dateFrom)) return false;
+        if (mDate < new Date(`${dateFrom}T00:00:00`)) return false;
       }
       if (dateTo) {
         const mDate = new Date(m.createdAt);
@@ -93,10 +137,7 @@ export default function AssetMovementHistoryPage() {
   }, [movements, statusFilter, dateFrom, dateTo]);
 
   const totalPages = Math.ceil(filteredMovements.length / ITEMS_PER_PAGE);
-  const paginatedMovements = filteredMovements.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const paginatedMovements = filteredMovements.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -106,18 +147,18 @@ export default function AssetMovementHistoryPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const payload: { toCustodianId?: number; toLocationId?: number; note?: string } = {};
+      const payload: MovementPayload = {};
       if (form.toCustodianId) payload.toCustodianId = Number(form.toCustodianId);
       if (form.toLocationId) payload.toLocationId = Number(form.toLocationId);
       if (form.note) payload.note = form.note;
       const newMovement = await api.movements.create(assetId, payload);
       setMovements((prev) => [newMovement, ...prev]);
-      setForm({ toCustodianId: "", toLocationId: "", note: "" });
+      setForm({ toCustodianId: '', toLocationId: '', note: '' });
       setIsFormVisible(false);
-      toast("Traspaso registrado exitosamente", "success");
+      toast('Traspaso registrado exitosamente', 'success');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error al registrar traspaso";
-      toast(message, "error");
+      const message = error instanceof Error ? error.message : 'Error al registrar traspaso';
+      toast(message, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -127,8 +168,8 @@ export default function AssetMovementHistoryPage() {
     setIsSaving(true);
     try {
       const fd = new FormData();
-      if (confirmForm.note) fd.append("note", confirmForm.note);
-      if (confirmForm.acta) fd.append("acta", confirmForm.acta);
+      if (confirmForm.note) fd.append('note', confirmForm.note);
+      if (confirmForm.acta) fd.append('acta', confirmForm.acta);
 
       if (groupId) {
         await api.movements.confirmBulk(groupId, fd);
@@ -142,11 +183,11 @@ export default function AssetMovementHistoryPage() {
       const updatedAsset = await api.assets.getById(assetId);
       setAsset(updatedAsset);
       setConfirmingId(null);
-      setConfirmForm({ note: "", acta: null });
-      toast("Recepción confirmada exitosamente", "success");
+      setConfirmForm({ note: '', acta: null });
+      toast('Recepción confirmada exitosamente', 'success');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error al confirmar recepción";
-      toast(message, "error");
+      const message = error instanceof Error ? error.message : 'Error al confirmar recepción';
+      toast(message, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -163,36 +204,49 @@ export default function AssetMovementHistoryPage() {
         const updated = await api.movements.reject(assetId, movementId);
         setMovements((prev) => prev.map((m) => (m.id === movementId ? updated : m)));
       }
-      toast("Traspaso rechazado", "info");
+      toast('Traspaso rechazado', 'info');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error al rechazar traspaso";
-      toast(message, "error");
+      const message = error instanceof Error ? error.message : 'Error al rechazar traspaso';
+      toast(message, 'error');
     } finally {
       setIsSaving(false);
     }
   }
 
   function exportToCSV() {
-    const headers = ["Fecha", "Estado", "Custodio Origen", "Custodio Destino", "Ubicación Origen", "Ubicación Destino", "Observaciones", "Registrado por", "Confirmado por"];
+    const headers = [
+      'Fecha',
+      'Estado',
+      'Custodio Origen',
+      'Custodio Destino',
+      'Ubicación Origen',
+      'Ubicación Destino',
+      'Observaciones',
+      'Registrado por',
+      'Confirmado por',
+    ];
     const rows = filteredMovements.map((m) => [
-      new Date(m.createdAt).toLocaleDateString("es-EC"),
+      new Date(m.createdAt).toLocaleDateString('es-EC'),
       STATUS_CONFIG[m.status].label,
-      m.fromCustodian?.fullName || "",
-      m.toCustodian?.fullName || "",
-      [m.fromLocation?.canton, m.fromLocation?.parroquia].filter(Boolean).join(" / ") || "",
-      [m.toLocation?.canton, m.toLocation?.parroquia].filter(Boolean).join(" / ") || "",
-      m.note || "",
-      m.registeredBy?.name || "",
-      m.confirmedBy?.name || "",
+      m.fromCustodian?.fullName || '',
+      m.toCustodian?.fullName || '',
+      [m.fromLocation?.canton, m.fromLocation?.parroquia].filter(Boolean).join(' / ') || '',
+      [m.toLocation?.canton, m.toLocation?.parroquia].filter(Boolean).join(' / ') || '',
+      m.note || '',
+      m.registeredBy?.name || '',
+      m.confirmedBy?.name || '',
     ]);
 
-    const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `historial_${asset?.assetName || assetId}_${new Date().toISOString().split("T")[0]}.csv`;
+    const escapeCsvCell = (cell: string) => `"${cell.replace(/"/g, '""')}"`;
+    const csvContent = [headers, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `historial_${asset?.assetName || assetId}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    toast("CSV exportado exitosamente", "success");
+    URL.revokeObjectURL(objectUrl);
+    toast('CSV exportado exitosamente', 'success');
   }
 
   const canInitiate = isAdmin || (!!user?.custodianId && asset?.custodianId === user?.custodianId);
@@ -204,12 +258,15 @@ export default function AssetMovementHistoryPage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-4">
         <Link href={`/admin/assets/${assetId}`}>
-          <Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
         </Link>
         <div>
           <h1 className="text-3xl font-bold">Historial de Traspasos</h1>
           <p className="text-muted-foreground">
-            {asset.assetName}{asset.code ? ` — ${asset.code}` : ""}
+            {asset.assetName}
+            {asset.code ? ` — ${asset.code}` : ''}
           </p>
         </div>
         <div className="ml-auto flex gap-2">
@@ -230,25 +287,45 @@ export default function AssetMovementHistoryPage() {
 
       {isFormVisible && (
         <Card>
-          <CardHeader><CardTitle>Iniciar Traspaso</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Iniciar Traspaso</CardTitle>
+          </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Custodio receptor</Label>
-                  <Select value={form.toCustodianId} onValueChange={(value) => setForm({ ...form, toCustodianId: value })}>
-                    <SelectTrigger><SelectValue placeholder="Sin cambio de custodio" /></SelectTrigger>
+                  <Select
+                    value={form.toCustodianId}
+                    onValueChange={(value) => setForm({ ...form, toCustodianId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin cambio de custodio" />
+                    </SelectTrigger>
                     <SelectContent>
-                      {custodians.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.fullName} ({c.identifier})</SelectItem>)}
+                      {custodians.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.fullName} ({c.identifier})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label>Ubicación destino</Label>
-                  <Select value={form.toLocationId} onValueChange={(value) => setForm({ ...form, toLocationId: value })}>
-                    <SelectTrigger><SelectValue placeholder="Sin cambio de ubicación" /></SelectTrigger>
+                  <Select
+                    value={form.toLocationId}
+                    onValueChange={(value) => setForm({ ...form, toLocationId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin cambio de ubicación" />
+                    </SelectTrigger>
                     <SelectContent>
-                      {locations.map((l) => <SelectItem key={l.id} value={String(l.id)}>{[l.canton, l.parroquia].filter(Boolean).join(" / ")}</SelectItem>)}
+                      {locations.map((l) => (
+                        <SelectItem key={l.id} value={String(l.id)}>
+                          {[l.canton, l.parroquia].filter(Boolean).join(' / ')}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -262,8 +339,12 @@ export default function AssetMovementHistoryPage() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={isSaving}>{isSaving ? "Guardando..." : "Registrar Traspaso"}</Button>
-                <Button type="button" variant="outline" onClick={() => setIsFormVisible(false)}>Cancelar</Button>
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Registrar Traspaso'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setIsFormVisible(false)}>
+                  Cancelar
+                </Button>
               </div>
             </form>
           </CardContent>
@@ -280,8 +361,10 @@ export default function AssetMovementHistoryPage() {
           <div className="flex flex-wrap gap-4">
             <div className="grid gap-2">
               <Label className="text-xs">Estado</Label>
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as MovementStatus | "")}>
-                <SelectTrigger className="w-40"><SelectValue placeholder="Todos" /></SelectTrigger>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as MovementStatus | '')}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="PENDIENTE">Pendiente</SelectItem>
                   <SelectItem value="COMPLETADO">Completado</SelectItem>
@@ -291,21 +374,11 @@ export default function AssetMovementHistoryPage() {
             </div>
             <div className="grid gap-2">
               <Label className="text-xs">Desde</Label>
-              <Input
-                type="date"
-                className="w-40"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-              />
+              <Input type="date" className="w-40" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label className="text-xs">Hasta</Label>
-              <Input
-                type="date"
-                className="w-40"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-              />
+              <Input type="date" className="w-40" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             </div>
             {(statusFilter || dateFrom || dateTo) && (
               <div className="grid gap-2">
@@ -313,7 +386,11 @@ export default function AssetMovementHistoryPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => { setStatusFilter(""); setDateFrom(""); setDateTo(""); }}
+                  onClick={() => {
+                    setStatusFilter('');
+                    setDateFrom('');
+                    setDateTo('');
+                  }}
                 >
                   Limpiar filtros
                 </Button>
@@ -323,13 +400,15 @@ export default function AssetMovementHistoryPage() {
 
           {filteredMovements.length === 0 ? (
             <p className="text-muted-foreground text-sm py-4 text-center">
-              {movements.length === 0 ? "No hay traspasos registrados." : "No hay traspasos con los filtros seleccionados."}
+              {movements.length === 0
+                ? 'No hay traspasos registrados.'
+                : 'No hay traspasos con los filtros seleccionados.'}
             </p>
           ) : (
             <>
               <div className="space-y-3">
                 {paginatedMovements.map((m) => {
-                  const isPending = m.status === "PENDIENTE";
+                  const isPending = m.status === 'PENDIENTE';
                   const canAct = isPending && (isAdmin || user?.custodianId === m.toCustodianId);
                   const isConfirming = confirmingId === m.id;
 
@@ -339,7 +418,11 @@ export default function AssetMovementHistoryPage() {
                         <div className="space-y-1 text-sm">
                           <div className="flex items-center gap-2">
                             <span className="text-muted-foreground">
-                              {new Date(m.createdAt).toLocaleDateString("es-EC", { year: "numeric", month: "short", day: "numeric" })}
+                              {new Date(m.createdAt).toLocaleDateString('es-EC', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })}
                             </span>
                             <StatusBadge status={m.status} />
                             {m.groupId && (
@@ -356,19 +439,24 @@ export default function AssetMovementHistoryPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium">Ubicación:</span>
                             <LocationChange
-                              from={[m.fromLocation?.canton, m.fromLocation?.parroquia].filter(Boolean).join(" / ")}
-                              to={[m.toLocation?.canton, m.toLocation?.parroquia].filter(Boolean).join(" / ")}
+                              from={[m.fromLocation?.canton, m.fromLocation?.parroquia].filter(Boolean).join(' / ')}
+                              to={[m.toLocation?.canton, m.toLocation?.parroquia].filter(Boolean).join(' / ')}
                             />
                           </div>
                           {m.note && <p className="text-muted-foreground">{m.note}</p>}
                         </div>
                         <div className="flex flex-col gap-1 items-end text-xs text-muted-foreground shrink-0">
                           {m.actaUrl && (
-                            <a href={m.actaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                            <a
+                              href={m.actaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-primary hover:underline"
+                            >
                               <FileText className="w-3.5 h-3.5" /> Ver acta
                             </a>
                           )}
-                          <span>Iniciado por: {m.registeredBy?.name ?? "—"}</span>
+                          <span>Iniciado por: {m.registeredBy?.name ?? '—'}</span>
                           {m.confirmedBy && <span>Confirmado por: {m.confirmedBy.name}</span>}
                         </div>
                       </div>
@@ -377,11 +465,17 @@ export default function AssetMovementHistoryPage() {
                         <div className="flex gap-2 pt-1 border-t">
                           <Button size="sm" onClick={() => setConfirmingId(m.id)}>
                             <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                            {m.groupId ? "Confirmar grupo" : "Confirmar recepción"}
+                            {m.groupId ? 'Confirmar grupo' : 'Confirmar recepción'}
                           </Button>
-                          <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive/10" onClick={() => setRejecting({ movementId: m.id, groupId: m.groupId })} disabled={isSaving}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={() => setRejecting({ movementId: m.id, groupId: m.groupId })}
+                            disabled={isSaving}
+                          >
                             <XCircle className="w-3.5 h-3.5 mr-1.5" />
-                            {m.groupId ? "Rechazar grupo" : "Rechazar"}
+                            {m.groupId ? 'Rechazar grupo' : 'Rechazar'}
                           </Button>
                         </div>
                       )}
@@ -389,21 +483,33 @@ export default function AssetMovementHistoryPage() {
                       {isConfirming && (
                         <div className="border-t pt-3 space-y-3">
                           <p className="text-sm font-medium">
-                            {m.groupId ? "Confirmar recepción del grupo" : "Confirmar recepción del bien"}
+                            {m.groupId ? 'Confirmar recepción del grupo' : 'Confirmar recepción del bien'}
                           </p>
                           <div className="grid gap-2">
-                            <Label className="text-xs">Acta firmada por ambas partes (PDF, JPG o PNG, máx. 10 MB)</Label>
-                            <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setConfirmForm({ ...confirmForm, acta: e.target.files?.[0] ?? null })} />
+                            <Label className="text-xs">
+                              Acta firmada por ambas partes (PDF, JPG o PNG, máx. 10 MB)
+                            </Label>
+                            <Input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => setConfirmForm({ ...confirmForm, acta: e.target.files?.[0] ?? null })}
+                            />
                           </div>
                           <div className="grid gap-2">
                             <Label className="text-xs">Observaciones de la recepción</Label>
-                            <Input placeholder="Estado del bien al recibirlo, etc." value={confirmForm.note} onChange={(e) => setConfirmForm({ ...confirmForm, note: e.target.value })} />
+                            <Input
+                              placeholder="Estado del bien al recibirlo, etc."
+                              value={confirmForm.note}
+                              onChange={(e) => setConfirmForm({ ...confirmForm, note: e.target.value })}
+                            />
                           </div>
                           <div className="flex gap-2">
                             <Button size="sm" onClick={() => handleConfirm(m.id, m.groupId)} disabled={isSaving}>
-                              {isSaving ? "Guardando..." : "Confirmar"}
+                              {isSaving ? 'Guardando...' : 'Confirmar'}
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => setConfirmingId(null)}>Cancelar</Button>
+                            <Button size="sm" variant="outline" onClick={() => setConfirmingId(null)}>
+                              Cancelar
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -443,7 +549,9 @@ export default function AssetMovementHistoryPage() {
       </Card>
       <ConfirmDialog
         open={rejecting !== null}
-        onOpenChange={(open) => { if (!open) setRejecting(null); }}
+        onOpenChange={(open) => {
+          if (!open) setRejecting(null);
+        }}
         title="¿Rechazar este traspaso? El bien permanecerá con el custodio actual."
         description=""
         onConfirm={() => {
@@ -455,24 +563,29 @@ export default function AssetMovementHistoryPage() {
   );
 }
 
-function CustodianChange({ from, to }: { from?: string; to?: string }) {
+interface ChangeProps {
+  from?: string;
+  to?: string;
+}
+
+function CustodianChange({ from, to }: ChangeProps) {
   if (!from && !to) return <>—</>;
   if (!to) return <span className="text-muted-foreground">{from}</span>;
   return (
     <span className="flex items-center gap-1 flex-wrap">
-      <span className="text-muted-foreground line-through text-xs">{from ?? "ninguno"}</span>
+      <span className="text-muted-foreground line-through text-xs">{from ?? 'ninguno'}</span>
       <ArrowRight className="w-3 h-3 shrink-0" />
       <span className="font-medium">{to}</span>
     </span>
   );
 }
 
-function LocationChange({ from, to }: { from?: string; to?: string }) {
+function LocationChange({ from, to }: ChangeProps) {
   if (!from && !to) return <>—</>;
   if (!to) return <span className="text-muted-foreground">{from}</span>;
   return (
     <span className="flex items-center gap-1 flex-wrap">
-      <span className="text-muted-foreground line-through text-xs">{from || "ninguna"}</span>
+      <span className="text-muted-foreground line-through text-xs">{from || 'ninguna'}</span>
       <ArrowRight className="w-3 h-3 shrink-0" />
       <span className="font-medium">{to}</span>
     </span>

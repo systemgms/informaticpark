@@ -1,53 +1,67 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { Custodian, Location } from "@/lib/types";
-import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, History, Save } from "lucide-react";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { useCustodianOptions } from '@/hooks/use-custodian-options';
+import { useLocationOptions } from '@/hooks/use-location-options';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, History, Save } from 'lucide-react';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
-const LocationPicker = dynamic(
-  () => import("@/components/location-picker").then((m) => m.LocationPicker),
-  { ssr: false, loading: () => <div className="h-[320px] rounded-md border border-input flex items-center justify-center text-muted-foreground text-sm">Cargando mapa...</div> }
-);
+const LocationPicker = dynamic(() => import('@/components/location-picker').then((m) => m.LocationPicker), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[320px] rounded-md border border-input flex items-center justify-center text-muted-foreground text-sm">
+      Cargando mapa...
+    </div>
+  ),
+});
 
 const MORONA_SANTIAGO: Record<string, string[]> = {
-  "Morona": [
-    "Macas", "Alshi", "General Proaño", "Huambi", "Proaño",
-    "Río Blanco", "San Isidro", "Sevilla Don Bosco", "Sinaí", "Zuñac",
+  Morona: [
+    'Macas',
+    'Alshi',
+    'General Proaño',
+    'Huambi',
+    'Proaño',
+    'Río Blanco',
+    'San Isidro',
+    'Sevilla Don Bosco',
+    'Sinaí',
+    'Zuñac',
   ],
-  "Gualaquiza": [
-    "Gualaquiza", "Amazonas", "Bomboiza", "Chiguinda",
-    "El Ideal", "El Rosario", "Nueva Tarqui",
+  Gualaquiza: ['Gualaquiza', 'Amazonas', 'Bomboiza', 'Chiguinda', 'El Ideal', 'El Rosario', 'Nueva Tarqui'],
+  Huamboya: ['Huamboya', 'Chiguaza'],
+  'Limón Indanza': [
+    'General Leonidas Plaza Gutiérrez',
+    'Indanza',
+    'San Antonio',
+    'San Miguel de Conchay',
+    'Santa Susana de Chiviaza',
+    'Yunganza',
   ],
-  "Huamboya": ["Huamboya", "Chiguaza"],
-  "Limón Indanza": [
-    "General Leonidas Plaza Gutiérrez", "Indanza", "San Antonio",
-    "San Miguel de Conchay", "Santa Susana de Chiviaza", "Yunganza",
+  Logroño: ['Logroño', 'Nambija', 'Shimpis'],
+  'Pablo Sexto': ['Pablo Sexto'],
+  Palora: ['Palora', 'Arapicos', 'Cumandá', 'Guiaza', 'Sangay'],
+  'San Juan Bosco': [
+    'San Juan Bosco',
+    'El Rosario',
+    'Pan de Azúcar',
+    'San Jacinto de Wakambeis',
+    'Santiago de Pananza',
   ],
-  "Logroño": ["Logroño", "Nambija", "Shimpis"],
-  "Pablo Sexto": ["Pablo Sexto"],
-  "Palora": ["Palora", "Arapicos", "Cumandá", "Guiaza", "Sangay"],
-  "San Juan Bosco": [
-    "San Juan Bosco", "El Rosario", "Pan de Azúcar",
-    "San Jacinto de Wakambeis", "Santiago de Pananza",
-  ],
-  "Santiago": [
-    "Santiago de Méndez", "Copal", "Chupianza",
-    "Patuca", "San Luis del Acho", "Tayuza",
-  ],
-  "Sucúa": ["Sucúa", "Asunción", "Huambi", "Santa Marianita de Jesús"],
-  "Taisha": ["Taisha", "Huasaga", "Macuma", "Pumpuentsa", "Tuutinentza"],
-  "Tiwintza": ["San José de Morona", "Santiago"],
+  Santiago: ['Santiago de Méndez', 'Copal', 'Chupianza', 'Patuca', 'San Luis del Acho', 'Tayuza'],
+  Sucúa: ['Sucúa', 'Asunción', 'Huambi', 'Santa Marianita de Jesús'],
+  Taisha: ['Taisha', 'Huasaga', 'Macuma', 'Pumpuentsa', 'Tuutinentza'],
+  Tiwintza: ['San José de Morona', 'Santiago'],
 };
 
 interface AssetFormProps {
@@ -58,26 +72,26 @@ export function AssetForm({ assetId }: AssetFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEdit = !!assetId;
-  const [loading, setLoading] = useState(isEdit);
-  const [saving, setSaving] = useState(false);
-  const [custodians, setCustodians] = useState<Custodian[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
+  const [isLoading, setIsLoading] = useState(isEdit);
+  const [isSaving, setIsSaving] = useState(false);
+  const { custodians } = useCustodianOptions();
+  const { locations, addLocation } = useLocationOptions();
   const [formData, setFormData] = useState({
-    code: "",
-    previousCode: "",
-    assetName: "",
-    brand: "",
-    model: "",
-    serialNumber: "",
-    location: "",
-    physicalLocation: "",
-    accountCode: "",
+    code: '',
+    previousCode: '',
+    assetName: '',
+    brand: '',
+    model: '',
+    serialNumber: '',
+    location: '',
+    physicalLocation: '',
+    accountCode: '',
     initialValue: 0,
     currentValue: 0,
-    note: "",
-    custodianId: "",
-    canton: "",
-    parroquia: "",
+    note: '',
+    custodianId: '',
+    canton: '',
+    parroquia: '',
   });
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -85,65 +99,43 @@ export function AssetForm({ assetId }: AssetFormProps) {
     try {
       const asset = await api.assets.getById(assetId!);
       setFormData({
-        code: asset.code || "",
-        previousCode: asset.previousCode || "",
+        code: asset.code || '',
+        previousCode: asset.previousCode || '',
         assetName: asset.assetName,
-        brand: asset.brand || "",
-        model: asset.model || "",
-        serialNumber: asset.serialNumber || "",
-        location: asset.location || "",
-        physicalLocation: asset.physicalLocation || "",
-        accountCode: asset.accountCode || "",
+        brand: asset.brand || '',
+        model: asset.model || '',
+        serialNumber: asset.serialNumber || '',
+        location: asset.location || '',
+        physicalLocation: asset.physicalLocation || '',
+        accountCode: asset.accountCode || '',
         initialValue: asset.initialValue || 0,
         currentValue: asset.currentValue || 0,
-        note: asset.note || "",
-        custodianId: asset.custodianId?.toString() || "",
-        canton: asset.geoLocation?.canton || "",
-        parroquia: asset.geoLocation?.parroquia || "",
+        note: asset.note || '',
+        custodianId: asset.custodianId?.toString() || '',
+        canton: asset.geoLocation?.canton || '',
+        parroquia: asset.geoLocation?.parroquia || '',
       });
       if (asset.geoLocation?.lat != null && asset.geoLocation?.lng != null) {
         setCoordinates({ lat: asset.geoLocation.lat, lng: asset.geoLocation.lng });
       }
-    } catch (error) {
-      console.error("Error loading asset:", error);
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Error al cargar el activo', 'error');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [assetId]);
+  }, [assetId, toast]);
 
   useEffect(() => {
-    loadCustodians();
-    loadLocations();
     if (isEdit) {
       loadAsset();
     }
   }, [assetId, isEdit, loadAsset]);
 
-  async function loadCustodians() {
-    try {
-      const data = await api.custodians.getAll();
-      setCustodians(data.data);
-    } catch (error) {
-      console.error("Error loading custodians:", error);
-    }
-  }
-
-  async function loadLocations() {
-    try {
-      const data = await api.locations.getAll();
-      setLocations(data.data);
-    } catch (error) {
-      console.error("Error loading locations:", error);
-    }
-  }
-
   async function resolveLocationId(): Promise<number | null> {
     const { canton, parroquia } = formData;
     if (!canton && !parroquia && !coordinates) return null;
 
-    const existing = locations.find(
-      (l) => l.canton === canton && l.parroquia === parroquia
-    );
+    const existing = locations.find((l) => l.canton === canton && l.parroquia === parroquia);
     if (existing) return existing.id;
 
     try {
@@ -153,32 +145,32 @@ export function AssetForm({ assetId }: AssetFormProps) {
         lat: coordinates?.lat ?? undefined,
         lng: coordinates?.lng ?? undefined,
       });
-      setLocations((prev) => [...prev, created]);
+      addLocation(created);
       return created.id;
     } catch {
-      // Si el API de ubicaciones no está disponible, guardar sin ubicación geográfica
+      // If the locations API is unavailable, save the asset without a geographic location
       return null;
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     // Basic validation
     if (!formData.assetName.trim()) {
-      toast("El nombre del activo es requerido", "error");
+      toast('El nombre del activo es requerido', 'error');
       return;
     }
     if (formData.initialValue && formData.initialValue < 0) {
-      toast("El valor inicial no puede ser negativo", "error");
+      toast('El valor inicial no puede ser negativo', 'error');
       return;
     }
     if (formData.currentValue && formData.currentValue < 0) {
-      toast("El valor actual no puede ser negativo", "error");
+      toast('El valor actual no puede ser negativo', 'error');
       return;
     }
-    
-    setSaving(true);
+
+    setIsSaving(true);
     try {
       const locationId = await resolveLocationId();
       const nullStr = (v: string) => v.trim() || null;
@@ -203,18 +195,18 @@ export function AssetForm({ assetId }: AssetFormProps) {
       } else {
         await api.assets.create(data);
       }
-      router.push("/admin/assets");
+      router.push('/admin/assets');
       router.refresh();
-    } catch (error: any) {
-      toast(error?.message || "Error al guardar activo", "error");
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Error al guardar activo', 'error');
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
-  if (loading) return <div>Cargando...</div>;
+  if (isLoading) return <div>Cargando...</div>;
 
-  const parroquias = formData.canton ? (MORONA_SANTIAGO[formData.canton] ?? []) : [];
+  const parishes = formData.canton ? (MORONA_SANTIAGO[formData.canton] ?? []) : [];
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -224,9 +216,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">
-          {isEdit ? "Editar Activo" : "Nuevo Activo"}
-        </h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Activo' : 'Nuevo Activo'}</h1>
         {isEdit && (
           <Link href={`/admin/assets/${assetId}/historial`} className="ml-auto">
             <Button variant="outline">
@@ -238,7 +228,6 @@ export function AssetForm({ assetId }: AssetFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-
         {/* Ubicación Geográfica */}
         <Card>
           <CardHeader>
@@ -246,37 +235,49 @@ export function AssetForm({ assetId }: AssetFormProps) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-2">
-                <Label>Coordenadas de Ubicación</Label>
-                <LocationPicker value={coordinates} onChange={setCoordinates} />
-                {coordinates && (
-                  <input type="hidden" name="coordinates" value={`${coordinates.lat},${coordinates.lng}`} />
-                )}
-              </div>
+              <Label>Coordenadas de Ubicación</Label>
+              <LocationPicker value={coordinates} onChange={setCoordinates} />
+              {coordinates && (
+                <input type="hidden" name="coordinates" value={`${coordinates.lat},${coordinates.lng}`} />
+              )}
+            </div>
             <div className="grid md:grid-cols-2 gap-4">
-              
               <div className="grid gap-2">
                 <Label htmlFor="canton">Cantón</Label>
-                <Select value={formData.canton} onValueChange={(value) =>
-                  setFormData({ ...formData, canton: value, parroquia: "" })
-                }>
-                  <SelectTrigger id="canton"><SelectValue placeholder="Seleccionar cantón" /></SelectTrigger>
+                <Select
+                  value={formData.canton}
+                  onValueChange={(value) => setFormData({ ...formData, canton: value, parroquia: '' })}
+                >
+                  <SelectTrigger id="canton">
+                    <SelectValue placeholder="Seleccionar cantón" />
+                  </SelectTrigger>
                   <SelectContent>
-                  {Object.keys(MORONA_SANTIAGO).map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
+                    {Object.keys(MORONA_SANTIAGO).map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="parroquia">Parroquia</Label>
-                <Select value={formData.parroquia} onValueChange={(value) =>
-                  setFormData({ ...formData, parroquia: value })
-                } disabled={!formData.canton}>
-                  <SelectTrigger id="parroquia"><SelectValue placeholder={formData.canton ? "Seleccionar parroquia" : "Seleccione un cantón primero"} /></SelectTrigger>
+                <Select
+                  value={formData.parroquia}
+                  onValueChange={(value) => setFormData({ ...formData, parroquia: value })}
+                  disabled={!formData.canton}
+                >
+                  <SelectTrigger id="parroquia">
+                    <SelectValue
+                      placeholder={formData.canton ? 'Seleccionar parroquia' : 'Seleccione un cantón primero'}
+                    />
+                  </SelectTrigger>
                   <SelectContent>
-                  {parroquias.map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
+                    {parishes.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -343,14 +344,19 @@ export function AssetForm({ assetId }: AssetFormProps) {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="custodianId">Custodio Responsable</Label>
-                  <Select value={formData.custodianId} onValueChange={(value) => setFormData({ ...formData, custodianId: value })}>
-                    <SelectTrigger id="custodianId"><SelectValue placeholder="Seleccionar Custodio" /></SelectTrigger>
+                  <Select
+                    value={formData.custodianId}
+                    onValueChange={(value) => setFormData({ ...formData, custodianId: value })}
+                  >
+                    <SelectTrigger id="custodianId">
+                      <SelectValue placeholder="Seleccionar Custodio" />
+                    </SelectTrigger>
                     <SelectContent>
-                    {custodians.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.fullName} ({c.identifier})
-                      </SelectItem>
-                    ))}
+                      {custodians.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.fullName} ({c.identifier})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -387,11 +393,10 @@ export function AssetForm({ assetId }: AssetFormProps) {
           </CardContent>
         </Card>
 
-        <Button type="submit" className="w-full" disabled={saving}>
+        <Button type="submit" className="w-full" disabled={isSaving}>
           <Save className="w-4 h-4 mr-2" />
-          {saving ? "Guardando..." : "Guardar Activo"}
+          {isSaving ? 'Guardando...' : 'Guardar Activo'}
         </Button>
-
       </form>
     </div>
   );

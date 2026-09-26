@@ -1,120 +1,105 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { api } from "@/lib/api";
-import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save } from "lucide-react";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Role } from "@/lib/types";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { api } from '@/lib/api';
+import { useCustodianOptions } from '@/hooks/use-custodian-options';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Save } from 'lucide-react';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Role } from '@/lib/types';
 
-const createUserSchema = z.object({
-  name: z.string().min(1, "Nombre requerido").max(100, "Máximo 100 caracteres"),
-  email: z.string().email("Email inválido").max(100, "Máximo 100 caracteres"),
-  password: z
-    .string()
-    .min(8, "La contraseña debe tener al menos 8 caracteres")
-    .max(100, "Máximo 100 caracteres"),
-  role: z.enum(["ADMIN", "USER"], "Rol inválido"),
-  isActive: z.boolean(),
-  custodianId: z.string().optional(),
-});
+interface UserFormValues {
+  name: string;
+  email: string;
+  password: string;
+  role: Role;
+  isActive: boolean;
+  custodianId: string;
+}
 
-type CreateUserFormValues = z.infer<typeof createUserSchema>;
+interface UserUpdatePayload {
+  name: string;
+  email: string;
+  role: Role;
+  isActive: boolean;
+  custodianId: number | null;
+  password?: string;
+}
 
-export function UserForm({ userId }: { userId?: number }) {
+interface UserFormProps {
+  userId?: number;
+}
+
+const INITIAL_FORM_VALUES: UserFormValues = {
+  name: '',
+  email: '',
+  password: '',
+  role: Role.USER,
+  isActive: true,
+  custodianId: '',
+};
+
+export function UserForm({ userId }: UserFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEdit = !!userId;
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [custodians, setCustodians] = useState<{ id: number; identifier: string }[]>([]);
-  const [formValues, setFormValues] = useState<CreateUserFormValues>({
-    name: "",
-    email: "",
-    password: "",
-    role: "USER",
-    isActive: true,
-    custodianId: "",
-  });
-
-  const {
-    register,
-    formState: { errors },
-  } = useForm<CreateUserFormValues>({
-    resolver: zodResolver(createUserSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      role: "USER",
-      isActive: true,
-      custodianId: "",
-    },
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const { custodians } = useCustodianOptions();
+  const [formValues, setFormValues] = useState<UserFormValues>(INITIAL_FORM_VALUES);
 
   useEffect(() => {
     async function load() {
       try {
-        const [custodiansData, userData] = await Promise.all([
-          api.custodians.getAll(),
-          isEdit ? api.users.getById(userId!) : Promise.resolve(null),
-        ]);
-        setCustodians(custodiansData.data.map((c) => ({
-          id: c.id,
-          identifier: c.identifier,
-        })));
+        const userData = isEdit ? await api.users.getById(userId!) : null;
         if (userData) {
           setFormValues({
             name: userData.name,
             email: userData.email,
-            password: "",
+            password: '',
             role: userData.role,
             isActive: userData.isActive,
-            custodianId: userData.custodianId ? String(userData.custodianId) : "",
+            custodianId: userData.custodianId ? String(userData.custodianId) : '',
           });
         }
-      } catch (error) {
-        console.error("Error loading data:", error);
+      } catch (error: unknown) {
+        toast(error instanceof Error ? error.message : 'Error al cargar el usuario', 'error');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     load();
-  }, [userId, isEdit]);
+  }, [userId, isEdit, toast]);
 
   async function handleSubmitFn(e: React.FormEvent) {
     e.preventDefault();
 
-    // Usar validación del schema a través de react-hook-form
     if (!formValues.name.trim()) {
-      toast("El nombre es requerido", "error");
+      toast('El nombre es requerido', 'error');
       return;
     }
     if (!formValues.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.email)) {
-      toast("El email es requerido y debe ser válido", "error");
+      toast('El email es requerido y debe ser válido', 'error');
       return;
     }
     if (!isEdit && !formValues.password) {
-      toast("La contraseña es requerida", "error");
+      toast('La contraseña es requerida', 'error');
       return;
     }
     if (formValues.password && formValues.password.length < 8) {
-      toast("La contraseña debe tener al menos 8 caracteres", "error");
+      toast('La contraseña debe tener al menos 8 caracteres', 'error');
       return;
     }
 
-    setSaving(true);
+    setIsSaving(true);
     try {
-      const payload: any = {
+      const payload: UserUpdatePayload = {
         name: formValues.name,
         email: formValues.email,
         role: formValues.role,
@@ -127,21 +112,21 @@ export function UserForm({ userId }: { userId?: number }) {
         await api.users.update(userId!, payload);
       } else {
         if (!formValues.password) {
-          toast("La contraseña es requerida", "error");
+          toast('La contraseña es requerida', 'error');
           return;
         }
         await api.users.create({ ...payload, password: formValues.password });
       }
-      router.push("/admin/users");
+      router.push('/admin/users');
       router.refresh();
-    } catch (error: any) {
-      toast(error?.message || "Error al guardar usuario", "error");
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Error al guardar usuario', 'error');
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
-  if (loading) return <div>Cargando...</div>;
+  if (isLoading) return <div>Cargando...</div>;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -151,9 +136,7 @@ export function UserForm({ userId }: { userId?: number }) {
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">
-          {isEdit ? "Editar Usuario" : "Nuevo Usuario"}
-        </h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</h1>
       </div>
 
       <Card>
@@ -166,12 +149,10 @@ export function UserForm({ userId }: { userId?: number }) {
               <Label htmlFor="name">Nombre Completo</Label>
               <Input
                 id="name"
-                {...register("name", { required: "Nombre requerido" })}
+                value={formValues.name}
+                onChange={(e) => setFormValues({ ...formValues, name: e.target.value })}
                 required
               />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-              )}
             </div>
 
             <div className="grid gap-2">
@@ -179,12 +160,10 @@ export function UserForm({ userId }: { userId?: number }) {
               <Input
                 id="email"
                 type="email"
-                {...register("email", { required: "Email requerido" })}
+                value={formValues.email}
+                onChange={(e) => setFormValues({ ...formValues, email: e.target.value })}
                 required
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
             </div>
 
             {!isEdit && (
@@ -193,20 +172,10 @@ export function UserForm({ userId }: { userId?: number }) {
                 <Input
                   id="password"
                   type="password"
-                  {...register("password", {
-                    required: "Contraseña requerida",
-                    minLength: {
-                      value: 8,
-                      message: "Mínimo 8 caracteres",
-                    },
-                  })}
+                  value={formValues.password}
+                  onChange={(e) => setFormValues({ ...formValues, password: e.target.value })}
                   required
                 />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.password.message}
-                  </p>
-                )}
               </div>
             )}
 
@@ -214,11 +183,11 @@ export function UserForm({ userId }: { userId?: number }) {
               <Label htmlFor="role">Rol</Label>
               <Select
                 value={formValues.role}
-                onValueChange={(value: string) =>
-                  setFormValues({ ...formValues, role: value as Role })
-                }
+                onValueChange={(value: string) => setFormValues({ ...formValues, role: value as Role })}
               >
-                <SelectTrigger id="role"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="role">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={Role.USER}>Usuario (Custodio)</SelectItem>
                   <SelectItem value={Role.ADMIN}>Administrador</SelectItem>
@@ -231,11 +200,11 @@ export function UserForm({ userId }: { userId?: number }) {
                 <Label htmlFor="custodianId">Custodio vinculado</Label>
                 <Select
                   value={formValues.custodianId}
-                  onValueChange={(value: string) =>
-                    setFormValues({ ...formValues, custodianId: value })
-                  }
+                  onValueChange={(value: string) => setFormValues({ ...formValues, custodianId: value })}
                 >
-                  <SelectTrigger id="custodianId"><SelectValue placeholder="Sin custodio vinculado" /></SelectTrigger>
+                  <SelectTrigger id="custodianId">
+                    <SelectValue placeholder="Sin custodio vinculado" />
+                  </SelectTrigger>
                   <SelectContent>
                     {custodians.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
@@ -255,20 +224,18 @@ export function UserForm({ userId }: { userId?: number }) {
                 id="isActive"
                 type="checkbox"
                 checked={formValues.isActive}
-                onChange={(e) =>
-                  setFormValues({ ...formValues, isActive: e.target.checked })
-                }
+                onChange={(e) => setFormValues({ ...formValues, isActive: e.target.checked })}
               />
               <Label htmlFor="isActive">Usuario Activo</Label>
             </div>
 
-            <Button type="submit" className="w-full" disabled={saving}>
+            <Button type="submit" className="w-full" disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {saving ? "Guardando..." : "Guardar Usuario"}
+              {isSaving ? 'Guardando...' : 'Guardar Usuario'}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

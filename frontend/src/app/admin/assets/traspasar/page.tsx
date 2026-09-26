@@ -1,266 +1,233 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { Asset, Custodian, Location } from "@/lib/types";
-import { useAuth } from "@/components/auth-provider";
-import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Package, Search, CheckSquare, Square, Send, AlertCircle } from "lucide-react";
+import { useCallback, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { Asset } from '@/lib/types';
+import { useToast } from '@/components/ui/toast';
+import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { useCustodianOptions } from '@/hooks/use-custodian-options';
+import { useLocationOptions } from '@/hooks/use-location-options';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Pagination } from '@/components/pagination';
+import { ListSearchInput } from '@/components/list-search-input';
+import { ArrowLeft, Send, X } from 'lucide-react';
+import { SelectableAssetList } from './selectable-asset-list';
+
+interface BulkTransferForm {
+  toCustodianId: string;
+  toLocationId: string;
+  note: string;
+}
+
+interface BulkTransferPayload {
+  assetIds: number[];
+  toCustodianId?: number;
+  toLocationId?: number;
+  note?: string;
+}
 
 export default function BulkTransferPage() {
-  const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const isAdmin = user?.role === "ADMIN";
 
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [custodians, setCustodians] = useState<Custodian[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const { custodians } = useCustodianOptions();
+  const { locations } = useLocationOptions();
+
+  const [selectedAssets, setSelectedAssets] = useState<Map<number, Asset>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
+  const [form, setForm] = useState<BulkTransferForm>({ toCustodianId: '', toLocationId: '', note: '' });
 
-  const [form, setForm] = useState({
-    toCustodianId: "",
-    toLocationId: "",
-    note: "",
-  });
-
-  useEffect(() => {
-    Promise.all([
-      api.assets.getAll(),
-      api.custodians.getAll(),
-      api.locations.getAll(),
-    ])
-      .then(([a, c, l]) => {
-        setAssets(a.data);
-        setCustodians(c.data);
-        setLocations(l.data);
-      })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Error al cargar datos"))
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  const visibleAssets =
-    isAdmin
-      ? assets
-      : assets.filter((a) => a.custodianId === user?.custodianId);
-
-  const filteredAssets = visibleAssets.filter(
-    (a) =>
-      a.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.code?.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchAssets = useCallback(
+    (params: { page: number; limit: number; search: string }) => api.assets.getAll(params),
+    [],
   );
 
-  function toggleSelect(id: number) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  const {
+    items: assets,
+    meta,
+    page,
+    setPage,
+    search,
+    setSearch,
+    isLoading,
+    error,
+  } = usePaginatedList<Asset>({ fetchPage: fetchAssets });
+
+  const selectedIds = useMemo(() => new Set(selectedAssets.keys()), [selectedAssets]);
+  const selectedList = useMemo(() => Array.from(selectedAssets.values()), [selectedAssets]);
+  const isAllOnPageSelected = assets.length > 0 && assets.every((asset) => selectedAssets.has(asset.id));
+
+  function toggleSelect(asset: Asset) {
+    setSelectedAssets((prev) => {
+      const next = new Map(prev);
+      if (next.has(asset.id)) {
+        next.delete(asset.id);
+      } else {
+        next.set(asset.id, asset);
+      }
       return next;
     });
   }
 
-  function toggleSelectAll() {
-    if (selectedIds.size === filteredAssets.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredAssets.map((a) => a.id)));
-    }
+  function toggleSelectAllOnPage() {
+    setSelectedAssets((prev) => {
+      const next = new Map(prev);
+      if (isAllOnPageSelected) {
+        assets.forEach((asset) => next.delete(asset.id));
+      } else {
+        assets.forEach((asset) => next.set(asset.id, asset));
+      }
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectedAssets(new Map());
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (selectedIds.size === 0) {
-      toast("Selecciona al menos un activo para traspasar.", "error");
+    if (selectedAssets.size === 0) {
+      toast('Selecciona al menos un activo para traspasar.', 'error');
       return;
     }
     setIsSaving(true);
     try {
-      const payload: { assetIds: number[]; toCustodianId?: number; toLocationId?: number; note?: string } = {
-        assetIds: [...selectedIds],
+      const payload: BulkTransferPayload = {
+        assetIds: Array.from(selectedAssets.keys()),
       };
       if (form.toCustodianId) payload.toCustodianId = Number(form.toCustodianId);
       if (form.toLocationId) payload.toLocationId = Number(form.toLocationId);
       if (form.note) payload.note = form.note;
       await api.movements.createBulk(payload);
-      toast(`Traspaso masivo registrado: ${selectedIds.size} activo(s).`, "success");
-      router.push("/admin/assets");
+      toast(`Traspaso masivo registrado: ${selectedAssets.size} activo(s).`, 'success');
+      router.push('/admin/assets');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Error al registrar traspaso masivo";
-      toast(message, "error");
+      const message = err instanceof Error ? err.message : 'Error al registrar traspaso masivo';
+      toast(message, 'error');
     } finally {
       setIsSaving(false);
     }
   }
 
-  const isAllSelected = filteredAssets.length > 0 && selectedIds.size === filteredAssets.length;
-  const hasPartialSelection = selectedIds.size > 0 && !isAllSelected;
-
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/admin/assets">
-          <Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
+          <Button variant="outline" size="icon" className="h-11 w-11">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
         </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Traspaso Masivo</h1>
-          <p className="text-muted-foreground text-sm mt-1">Selecciona uno o más activos para traspasar simultáneamente.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Selecciona uno o más activos para traspasar simultáneamente.
+          </p>
         </div>
       </div>
-
-      {error && (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="py-4 flex items-center gap-2 text-destructive text-sm">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            {error}
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Seleccionar Activos</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-2 max-w-sm">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                placeholder="Buscar por nombre o código..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            {!isLoading && (
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {filteredAssets.length} {filteredAssets.length === 1 ? "activo" : "activos"}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre o código..." />
+            {!isLoading && meta && (
+              <span className="whitespace-nowrap text-sm text-muted-foreground">
+                {meta.total} {meta.total === 1 ? 'activo' : 'activos'} · {selectedAssets.size} seleccionado(s)
               </span>
             )}
           </div>
 
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40">
-                  <TableHead className="w-10">
-                    <button onClick={toggleSelectAll} className="cursor-pointer">
-                      {isAllSelected ? (
-                        <CheckSquare className="w-4 h-4 text-primary" />
-                      ) : hasPartialSelection ? (
-                        <div className="w-4 h-4 border-2 border-primary rounded flex items-center justify-center">
-                          <div className="w-2 h-0.5 bg-primary rounded" />
-                        </div>
-                      ) : (
-                        <Square className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </button>
-                  </TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Nombre del Activo</TableHead>
-                  <TableHead>Marca / Modelo</TableHead>
-                  <TableHead>Ubicación</TableHead>
-                  <TableHead>Custodio Actual</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="w-4 h-4" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : filteredAssets.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-12">
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <Package className="w-8 h-8" />
-                        <p className="text-sm font-medium">
-                          {searchTerm ? "Sin resultados para tu búsqueda" : "No hay activos disponibles"}
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAssets.map((a) => {
-                    const isSelected = selectedIds.has(a.id);
-                    return (
-                      <TableRow
-                        key={a.id}
-                        className={`hover:bg-muted/40 transition-colors cursor-pointer ${isSelected ? "bg-primary/5" : ""}`}
-                        onClick={() => toggleSelect(a.id)}
-                      >
-                        <TableCell>
-                          {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-primary" />
-                          ) : (
-                            <Square className="w-4 h-4 text-muted-foreground" />
-                          )}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">{a.code || "—"}</TableCell>
-                        <TableCell className="font-medium">{a.assetName}</TableCell>
-                        <TableCell className="text-muted-foreground">{[a.brand, a.model].filter(Boolean).join(" ") || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{a.location || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{a.custodian?.fullName || "—"}</TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-11 cursor-pointer"
+            onClick={toggleSelectAllOnPage}
+            disabled={assets.length === 0}
+          >
+            {isAllOnPageSelected ? 'Deseleccionar página actual' : 'Seleccionar página actual'}
+          </Button>
+
+          <SelectableAssetList
+            assets={assets}
+            isLoading={isLoading}
+            error={error}
+            hasSearch={search.length > 0}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+          />
+
+          {meta && <Pagination page={page} totalPages={meta.totalPages} onPageChange={setPage} />}
         </CardContent>
       </Card>
 
-      {selectedIds.size > 0 && (
+      {selectedList.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
-              Datos del Traspaso ({selectedIds.size} activo{selectedIds.size > 1 ? "s" : ""})
+              Datos del Traspaso ({selectedList.length} activo{selectedList.length > 1 ? 's' : ''})
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {selectedList.map((asset) => (
+                <button
+                  key={asset.id}
+                  type="button"
+                  onClick={() => toggleSelect(asset)}
+                  className="inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs"
+                  aria-label={`Quitar ${asset.assetName} de la selección`}
+                >
+                  {asset.assetName}
+                  <X className="h-3 w-3" />
+                </button>
+              ))}
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
                   <Label>Custodio receptor</Label>
-                  <Select value={form.toCustodianId} onValueChange={(value) => setForm({ ...form, toCustodianId: value })}>
-                    <SelectTrigger><SelectValue placeholder="Sin cambio de custodio" /></SelectTrigger>
+                  <Select
+                    value={form.toCustodianId}
+                    onValueChange={(value) => setForm({ ...form, toCustodianId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin cambio de custodio" />
+                    </SelectTrigger>
                     <SelectContent>
-                    {custodians.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>{c.fullName} ({c.identifier})</SelectItem>
-                    ))}
+                      {custodians.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.fullName} ({c.identifier})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label>Ubicación destino</Label>
-                  <Select value={form.toLocationId} onValueChange={(value) => setForm({ ...form, toLocationId: value })}>
-                    <SelectTrigger><SelectValue placeholder="Sin cambio de ubicación" /></SelectTrigger>
+                  <Select
+                    value={form.toLocationId}
+                    onValueChange={(value) => setForm({ ...form, toLocationId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin cambio de ubicación" />
+                    </SelectTrigger>
                     <SelectContent>
-                    {locations.map((l) => (
-                      <SelectItem key={l.id} value={String(l.id)}>{[l.canton, l.parroquia].filter(Boolean).join(" / ")}</SelectItem>
-                    ))}
+                      {locations.map((l) => (
+                        <SelectItem key={l.id} value={String(l.id)}>
+                          {[l.canton, l.parroquia].filter(Boolean).join(' / ')}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -273,17 +240,12 @@ export default function BulkTransferPage() {
                   placeholder="Motivo del traspaso, notas generales, etc."
                 />
               </div>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={isSaving} className="cursor-pointer">
-                  <Send className="w-4 h-4 mr-2" />
-                  {isSaving ? "Registrando..." : `Traspasar ${selectedIds.size} activo(s)`}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button type="submit" disabled={isSaving} className="h-11 cursor-pointer">
+                  <Send className="mr-2 h-4 w-4" />
+                  {isSaving ? 'Registrando...' : `Traspasar ${selectedList.length} activo(s)`}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSelectedIds(new Set())}
-                  className="cursor-pointer"
-                >
+                <Button type="button" variant="outline" onClick={clearSelection} className="h-11 cursor-pointer">
                   Limpiar selección
                 </Button>
               </div>
