@@ -48,7 +48,7 @@ describe('UsersAdminPage', () => {
     render(<UsersAdminPage />);
 
     await waitFor(() => expect(screen.getAllByText('Carlos Pérez').length).toBeGreaterThan(0));
-    expect(getAllMock).toHaveBeenCalledWith({ page: 1, limit: 20 });
+    expect(getAllMock).toHaveBeenCalledWith({ page: 1, limit: 20, search: '' });
   });
 
   it('calls the API with the next page when paging', async () => {
@@ -59,7 +59,19 @@ describe('UsersAdminPage', () => {
 
     await user.click(screen.getByRole('button', { name: /página siguiente/i }));
 
-    await waitFor(() => expect(getAllMock).toHaveBeenCalledWith({ page: 2, limit: 20 }));
+    await waitFor(() => expect(getAllMock).toHaveBeenCalledWith({ page: 2, limit: 20, search: '' }));
+  });
+
+  it('calls the API with the search term when searching', async () => {
+    const user = userEvent.setup();
+    render(<UsersAdminPage />);
+    await waitFor(() => expect(screen.getAllByText('Carlos Pérez').length).toBeGreaterThan(0));
+
+    await user.type(screen.getByPlaceholderText(/buscar por nombre o email/i), 'ana');
+
+    await waitFor(() => expect(getAllMock).toHaveBeenCalledWith(expect.objectContaining({ search: 'ana' })), {
+      timeout: 1000,
+    });
   });
 
   it('shows an error toast when the delete request is rejected', async () => {

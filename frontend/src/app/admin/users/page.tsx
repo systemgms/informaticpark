@@ -9,14 +9,13 @@ import { usePaginatedList } from '@/hooks/use-paginated-list';
 import { useListItemDeletion } from '@/hooks/use-list-item-deletion';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/pagination';
+import { ListSearchInput } from '@/components/list-search-input';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { UserList } from './user-list';
 
 export default function UsersAdminPage() {
-  // The backend users endpoint does not support `search`, so this page only paginates
-  // and strips the (unused) search field before calling the API.
   const fetchUsers = useCallback(
-    ({ page, limit }: { page: number; limit: number }) => api.users.getAll({ page, limit }),
+    (params: { page: number; limit: number; search: string }) => api.users.getAll(params),
     [],
   );
 
@@ -25,6 +24,8 @@ export default function UsersAdminPage() {
     meta,
     page,
     setPage,
+    search,
+    setSearch,
     isLoading,
     error,
     reload,
@@ -53,6 +54,15 @@ export default function UsersAdminPage() {
             Nuevo Usuario
           </Button>
         </Link>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre o email..." />
+        {!isLoading && meta && (
+          <span className="whitespace-nowrap text-sm text-muted-foreground">
+            {meta.total} {meta.total === 1 ? 'resultado' : 'resultados'}
+          </span>
+        )}
       </div>
 
       <UserList users={users} isLoading={isLoading} error={error} onDeleteClick={requestDelete} />

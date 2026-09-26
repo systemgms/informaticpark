@@ -229,6 +229,53 @@ describe('UsersService', () => {
         expect.objectContaining({ skip: 20 }),
       );
     });
+
+    it('should search users by name or email, combined with the active filter', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+
+      await service.findAll(1, 20, false, 'ana');
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            isActive: true,
+            OR: [
+              { name: { contains: 'ana', mode: 'insensitive' } },
+              { email: { contains: 'ana', mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('should search inactive users too when includeInactive is true', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+
+      await service.findAll(1, 20, true, 'ana');
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { name: { contains: 'ana', mode: 'insensitive' } },
+              { email: { contains: 'ana', mode: 'insensitive' } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('should ignore an empty search string', async () => {
+      prisma.user.findMany.mockResolvedValue([]);
+
+      await service.findAll(1, 20, false, '');
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { isActive: true },
+        }),
+      );
+    });
   });
 
   describe('count', () => {
@@ -238,6 +285,22 @@ describe('UsersService', () => {
       const result = await service.count();
 
       expect(result).toBe(5);
+    });
+
+    it('should use the same where filter as findAll when searching', async () => {
+      prisma.user.count.mockResolvedValue(2);
+
+      await service.count(false, 'ana');
+
+      expect(prisma.user.count).toHaveBeenCalledWith({
+        where: {
+          isActive: true,
+          OR: [
+            { name: { contains: 'ana', mode: 'insensitive' } },
+            { email: { contains: 'ana', mode: 'insensitive' } },
+          ],
+        },
+      });
     });
   });
 });

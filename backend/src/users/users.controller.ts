@@ -23,6 +23,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ActivateUserDto } from './dto/activate-user.dto';
 import { ParseIdPipe } from '../common/pipes/parse-id.pipe';
 import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
+import { MaxLengthPipe } from '../common/pipes/max-length.pipe';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT')
@@ -51,6 +52,12 @@ export class UsersController {
     type: Boolean,
     description: 'Incluir usuarios inactivos',
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Búsqueda por nombre o email',
+  })
   @ApiResponse({ status: 200, description: 'Lista de usuarios' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @ApiResponse({ status: 403, description: 'Solo ADMIN' })
@@ -58,16 +65,22 @@ export class UsersController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('includeInactive') includeInactive?: string,
+    @Query('search', new MaxLengthPipe(100)) search?: string,
   ) {
     const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
     const limitNum = Math.min(
       100,
       Math.max(1, parseInt(limit || '20', 10) || 20),
     );
-    const includeInc = includeInactive === 'true';
+    const shouldIncludeInactive = includeInactive === 'true';
     const [users, total] = await Promise.all([
-      this.usersService.findAll(pageNum, limitNum, includeInc),
-      this.usersService.count(includeInc),
+      this.usersService.findAll(
+        pageNum,
+        limitNum,
+        shouldIncludeInactive,
+        search,
+      ),
+      this.usersService.count(shouldIncludeInactive, search),
     ]);
     return {
       data: users,

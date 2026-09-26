@@ -168,7 +168,7 @@ export const api = {
     me: () => fetcher<User>('/auth/me'),
   },
   users: {
-    getAll: (params?: { page?: number; limit?: number; includeInactive?: boolean }) =>
+    getAll: (params?: ListParams & { includeInactive?: boolean }) =>
       fetcher<PaginatedResponse<User>>(`/users${buildQueryString(params ?? {})}`),
     getById: (id: number) => fetcher<User>(`/users/${id}`),
     create: (data: { name: string; email: string; password: string; role?: string; custodianId?: number | null }) =>

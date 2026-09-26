@@ -138,10 +138,27 @@ export class UsersService {
     return this.setActive(id, false);
   }
 
-  findAll(page = 1, limit = 20, includeInactive = false) {
+  private buildWhere(
+    includeInactive: boolean,
+    search?: string,
+  ): Prisma.UserWhereInput {
+    return {
+      ...(includeInactive ? {} : { isActive: true }),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+  }
+
+  findAll(page = 1, limit = 20, includeInactive = false, search?: string) {
     const skip = (page - 1) * limit;
     return this.prisma.user.findMany({
-      where: includeInactive ? {} : { isActive: true },
+      where: this.buildWhere(includeInactive, search),
       select: USER_SELECT,
       orderBy: { createdAt: 'desc' },
       skip,
@@ -149,9 +166,9 @@ export class UsersService {
     });
   }
 
-  async count(includeInactive = false) {
+  async count(includeInactive = false, search?: string) {
     return this.prisma.user.count({
-      where: includeInactive ? {} : { isActive: true },
+      where: this.buildWhere(includeInactive, search),
     });
   }
 }
