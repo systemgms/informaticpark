@@ -264,11 +264,11 @@ export default function AssetMovementHistoryPage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Link href={`/admin/assets/${assetId}`}>
-            <Button variant="outline" size="icon">
+          <Button asChild variant="outline" size="icon">
+            <Link href={`/admin/assets/${assetId}`}>
               <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div>
             <h1 className="text-3xl font-bold">Historial de Traspasos</h1>
             <p className="text-muted-foreground">

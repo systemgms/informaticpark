@@ -19,11 +19,11 @@ export function ListEmptyState({ icon: Icon, message, action }: ListEmptyStatePr
       <Icon className="h-8 w-8" />
       <p className="text-sm font-medium">{message}</p>
       {action && (
-        <Link href={action.href}>
-          <Button size="sm" variant="outline" className="mt-1 h-11 cursor-pointer">
+        <Button asChild size="sm" variant="outline" className="mt-1 h-11 cursor-pointer">
+          <Link href={action.href}>
             <Plus className="mr-1 h-3 w-3" /> {action.label}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       )}
     </div>
   );

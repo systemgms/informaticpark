@@ -52,12 +52,12 @@ export default function CustodianAssetsPage() {
             {custodian.unit ? ` · ${custodian.unit}` : ''}
           </p>
         </div>
-        <Link href={`/admin/custodians/${id}`} className="ml-auto">
-          <Button variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="ml-auto">
+          <Link href={`/admin/custodians/${id}`}>
             <Pencil className="w-4 h-4 mr-2" />
             Editar custodio
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       <Card>

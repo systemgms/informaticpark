@@ -56,12 +56,12 @@ export default function AssetsAdminPage() {
           <p className="mt-1 text-sm text-muted-foreground">Control de inventario y equipos.</p>
         </div>
         {isAdmin && (
-          <Link href="/admin/assets/new" className="w-full sm:w-auto">
-            <Button className="w-full cursor-pointer sm:w-auto">
+          <Button asChild className="w-full cursor-pointer sm:w-auto">
+            <Link href="/admin/assets/new">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Activo
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         )}
       </div>
 

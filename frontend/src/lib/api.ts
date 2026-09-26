@@ -15,14 +15,16 @@ import {
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 const API_URL = `${BACKEND_URL}/api`;
 
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  meta: PaginationMeta;
 }
 
 export interface ListParams {
@@ -53,6 +55,67 @@ export interface BulkMovementActionResult {
   count: number;
 }
 
+interface UserPayloadBase {
+  name?: string;
+  email?: string;
+  password?: string;
+  role?: string;
+  custodianId?: number | null;
+}
+
+export interface CreateUserPayload extends UserPayloadBase {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export type UpdateUserPayload = UserPayloadBase;
+
+export interface CreateCustodianPayload {
+  fullName: string;
+  identifier: string;
+  unit?: string;
+  locationId?: number;
+}
+
+export interface UpdateCustodianPayload {
+  fullName?: string;
+  identifier?: string;
+  unit?: string;
+  locationId?: number | null;
+}
+
+export interface LocationPayload {
+  canton?: string;
+  parroquia?: string;
+  lat?: number;
+  lng?: number;
+}
+
+interface AssetPayloadBase {
+  code?: string | null;
+  previousCode?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  serialNumber?: string | null;
+  location?: string | null;
+  physicalLocation?: string | null;
+  accountCode?: string | null;
+  note?: string | null;
+  custodianId?: number | null;
+  locationId?: number | null;
+  initialValue?: number | null;
+  currentValue?: number | null;
+}
+
+export interface CreateAssetPayload extends AssetPayloadBase {
+  assetName: string;
+}
+
+export interface UpdateAssetPayload extends AssetPayloadBase {
+  assetName?: string;
+}
+
 async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   let token: string | null = null;
   if (typeof window !== 'undefined') {
@@ -68,7 +131,7 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   try {
     const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
     if (isHttps && BACKEND_URL.startsWith('http://')) {
-      throw new Error(`Conexión bloqueada por contenido mixto: frontend en HTTPS y backend en HTTP`);
+      throw new Error('Conexión bloqueada por contenido mixto: frontend en HTTPS y backend en HTTP');
     }
     response = await fetch(url, {
       ...options,
@@ -85,7 +148,7 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const message = err instanceof Error ? err.message : '';
     const name = err instanceof Error ? err.name : '';
     if (message.includes('Failed to fetch') || name === 'AbortError' || message.includes('NetworkError')) {
-      throw new Error(`No se pudo conectar con el servidor. Verifica que el servidor esté encendido.`);
+      throw new Error('No se pudo conectar con el servidor. Verifica que el servidor esté encendido.');
     }
     throw err;
   } finally {
@@ -171,12 +234,9 @@ export const api = {
     getAll: (params?: ListParams & { includeInactive?: boolean }) =>
       fetcher<PaginatedResponse<User>>(`/users${buildQueryString(params ?? {})}`),
     getById: (id: number) => fetcher<User>(`/users/${id}`),
-    create: (data: { name: string; email: string; password: string; role?: string; custodianId?: number | null }) =>
-      fetcher<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
-    update: (
-      id: number,
-      data: { name?: string; email?: string; password?: string; role?: string; custodianId?: number | null },
-    ) => fetcher<User>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    create: (data: CreateUserPayload) => fetcher<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: UpdateUserPayload) =>
+      fetcher<User>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: number) => fetcher<void>(`/users/${id}`, { method: 'DELETE' }),
   },
   custodians: {
@@ -184,9 +244,9 @@ export const api = {
       fetcher<PaginatedResponse<Custodian>>(`/custodians${buildQueryString(params ?? {})}`),
     getOptions: () => fetcher<CustodianOption[]>('/custodians/options'),
     getById: (id: number) => fetcher<Custodian>(`/custodians/${id}`),
-    create: (data: { fullName: string; identifier: string; unit?: string; locationId?: number }) =>
+    create: (data: CreateCustodianPayload) =>
       fetcher<Custodian>('/custodians', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: number, data: { fullName?: string; identifier?: string; unit?: string; locationId?: number | null }) =>
+    update: (id: number, data: UpdateCustodianPayload) =>
       fetcher<Custodian>(`/custodians/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: number) => fetcher<void>(`/custodians/${id}`, { method: 'DELETE' }),
   },
@@ -195,9 +255,8 @@ export const api = {
       fetcher<PaginatedResponse<Location>>(`/locations${buildQueryString(params ?? {})}`),
     getAllUnpaginated: () => fetcher<Location[]>('/locations?all=true'),
     getById: (id: number) => fetcher<Location>(`/locations/${id}`),
-    create: (data: { canton?: string; parroquia?: string; lat?: number; lng?: number }) =>
-      fetcher<Location>('/locations', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: number, data: { canton?: string; parroquia?: string; lat?: number; lng?: number }) =>
+    create: (data: LocationPayload) => fetcher<Location>('/locations', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: LocationPayload) =>
       fetcher<Location>(`/locations/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: number) => fetcher<void>(`/locations/${id}`, { method: 'DELETE' }),
   },
@@ -205,46 +264,14 @@ export const api = {
     getAll: (params?: ListParams) => fetcher<PaginatedResponse<Asset>>(`/assets${buildQueryString(params ?? {})}`),
     getStats: () => fetcher<AssetStats>('/assets/stats'),
     getById: (id: number) => fetcher<Asset>(`/assets/${id}`),
-    create: (data: {
-      code?: string | null;
-      previousCode?: string | null;
-      assetName: string;
-      brand?: string | null;
-      model?: string | null;
-      serialNumber?: string | null;
-      location?: string | null;
-      physicalLocation?: string | null;
-      accountCode?: string | null;
-      note?: string | null;
-      custodianId?: number | null;
-      locationId?: number | null;
-      initialValue?: number | null;
-      currentValue?: number | null;
-    }) => fetcher<Asset>('/assets', { method: 'POST', body: JSON.stringify(data) }),
-    update: (
-      id: number,
-      data: {
-        code?: string | null;
-        previousCode?: string | null;
-        assetName?: string;
-        brand?: string | null;
-        model?: string | null;
-        serialNumber?: string | null;
-        location?: string | null;
-        physicalLocation?: string | null;
-        accountCode?: string | null;
-        note?: string | null;
-        custodianId?: number | null;
-        locationId?: number | null;
-        initialValue?: number | null;
-        currentValue?: number | null;
-      },
-    ) => fetcher<Asset>(`/assets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    create: (data: CreateAssetPayload) => fetcher<Asset>('/assets', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: UpdateAssetPayload) =>
+      fetcher<Asset>(`/assets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: number) => fetcher<void>(`/assets/${id}`, { method: 'DELETE' }),
   },
   movements: {
     getByAsset: (assetId: number) => fetcher<AssetMovement[]>(`/assets/${assetId}/movements`),
-    getPendingForMe: () => fetcher<AssetMovement[]>(`/movements/pending`),
+    getPendingForMe: () => fetcher<AssetMovement[]>('/movements/pending'),
     create: (assetId: number, data: { toCustodianId?: number; toLocationId?: number; note?: string }) =>
       fetcher<AssetMovement>(`/assets/${assetId}/movements`, { method: 'POST', body: JSON.stringify(data) }),
     confirm: (assetId: number, movementId: number, formData: FormData) =>

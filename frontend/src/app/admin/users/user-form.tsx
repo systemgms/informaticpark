@@ -127,11 +127,11 @@ export function UserForm({ userId }: UserFormProps) {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
-        <Link href="/admin/users">
-          <Button variant="outline" size="icon">
+        <Button asChild variant="outline" size="icon">
+          <Link href="/admin/users">
             <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <h1 className="text-3xl font-bold">{isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</h1>
       </div>
 

@@ -68,6 +68,29 @@ interface AssetFormProps {
   assetId?: number;
 }
 
+interface AssetFormData {
+  code: string;
+  previousCode: string;
+  assetName: string;
+  brand: string;
+  model: string;
+  serialNumber: string;
+  location: string;
+  physicalLocation: string;
+  accountCode: string;
+  initialValue: number;
+  currentValue: number;
+  note: string;
+  custodianId: string;
+  canton: string;
+  parroquia: string;
+}
+
+interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
 export function AssetForm({ assetId }: AssetFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -76,7 +99,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { custodians } = useCustodianOptions();
   const { locations, addLocation } = useLocationOptions();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AssetFormData>({
     code: '',
     previousCode: '',
     assetName: '',
@@ -93,7 +116,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
     canton: '',
     parroquia: '',
   });
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
 
   const loadAsset = useCallback(async () => {
     try {
@@ -211,19 +234,19 @@ export function AssetForm({ assetId }: AssetFormProps) {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-4">
-        <Link href="/admin/assets">
-          <Button variant="outline" size="icon">
+        <Button asChild variant="outline" size="icon">
+          <Link href="/admin/assets">
             <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <h1 className="text-3xl font-bold">{isEdit ? 'Editar Activo' : 'Nuevo Activo'}</h1>
         {isEdit && (
-          <Link href={`/admin/assets/${assetId}/historial`} className="ml-auto">
-            <Button variant="outline">
+          <Button asChild variant="outline" className="ml-auto">
+            <Link href={`/admin/assets/${assetId}/historial`}>
               <History className="w-4 h-4 mr-2" />
               Historial de Traspasos
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         )}
       </div>
 

@@ -74,6 +74,15 @@ describe('UsersAdminPage', () => {
     });
   });
 
+  it('renders "Nuevo Usuario" as a single anchor without a nested button', async () => {
+    render(<UsersAdminPage />);
+    await waitFor(() => expect(screen.getAllByText('Carlos Pérez').length).toBeGreaterThan(0));
+
+    const link = screen.getByRole('link', { name: /nuevo usuario/i });
+    expect(link.tagName).toBe('A');
+    expect(link.querySelector('button')).toBeNull();
+  });
+
   it('shows an error toast when the delete request is rejected', async () => {
     deleteMock.mockRejectedValue(new Error('No tienes permisos para eliminar este usuario'));
     const user = userEvent.setup();

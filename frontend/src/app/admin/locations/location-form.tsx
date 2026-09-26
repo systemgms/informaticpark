@@ -15,13 +15,20 @@ interface LocationFormProps {
   locationId?: number;
 }
 
+interface LocationFormData {
+  canton: string;
+  parroquia: string;
+  lat: string;
+  lng: string;
+}
+
 export function LocationForm({ locationId }: LocationFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEdit = !!locationId;
   const [isLoading, setIsLoading] = useState(isEdit);
   const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LocationFormData>({
     canton: '',
     parroquia: '',
     lat: '',
@@ -101,11 +108,11 @@ export function LocationForm({ locationId }: LocationFormProps) {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
-        <Link href="/admin/locations">
-          <Button variant="outline" size="icon">
+        <Button asChild variant="outline" size="icon">
+          <Link href="/admin/locations">
             <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <h1 className="text-3xl font-bold">{isEdit ? 'Editar Ubicación' : 'Nueva Ubicación'}</h1>
       </div>
 

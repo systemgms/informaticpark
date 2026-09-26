@@ -119,11 +119,11 @@ export default function BulkTransferPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/assets">
-          <Button variant="outline" size="icon" className="h-11 w-11">
+        <Button asChild variant="outline" size="icon" className="h-11 w-11">
+          <Link href="/admin/assets">
             <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Traspaso Masivo</h1>
           <p className="mt-1 text-sm text-muted-foreground">

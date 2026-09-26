@@ -23,31 +23,27 @@ function formatValue(value?: number | null): string {
   return value != null ? `$${value.toFixed(2)}` : '—';
 }
 
-function AssetActions({
-  asset,
-  isAdmin,
-  onDeleteClick,
-}: {
+interface AssetActionsProps {
   asset: Asset;
   isAdmin: boolean;
   onDeleteClick: (id: number) => void;
-}) {
+}
+
+function AssetActions({ asset, isAdmin, onDeleteClick }: AssetActionsProps) {
   if (!isAdmin) {
     return (
-      <Link href={`/admin/assets/${asset.id}/historial`}>
-        <Button variant="ghost" size="sm" className="h-11 cursor-pointer text-xs">
-          Traspasos
-        </Button>
-      </Link>
+      <Button asChild variant="ghost" size="sm" className="h-11 cursor-pointer text-xs">
+        <Link href={`/admin/assets/${asset.id}/historial`}>Traspasos</Link>
+      </Button>
     );
   }
   return (
     <div className="flex items-center justify-end gap-1">
-      <Link href={`/admin/assets/${asset.id}`}>
-        <Button variant="ghost" size="icon" className="h-11 w-11 cursor-pointer" aria-label="Editar activo">
+      <Button asChild variant="ghost" size="icon" className="h-11 w-11 cursor-pointer" aria-label="Editar activo">
+        <Link href={`/admin/assets/${asset.id}`}>
           <Pencil className="h-3.5 w-3.5" />
-        </Button>
-      </Link>
+        </Link>
+      </Button>
       <Button
         variant="ghost"
         size="icon"

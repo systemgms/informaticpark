@@ -15,13 +15,19 @@ interface CustodianFormProps {
   custodianId?: number;
 }
 
+interface CustodianFormData {
+  fullName: string;
+  identifier: string;
+  unit: string;
+}
+
 export function CustodianForm({ custodianId }: CustodianFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEdit = !!custodianId;
   const [isLoading, setIsLoading] = useState(isEdit);
   const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CustodianFormData>({
     fullName: '',
     identifier: '',
     unit: '',
@@ -82,11 +88,11 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
-        <Link href="/admin/custodians">
-          <Button variant="outline" size="icon">
+        <Button asChild variant="outline" size="icon">
+          <Link href="/admin/custodians">
             <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <h1 className="text-3xl font-bold">{isEdit ? 'Editar Custodio' : 'Nuevo Custodio'}</h1>
       </div>
 

@@ -48,12 +48,12 @@ export default function LocationsAdminPage() {
           <h1 className="text-3xl font-bold tracking-tight">Ubicaciones</h1>
           <p className="mt-1 text-sm text-muted-foreground">Cantones y parroquias del parque informático.</p>
         </div>
-        <Link href="/admin/locations/new" className="w-full sm:w-auto">
-          <Button className="w-full cursor-pointer sm:w-auto">
+        <Button asChild className="w-full cursor-pointer sm:w-auto">
+          <Link href="/admin/locations/new">
             <Plus className="mr-2 h-4 w-4" />
             Nueva Ubicación
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

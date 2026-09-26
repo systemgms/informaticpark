@@ -22,14 +22,19 @@ function formatCoordinates(location: Location): string {
   return location.lat != null && location.lng != null ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : '—';
 }
 
-function LocationActions({ location, onDeleteClick }: { location: Location; onDeleteClick: (id: number) => void }) {
+interface LocationActionsProps {
+  location: Location;
+  onDeleteClick: (id: number) => void;
+}
+
+function LocationActions({ location, onDeleteClick }: LocationActionsProps) {
   return (
     <div className="flex items-center justify-end gap-1">
-      <Link href={`/admin/locations/${location.id}`}>
-        <Button variant="ghost" size="icon" className="h-11 w-11 cursor-pointer" aria-label="Editar ubicación">
+      <Button asChild variant="ghost" size="icon" className="h-11 w-11 cursor-pointer" aria-label="Editar ubicación">
+        <Link href={`/admin/locations/${location.id}`}>
           <Pencil className="h-3.5 w-3.5" />
-        </Button>
-      </Link>
+        </Link>
+      </Button>
       <Button
         variant="ghost"
         size="icon"

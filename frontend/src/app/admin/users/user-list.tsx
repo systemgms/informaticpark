@@ -18,14 +18,24 @@ interface UserListProps {
   onDeleteClick: (id: number) => void;
 }
 
-function UserActions({ user, onDeleteClick }: { user: User; onDeleteClick: (id: number) => void }) {
+interface UserActionsProps {
+  user: User;
+  onDeleteClick: (id: number) => void;
+}
+
+const ROLE_LABELS: Record<Role, string> = {
+  [Role.ADMIN]: 'Administrador',
+  [Role.USER]: 'Usuario (Custodio)',
+};
+
+function UserActions({ user, onDeleteClick }: UserActionsProps) {
   return (
     <div className="flex items-center justify-end gap-1">
-      <Link href={`/admin/users/${user.id}`}>
-        <Button variant="ghost" size="icon" className="h-11 w-11 cursor-pointer" aria-label="Editar usuario">
+      <Button asChild variant="ghost" size="icon" className="h-11 w-11 cursor-pointer" aria-label="Editar usuario">
+        <Link href={`/admin/users/${user.id}`}>
           <Pencil className="h-3.5 w-3.5" />
-        </Button>
-      </Link>
+        </Link>
+      </Button>
       <Button
         variant="ghost"
         size="icon"
@@ -74,7 +84,7 @@ export function UserList({ users, isLoading, error, onDeleteClick }: UserListPro
                 <p className="font-medium">{user.name}</p>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
                 <div className="flex items-center gap-2">
-                  <Badge variant={user.role === Role.ADMIN ? 'default' : 'secondary'}>{user.role}</Badge>
+                  <Badge variant={user.role === Role.ADMIN ? 'default' : 'secondary'}>{ROLE_LABELS[user.role]}</Badge>
                   <Badge variant={user.isActive ? 'success' : 'destructive'}>
                     {user.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
@@ -140,7 +150,9 @@ export function UserList({ users, isLoading, error, onDeleteClick }: UserListPro
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
                     <TableCell>
-                      <Badge variant={user.role === Role.ADMIN ? 'default' : 'secondary'}>{user.role}</Badge>
+                      <Badge variant={user.role === Role.ADMIN ? 'default' : 'secondary'}>
+                        {ROLE_LABELS[user.role]}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={user.isActive ? 'success' : 'destructive'}>

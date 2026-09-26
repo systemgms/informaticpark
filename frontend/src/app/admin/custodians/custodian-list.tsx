@@ -19,14 +19,19 @@ interface CustodianListProps {
   onDeleteClick: (id: number) => void;
 }
 
-function CustodianActions({ custodian, onDeleteClick }: { custodian: Custodian; onDeleteClick: (id: number) => void }) {
+interface CustodianActionsProps {
+  custodian: Custodian;
+  onDeleteClick: (id: number) => void;
+}
+
+function CustodianActions({ custodian, onDeleteClick }: CustodianActionsProps) {
   return (
     <div className="flex items-center justify-end gap-1">
-      <Link href={`/admin/custodians/${custodian.id}`}>
-        <Button variant="ghost" size="icon" className="h-11 w-11 cursor-pointer" aria-label="Editar custodio">
+      <Button asChild variant="ghost" size="icon" className="h-11 w-11 cursor-pointer" aria-label="Editar custodio">
+        <Link href={`/admin/custodians/${custodian.id}`}>
           <Pencil className="h-3.5 w-3.5" />
-        </Button>
-      </Link>
+        </Link>
+      </Button>
       <Button
         variant="ghost"
         size="icon"

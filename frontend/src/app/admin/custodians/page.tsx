@@ -48,12 +48,12 @@ export default function CustodiansAdminPage() {
           <h1 className="text-3xl font-bold tracking-tight">Custodios</h1>
           <p className="mt-1 text-sm text-muted-foreground">Responsables de los activos asignados.</p>
         </div>
-        <Link href="/admin/custodians/new" className="w-full sm:w-auto">
-          <Button className="w-full cursor-pointer sm:w-auto">
+        <Button asChild className="w-full cursor-pointer sm:w-auto">
+          <Link href="/admin/custodians/new">
             <Plus className="mr-2 h-4 w-4" />
             Nuevo Custodio
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
