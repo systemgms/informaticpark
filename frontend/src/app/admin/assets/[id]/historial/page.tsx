@@ -256,20 +256,22 @@ export default function AssetMovementHistoryPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Link href={`/admin/assets/${assetId}`}>
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Historial de Traspasos</h1>
-          <p className="text-muted-foreground">
-            {asset.assetName}
-            {asset.code ? ` — ${asset.code}` : ''}
-          </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-4">
+          <Link href={`/admin/assets/${assetId}`}>
+            <Button variant="outline" size="icon">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold">Historial de Traspasos</h1>
+            <p className="text-muted-foreground">
+              {asset.assetName}
+              {asset.code ? ` — ${asset.code}` : ''}
+            </p>
+          </div>
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
           {filteredMovements.length > 0 && (
             <Button variant="outline" onClick={exportToCSV}>
               <Download className="w-4 h-4 mr-2" />

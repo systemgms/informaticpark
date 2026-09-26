@@ -219,14 +219,17 @@ export function UserForm({ userId }: UserFormProps) {
               </div>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className="flex min-h-11 items-center gap-2">
               <input
                 id="isActive"
                 type="checkbox"
+                className="h-11 w-11 shrink-0 cursor-pointer accent-primary"
                 checked={formValues.isActive}
                 onChange={(e) => setFormValues({ ...formValues, isActive: e.target.checked })}
               />
-              <Label htmlFor="isActive">Usuario Activo</Label>
+              <Label htmlFor="isActive" className="cursor-pointer">
+                Usuario Activo
+              </Label>
             </div>
 
             <Button type="submit" className="w-full" disabled={isSaving}>

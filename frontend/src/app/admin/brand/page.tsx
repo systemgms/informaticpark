@@ -1,30 +1,35 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-import { useBrand } from "@/components/brand-provider";
-import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Palette, Save, Upload, ImageIcon, Fingerprint } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import { useBrand } from '@/components/brand-provider';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Palette, Save, Upload, ImageIcon, Fingerprint } from 'lucide-react';
+
+interface UploadState {
+  isLogoUploading: boolean;
+  isFaviconUploading: boolean;
+}
 
 export default function BrandAdminPage() {
   const { brand, refresh } = useBrand();
   const { toast } = useToast();
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState<{ logo: boolean; favicon: boolean }>({
-    logo: false,
-    favicon: false,
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadState, setUploadState] = useState<UploadState>({
+    isLogoUploading: false,
+    isFaviconUploading: false,
   });
   const [formData, setFormData] = useState({
-    appName: "",
-    primaryColor: "#4f46e5",
-    secondaryColor: "#6366f1",
-    accentColor: "#e0e7ff",
-    logoUrl: "",
-    faviconUrl: "",
+    appName: '',
+    primaryColor: '#4f46e5',
+    secondaryColor: '#6366f1',
+    accentColor: '#e0e7ff',
+    logoUrl: '',
+    faviconUrl: '',
   });
 
   useEffect(() => {
@@ -34,15 +39,15 @@ export default function BrandAdminPage() {
         primaryColor: brand.primaryColor,
         secondaryColor: brand.secondaryColor,
         accentColor: brand.accentColor,
-        logoUrl: brand.logoUrl ?? "",
-        faviconUrl: brand.faviconUrl ?? "",
+        logoUrl: brand.logoUrl ?? '',
+        faviconUrl: brand.faviconUrl ?? '',
       });
     }
   }, [brand]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
+    setIsSaving(true);
     try {
       await api.brandSettings.update({
         appName: formData.appName,
@@ -53,33 +58,33 @@ export default function BrandAdminPage() {
         faviconUrl: formData.faviconUrl || undefined,
       });
       await refresh();
-      toast("Marca actualizada correctamente", "success");
-    } catch (error: any) {
-      toast(error?.message || "Error al actualizar la marca", "error");
+      toast('Marca actualizada correctamente', 'success');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar la marca';
+      toast(message, 'error');
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
-  async function handleFileUpload(
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "logo" | "favicon"
-  ) {
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'favicon') {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading((prev) => ({ ...prev, [type]: true }));
+    const uploadKey = type === 'logo' ? 'isLogoUploading' : 'isFaviconUploading';
+    setUploadState((prev) => ({ ...prev, [uploadKey]: true }));
     try {
       const formDataUpload = new FormData();
-      formDataUpload.append("file", file);
-      formDataUpload.append("type", type);
+      formDataUpload.append('file', file);
+      formDataUpload.append('type', type);
       const result = await api.brandSettings.uploadFile(formDataUpload);
       setFormData((prev) => ({ ...prev, [`${type}Url`]: result.url }));
-      toast(`${type === "logo" ? "Logo" : "Favicon"} subido correctamente`, "success");
-    } catch (error: any) {
-      toast(error?.message || "Error al subir el archivo", "error");
+      toast(`${type === 'logo' ? 'Logo' : 'Favicon'} subido correctamente`, 'success');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error al subir el archivo';
+      toast(message, 'error');
     } finally {
-      setUploading((prev) => ({ ...prev, [type]: false }));
+      setUploadState((prev) => ({ ...prev, [uploadKey]: false }));
     }
   }
 
@@ -97,9 +102,7 @@ export default function BrandAdminPage() {
         <Palette className="w-8 h-8 text-primary" />
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Personalizar marca</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Cambia colores, nombre, logo y favicon del sistema.
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">Cambia colores, nombre, logo y favicon del sistema.</p>
         </div>
       </div>
 
@@ -114,9 +117,7 @@ export default function BrandAdminPage() {
               <Input
                 id="appName"
                 value={formData.appName}
-                onChange={(e) =>
-                  setFormData({ ...formData, appName: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, appName: e.target.value })}
                 placeholder="Parque Informático"
               />
             </div>
@@ -128,9 +129,7 @@ export default function BrandAdminPage() {
                   <Input
                     id="logoUrl"
                     value={formData.logoUrl}
-                    onChange={(e) =>
-                      setFormData({ ...formData, logoUrl: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
                     placeholder="https://..."
                     className="flex-1"
                   />
@@ -139,21 +138,21 @@ export default function BrandAdminPage() {
                     className="cursor-pointer inline-flex items-center justify-center px-3 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors shrink-0"
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    {uploading.logo ? "Subiendo..." : "Subir"}
+                    {uploadState.isLogoUploading ? 'Subiendo...' : 'Subir'}
                   </Label>
                   <Input
                     id="logoFile"
                     type="file"
                     accept="image/png,image/jpeg,image/jpg,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/webp"
-                    onChange={(e) => handleFileUpload(e, "logo")}
+                    onChange={(e) => handleFileUpload(e, 'logo')}
                     className="hidden"
-                    disabled={uploading.logo}
+                    disabled={uploadState.isLogoUploading}
                   />
                 </div>
                 {formData.logoUrl && (
                   <img
                     src={formData.logoUrl}
-                    alt="Logo preview"
+                    alt="Vista previa del logo"
                     className="mt-2 h-16 w-auto object-contain border rounded-md p-2"
                   />
                 )}
@@ -165,9 +164,7 @@ export default function BrandAdminPage() {
                   <Input
                     id="faviconUrl"
                     value={formData.faviconUrl}
-                    onChange={(e) =>
-                      setFormData({ ...formData, faviconUrl: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, faviconUrl: e.target.value })}
                     placeholder="https://..."
                     className="flex-1"
                   />
@@ -176,21 +173,21 @@ export default function BrandAdminPage() {
                     className="cursor-pointer inline-flex items-center justify-center px-3 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors shrink-0"
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    {uploading.favicon ? "Subiendo..." : "Subir"}
+                    {uploadState.isFaviconUploading ? 'Subiendo...' : 'Subir'}
                   </Label>
                   <Input
                     id="faviconFile"
                     type="file"
                     accept="image/png,image/jpeg,image/jpg,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/webp"
-                    onChange={(e) => handleFileUpload(e, "favicon")}
+                    onChange={(e) => handleFileUpload(e, 'favicon')}
                     className="hidden"
-                    disabled={uploading.favicon}
+                    disabled={uploadState.isFaviconUploading}
                   />
                 </div>
                 {formData.faviconUrl && (
                   <img
                     src={formData.faviconUrl}
-                    alt="Favicon preview"
+                    alt="Vista previa del favicon"
                     className="mt-2 h-8 w-8 object-contain border rounded-md p-1"
                   />
                 )}
@@ -212,16 +209,12 @@ export default function BrandAdminPage() {
                     id="primaryColor"
                     type="color"
                     value={formData.primaryColor}
-                    onChange={(e) =>
-                      setFormData({ ...formData, primaryColor: e.target.value })
-                    }
-                    className="w-12 h-10 p-1 cursor-pointer"
+                    onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
+                    className="w-12 h-11 p-1 cursor-pointer"
                   />
                   <Input
                     value={formData.primaryColor}
-                    onChange={(e) =>
-                      setFormData({ ...formData, primaryColor: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
                     placeholder="#4f46e5"
                     className="flex-1 font-mono"
                   />
@@ -235,16 +228,12 @@ export default function BrandAdminPage() {
                     id="secondaryColor"
                     type="color"
                     value={formData.secondaryColor}
-                    onChange={(e) =>
-                      setFormData({ ...formData, secondaryColor: e.target.value })
-                    }
-                    className="w-12 h-10 p-1 cursor-pointer"
+                    onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
+                    className="w-12 h-11 p-1 cursor-pointer"
                   />
                   <Input
                     value={formData.secondaryColor}
-                    onChange={(e) =>
-                      setFormData({ ...formData, secondaryColor: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
                     placeholder="#6366f1"
                     className="flex-1 font-mono"
                   />
@@ -258,16 +247,12 @@ export default function BrandAdminPage() {
                     id="accentColor"
                     type="color"
                     value={formData.accentColor}
-                    onChange={(e) =>
-                      setFormData({ ...formData, accentColor: e.target.value })
-                    }
-                    className="w-12 h-10 p-1 cursor-pointer"
+                    onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
+                    className="w-12 h-11 p-1 cursor-pointer"
                   />
                   <Input
                     value={formData.accentColor}
-                    onChange={(e) =>
-                      setFormData({ ...formData, accentColor: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
                     placeholder="#e0e7ff"
                     className="flex-1 font-mono"
                   />
@@ -285,35 +270,23 @@ export default function BrandAdminPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-4 p-4 border rounded-lg">
                 {formData.logoUrl ? (
-                  <img
-                    src={formData.logoUrl}
-                    alt="Logo"
-                    className="h-12 w-auto object-contain"
-                  />
+                  <img src={formData.logoUrl} alt="Logotipo" className="h-12 w-auto object-contain" />
                 ) : (
                   <ImageIcon className="w-10 h-10 text-muted-foreground" />
                 )}
                 <div>
                   <h2 className="text-xl font-bold" style={{ color: formData.primaryColor }}>
-                    {formData.appName || "Parque Informático"}
+                    {formData.appName || 'Parque Informático'}
                   </h2>
                   <p className="text-sm text-muted-foreground">Panel administrativo</p>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  style={{ backgroundColor: formData.primaryColor }}
-                  className="text-white"
-                >
+                <Button type="button" style={{ backgroundColor: formData.primaryColor }} className="text-white">
                   Botón primario
                 </Button>
-                <Button
-                  type="button"
-                  style={{ backgroundColor: formData.secondaryColor }}
-                  className="text-white"
-                >
+                <Button type="button" style={{ backgroundColor: formData.secondaryColor }} className="text-white">
                   Botón secundario
                 </Button>
                 <span
@@ -331,9 +304,9 @@ export default function BrandAdminPage() {
           </CardContent>
         </Card>
 
-        <Button type="submit" className="w-full" disabled={saving}>
+        <Button type="submit" className="w-full" disabled={isSaving}>
           <Save className="w-4 h-4 mr-2" />
-          {saving ? "Guardando..." : "Guardar cambios"}
+          {isSaving ? 'Guardando...' : 'Guardar cambios'}
         </Button>
       </form>
     </div>
