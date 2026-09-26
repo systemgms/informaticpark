@@ -1,49 +1,48 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { Public } from '../auth/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 
+// Probes must stay reachable by load balancers and uptime monitors without a token.
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  getHealthCheck() {
-    try {
-      // Verificar conexión a la base de datos ejecutando una consulta simple
-      void this.prisma.$executeRaw`SELECT 1`;
+  async getHealthCheck() {
+    await this.ensureDatabaseIsReachable();
 
-      return {
-        status: 'ok',
-        database: 'connected',
-        timestamp: new Date().toISOString(),
-        version: '1.0.0',
-      };
-    } catch (error) {
-      return {
-        status: 'error',
-        database: 'disconnected',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString(),
-      };
-    }
+    return {
+      status: 'ok',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+    };
   }
 
   @Get('ready')
   @HttpCode(HttpStatus.OK)
-  readyCheck() {
+  async readyCheck() {
+    await this.ensureDatabaseIsReachable();
+
+    return {
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // The driver error is deliberately dropped: these endpoints are public.
+  private async ensureDatabaseIsReachable(): Promise<void> {
     try {
-      // Verificar que la base de datos esté lista para recibir peticiones
-      void this.prisma.$executeRaw`SELECT 1`;
-      return {
-        status: 'ready',
-        timestamp: new Date().toISOString(),
-      };
-    } catch (error) {
-      return {
-        status: 'not ready',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString(),
-      };
+      await this.prisma.$executeRaw`SELECT 1`;
+    } catch {
+      throw new ServiceUnavailableException('Base de datos no disponible');
     }
   }
 }
