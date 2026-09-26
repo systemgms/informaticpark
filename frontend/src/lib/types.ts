@@ -1,6 +1,6 @@
 export enum Role {
-  ADMIN = "ADMIN",
-  USER = "USER",
+  ADMIN = 'ADMIN',
+  USER = 'USER',
 }
 
 export interface User {
@@ -35,7 +35,7 @@ export interface Location {
   updatedAt: string;
 }
 
-export type MovementStatus = "PENDIENTE" | "COMPLETADO" | "RECHAZADO";
+export type MovementStatus = 'PENDIENTE' | 'COMPLETADO' | 'RECHAZADO';
 
 export interface AssetMovement {
   id: number;
@@ -86,6 +86,13 @@ export interface Asset {
   createdByUser?: User | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AssetStats {
+  total: number;
+  totalValue: number;
+  withoutCustodian: number;
+  withoutLocation: number;
 }
 
 export interface BrandSettings {

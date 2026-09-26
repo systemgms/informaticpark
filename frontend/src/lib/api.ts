@@ -1,4 +1,13 @@
-import { User, Custodian, Location, Asset, AssetMovement, BrandSettings, BrandSettingsUpdate } from './types';
+import {
+  User,
+  Custodian,
+  Location,
+  Asset,
+  AssetMovement,
+  AssetStats,
+  BrandSettings,
+  BrandSettingsUpdate,
+} from './types';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 const API_URL = `${BACKEND_URL}/api`;
@@ -11,6 +20,24 @@ export interface PaginatedResponse<T> {
     limit: number;
     totalPages: number;
   };
+}
+
+export interface ListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+type QueryValue = string | number | boolean | undefined;
+
+function buildQueryString(params: object): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params) as [string, QueryValue][]) {
+    if (value === undefined || value === '') continue;
+    searchParams.set(key, String(value));
+  }
+  const query = searchParams.toString();
+  return query ? `?${query}` : '';
 }
 
 export interface LoginResponse {
@@ -55,9 +82,7 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const message = err instanceof Error ? err.message : '';
     const name = err instanceof Error ? err.name : '';
     if (message.includes('Failed to fetch') || name === 'AbortError' || message.includes('NetworkError')) {
-      throw new Error(
-        `No se pudo conectar con el servidor. Verifica que el servidor esté encendido.`
-      );
+      throw new Error(`No se pudo conectar con el servidor. Verifica que el servidor esté encendido.`);
     }
     throw err;
   } finally {
@@ -75,9 +100,7 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    const error = (await response
-      .json()
-      .catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
+    const error = (await response.json().catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
     throw new Error(error.message || `Error ${response.status}: ${response.statusText}`);
   }
 
@@ -129,9 +152,7 @@ async function fetcherMultipart<T>(endpoint: string, body: FormData, method = 'P
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    const error = (await response
-      .json()
-      .catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
+    const error = (await response.json().catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
     throw new Error(error.message || `Error ${response.status}`);
   }
   return response.json();
@@ -144,16 +165,20 @@ export const api = {
     me: () => fetcher<User>('/auth/me'),
   },
   users: {
-    getAll: () => fetcher<PaginatedResponse<User>>('/users'),
+    getAll: (params?: { page?: number; limit?: number; includeInactive?: boolean }) =>
+      fetcher<PaginatedResponse<User>>(`/users${buildQueryString(params ?? {})}`),
     getById: (id: number) => fetcher<User>(`/users/${id}`),
     create: (data: { name: string; email: string; password: string; role?: string; custodianId?: number | null }) =>
       fetcher<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: number, data: { name?: string; email?: string; password?: string; role?: string; custodianId?: number | null }) =>
-      fetcher<User>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    update: (
+      id: number,
+      data: { name?: string; email?: string; password?: string; role?: string; custodianId?: number | null },
+    ) => fetcher<User>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: number) => fetcher<void>(`/users/${id}`, { method: 'DELETE' }),
   },
   custodians: {
-    getAll: () => fetcher<PaginatedResponse<Custodian>>('/custodians'),
+    getAll: (params?: ListParams) =>
+      fetcher<PaginatedResponse<Custodian>>(`/custodians${buildQueryString(params ?? {})}`),
     getById: (id: number) => fetcher<Custodian>(`/custodians/${id}`),
     create: (data: { fullName: string; identifier: string; unit?: string; locationId?: number }) =>
       fetcher<Custodian>('/custodians', { method: 'POST', body: JSON.stringify(data) }),
@@ -162,7 +187,9 @@ export const api = {
     delete: (id: number) => fetcher<void>(`/custodians/${id}`, { method: 'DELETE' }),
   },
   locations: {
-    getAll: () => fetcher<PaginatedResponse<Location>>('/locations'),
+    getAll: (params?: ListParams) =>
+      fetcher<PaginatedResponse<Location>>(`/locations${buildQueryString(params ?? {})}`),
+    getAllUnpaginated: () => fetcher<Location[]>('/locations?all=true'),
     getById: (id: number) => fetcher<Location>(`/locations/${id}`),
     create: (data: { canton?: string; parroquia?: string; lat?: number; lng?: number }) =>
       fetcher<Location>('/locations', { method: 'POST', body: JSON.stringify(data) }),
@@ -171,7 +198,8 @@ export const api = {
     delete: (id: number) => fetcher<void>(`/locations/${id}`, { method: 'DELETE' }),
   },
   assets: {
-    getAll: () => fetcher<PaginatedResponse<Asset>>('/assets'),
+    getAll: (params?: ListParams) => fetcher<PaginatedResponse<Asset>>(`/assets${buildQueryString(params ?? {})}`),
+    getStats: () => fetcher<AssetStats>('/assets/stats'),
     getById: (id: number) => fetcher<Asset>(`/assets/${id}`),
     create: (data: {
       code?: string | null;
@@ -188,25 +216,26 @@ export const api = {
       locationId?: number | null;
       initialValue?: number | null;
       currentValue?: number | null;
-    }) =>
-      fetcher<Asset>('/assets', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: number, data: {
-      code?: string | null;
-      previousCode?: string | null;
-      assetName?: string;
-      brand?: string | null;
-      model?: string | null;
-      serialNumber?: string | null;
-      location?: string | null;
-      physicalLocation?: string | null;
-      accountCode?: string | null;
-      note?: string | null;
-      custodianId?: number | null;
-      locationId?: number | null;
-      initialValue?: number | null;
-      currentValue?: number | null;
-    }) =>
-      fetcher<Asset>(`/assets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    }) => fetcher<Asset>('/assets', { method: 'POST', body: JSON.stringify(data) }),
+    update: (
+      id: number,
+      data: {
+        code?: string | null;
+        previousCode?: string | null;
+        assetName?: string;
+        brand?: string | null;
+        model?: string | null;
+        serialNumber?: string | null;
+        location?: string | null;
+        physicalLocation?: string | null;
+        accountCode?: string | null;
+        note?: string | null;
+        custodianId?: number | null;
+        locationId?: number | null;
+        initialValue?: number | null;
+        currentValue?: number | null;
+      },
+    ) => fetcher<Asset>(`/assets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: number) => fetcher<void>(`/assets/${id}`, { method: 'DELETE' }),
   },
   movements: {
@@ -219,7 +248,10 @@ export const api = {
     reject: (assetId: number, movementId: number) =>
       fetcher<AssetMovement>(`/assets/${assetId}/movements/${movementId}/reject`, { method: 'PATCH' }),
     createBulk: (data: { assetIds: number[]; toCustodianId?: number; toLocationId?: number; note?: string }) =>
-      fetcher<{ groupId: string; movements: AssetMovement[] }>('/movements/bulk', { method: 'POST', body: JSON.stringify(data) }),
+      fetcher<{ groupId: string; movements: AssetMovement[] }>('/movements/bulk', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
     confirmBulk: (groupId: string, formData: FormData) =>
       fetcherMultipart<BulkMovementActionResult>(`/movements/bulk/${groupId}/confirm`, formData, 'PATCH'),
     rejectBulk: (groupId: string) =>
