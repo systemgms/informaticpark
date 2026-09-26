@@ -131,6 +131,27 @@ describe('CustodiansService', () => {
     });
   });
 
+  describe('findOptions', () => {
+    it('should select only id and fullName, filter deleted, and order by fullName', async () => {
+      prisma.custodian.findMany.mockResolvedValue([
+        { id: 2, fullName: 'Ana' },
+        { id: 1, fullName: 'Beto' },
+      ]);
+
+      const result = await service.findOptions();
+
+      expect(prisma.custodian.findMany).toHaveBeenCalledWith({
+        where: { isDeleted: false },
+        select: { id: true, fullName: true },
+        orderBy: { fullName: 'asc' },
+      });
+      expect(result).toEqual([
+        { id: 2, fullName: 'Ana' },
+        { id: 1, fullName: 'Beto' },
+      ]);
+    });
+  });
+
   describe('findOne', () => {
     it('should return a single custodian', async () => {
       prisma.custodian.findUnique.mockResolvedValue(mockCustodian);

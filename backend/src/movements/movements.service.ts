@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMovementDto } from './dto/create-movement.dto';
 import { CreateBulkMovementDto } from './dto/create-bulk-movement.dto';
 import { ConfirmMovementDto } from './dto/confirm-movement.dto';
+import { AuthUser } from '../common/types/auth-user.type';
 import { randomUUID } from 'crypto';
 
 const MOVEMENT_INCLUDE = {
@@ -240,12 +241,20 @@ export class MovementsService {
     });
   }
 
-  async findAll(assetId: number) {
+  async findAll(assetId: number, caller?: AuthUser) {
     const asset = await this.prisma.asset.findUnique({
       where: { id: assetId },
     });
     if (!asset)
       throw new NotFoundException(`Activo con id ${assetId} no encontrado`);
+
+    if (
+      caller &&
+      caller.role !== 'ADMIN' &&
+      asset.custodianId !== caller.custodianId
+    ) {
+      throw new NotFoundException(`Activo con id ${assetId} no encontrado`);
+    }
 
     return this.prisma.assetMovement.findMany({
       where: { assetId },

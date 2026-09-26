@@ -77,6 +77,17 @@ export class CustodiansController {
     return this.custodiansService.findAll(pageNum, limitNum, search);
   }
 
+  @Get('options')
+  @Roles()
+  @ApiOperation({
+    summary:
+      'Listar opciones de custodio (id y nombre) para cualquier usuario autenticado',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de opciones de custodio' })
+  async findOptions() {
+    return this.custodiansService.findOptions();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener custodio por ID' })
   @ApiParam({ name: 'id', description: 'ID del custodio' })

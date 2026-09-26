@@ -401,6 +401,38 @@ describe('MovementsService', () => {
 
       await expect(service.findAll(999)).rejects.toThrow(NotFoundException);
     });
+
+    it('should throw NotFoundException when a USER caller requests another custodian asset history', async () => {
+      prisma.asset.findUnique.mockResolvedValue(mockAsset);
+
+      await expect(
+        service.findAll(1, { role: 'USER', custodianId: 999 }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return the history when a USER caller owns the asset', async () => {
+      prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.assetMovement.findMany.mockResolvedValue([mockMovement]);
+
+      const result = await service.findAll(1, {
+        role: 'USER',
+        custodianId: 1,
+      });
+
+      expect(result).toEqual([mockMovement]);
+    });
+
+    it('should return the history for an ADMIN caller regardless of custodian', async () => {
+      prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.assetMovement.findMany.mockResolvedValue([mockMovement]);
+
+      const result = await service.findAll(1, {
+        role: 'ADMIN',
+        custodianId: null,
+      });
+
+      expect(result).toEqual([mockMovement]);
+    });
   });
 
   describe('confirmBulk', () => {

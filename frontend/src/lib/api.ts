@@ -1,6 +1,7 @@
 import {
   User,
   Custodian,
+  CustodianOption,
   Location,
   Asset,
   AssetMovement,
@@ -179,6 +180,7 @@ export const api = {
   custodians: {
     getAll: (params?: ListParams) =>
       fetcher<PaginatedResponse<Custodian>>(`/custodians${buildQueryString(params ?? {})}`),
+    getOptions: () => fetcher<CustodianOption[]>('/custodians/options'),
     getById: (id: number) => fetcher<Custodian>(`/custodians/${id}`),
     create: (data: { fullName: string; identifier: string; unit?: string; locationId?: number }) =>
       fetcher<Custodian>('/custodians', { method: 'POST', body: JSON.stringify(data) }),

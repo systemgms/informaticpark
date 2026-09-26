@@ -25,6 +25,11 @@ export interface Custodian {
   assets?: Asset[];
 }
 
+export interface CustodianOption {
+  id: number;
+  fullName: string;
+}
+
 export interface Location {
   id: number;
   canton?: string | null;

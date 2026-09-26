@@ -112,8 +112,11 @@ export class MovementsController {
   @Get()
   @ApiOperation({ summary: 'Historial de traspasos del activo' })
   @ApiParam({ name: 'assetId', description: 'ID del activo' })
-  findAll(@Param('assetId', ParseIdPipe) assetId: number) {
-    return this.movementsService.findAll(assetId);
+  findAll(
+    @Param('assetId', ParseIdPipe) assetId: number,
+    @Req() req: { user: AuthUser },
+  ) {
+    return this.movementsService.findAll(assetId, req.user);
   }
 
   @Get('pending/me')

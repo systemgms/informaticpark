@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Asset, AssetMovement, MovementStatus } from '@/lib/types';
-import { useCustodianOptions } from '@/hooks/use-custodian-options';
+import { useCustodianDestinationOptions } from '@/hooks/use-custodian-destination-options';
 import { useLocationOptions } from '@/hooks/use-location-options';
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/components/ui/toast';
@@ -88,7 +88,7 @@ export default function AssetMovementHistoryPage() {
 
   const [asset, setAsset] = useState<Asset | null>(null);
   const [movements, setMovements] = useState<AssetMovement[]>([]);
-  const { custodians } = useCustodianOptions();
+  const { custodians, error: custodiansError } = useCustodianDestinationOptions();
   const { locations } = useLocationOptions();
   const [isLoading, setIsLoading] = useState(true);
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -118,6 +118,12 @@ export default function AssetMovementHistoryPage() {
       })
       .finally(() => setIsLoading(false));
   }, [assetId, toast]);
+
+  useEffect(() => {
+    if (custodiansError) {
+      toast('No se pudieron cargar los custodios disponibles', 'error');
+    }
+  }, [custodiansError, toast]);
 
   const filteredMovements = useMemo(() => {
     return movements.filter((m) => {
@@ -307,7 +313,7 @@ export default function AssetMovementHistoryPage() {
                     <SelectContent>
                       {custodians.map((c) => (
                         <SelectItem key={c.id} value={String(c.id)}>
-                          {c.fullName} ({c.identifier})
+                          {c.fullName}
                         </SelectItem>
                       ))}
                     </SelectContent>

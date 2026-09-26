@@ -89,6 +89,14 @@ export class CustodiansService {
     };
   }
 
+  async findOptions() {
+    return this.prisma.custodian.findMany({
+      where: { isDeleted: false },
+      select: { id: true, fullName: true },
+      orderBy: { fullName: 'asc' },
+    });
+  }
+
   async findOne(id: number) {
     const custodian = await this.prisma.custodian.findUnique({
       where: { id, isDeleted: false },
