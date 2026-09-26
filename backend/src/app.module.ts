@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { shouldSkipMutationsThrottling } from './common/throttler/mutations-throttler.skip-if';
 import { AuthModule } from './auth/auth.module';
 import { JwtConfigModule } from './auth/jwt-config.module';
 import { UsersModule } from './users/users.module';
@@ -27,6 +28,10 @@ import { RolesGuard } from './auth/roles.guard';
         name: 'mutations',
         ttl: 60000,
         limit: 20,
+        // Applies only to non-safe HTTP methods: `@nestjs/throttler` runs
+        // every named throttler on every route, so without this predicate
+        // GET/HEAD/OPTIONS reads would also be capped at 20/min.
+        skipIf: shouldSkipMutationsThrottling,
       },
     ]),
     ConfigModule.forRoot({ isGlobal: true }),
