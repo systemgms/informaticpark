@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
+import { AuthUser } from '../common/types/auth-user.type';
 
 @Injectable()
 export class AssetsService {
@@ -99,10 +100,20 @@ export class AssetsService {
     }
   }
 
-  async findAll(page = 1, limit = 20, search?: string) {
+  async findAll(page = 1, limit = 20, search?: string, caller?: AuthUser) {
+    const isRestrictedCaller = !!caller && caller.role !== 'ADMIN';
+
+    if (isRestrictedCaller && !caller?.custodianId) {
+      return {
+        data: [],
+        meta: { total: 0, page, limit, totalPages: 0 },
+      };
+    }
+
     const skip = (page - 1) * limit;
     const where: Prisma.AssetWhereInput = {
       isDeleted: false,
+      ...(isRestrictedCaller ? { custodianId: caller?.custodianId } : {}),
       ...(search
         ? {
             OR: [
@@ -141,7 +152,7 @@ export class AssetsService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, caller?: AuthUser) {
     const asset = await this.prisma.asset.findUnique({
       where: { id, isDeleted: false },
       include: {
@@ -151,6 +162,13 @@ export class AssetsService {
       },
     });
     if (!asset) {
+      throw new NotFoundException(`Activo con id ${id} no encontrado`);
+    }
+    if (
+      caller &&
+      caller.role !== 'ADMIN' &&
+      asset.custodianId !== caller.custodianId
+    ) {
       throw new NotFoundException(`Activo con id ${id} no encontrado`);
     }
     return this.formatAsset(asset);
@@ -255,11 +273,16 @@ export class AssetsService {
     });
   }
 
-  private formatAsset(asset: any) {
+  private formatAsset<
+    T extends {
+      initialValue: Prisma.Decimal | null;
+      currentValue: Prisma.Decimal | null;
+    },
+  >(asset: T) {
     return {
       ...asset,
-      initialValue: asset.initialValue ? parseFloat(asset.initialValue) : null,
-      currentValue: asset.currentValue ? parseFloat(asset.currentValue) : null,
+      initialValue: asset.initialValue ? Number(asset.initialValue) : null,
+      currentValue: asset.currentValue ? Number(asset.currentValue) : null,
     };
   }
 }

@@ -150,6 +150,47 @@ describe('AssetsService', () => {
       expect(result.data[0].initialValue).toBe(1500);
       expect(result.data[0].currentValue).toBe(1200);
     });
+
+    it('should scope results to the caller custodian for a USER caller', async () => {
+      prisma.asset.findMany.mockResolvedValue([mockAsset]);
+      prisma.asset.count.mockResolvedValue(1);
+
+      await service.findAll(1, 20, undefined, { role: 'USER', custodianId: 1 });
+
+      expect(prisma.asset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ isDeleted: false, custodianId: 1 }),
+        }),
+      );
+    });
+
+    it('should return an empty paginated result without querying when a USER caller has no custodian', async () => {
+      const result = await service.findAll(1, 20, undefined, {
+        role: 'USER',
+        custodianId: null,
+      });
+
+      expect(result).toEqual({
+        data: [],
+        meta: { total: 0, page: 1, limit: 20, totalPages: 0 },
+      });
+      expect(prisma.asset.findMany).not.toHaveBeenCalled();
+      expect(prisma.asset.count).not.toHaveBeenCalled();
+    });
+
+    it('should return all assets for an ADMIN caller regardless of custodian', async () => {
+      prisma.asset.findMany.mockResolvedValue([mockAsset]);
+      prisma.asset.count.mockResolvedValue(1);
+
+      await service.findAll(1, 20, undefined, {
+        role: 'ADMIN',
+        custodianId: null,
+      });
+
+      expect(prisma.asset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isDeleted: false } }),
+      );
+    });
   });
 
   describe('findOne', () => {
@@ -166,6 +207,22 @@ describe('AssetsService', () => {
       prisma.asset.findUnique.mockResolvedValue(null);
 
       await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when a USER caller requests another custodian asset', async () => {
+      prisma.asset.findUnique.mockResolvedValue(mockAsset);
+
+      await expect(
+        service.findOne(1, { role: 'USER', custodianId: 2 }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return the asset when a USER caller requests their own custodian asset', async () => {
+      prisma.asset.findUnique.mockResolvedValue(mockAsset);
+
+      const result = await service.findOne(1, { role: 'USER', custodianId: 1 });
+
+      expect(result.id).toBe(1);
     });
   });
 

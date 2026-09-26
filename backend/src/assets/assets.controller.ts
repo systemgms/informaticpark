@@ -24,6 +24,8 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 import { ParseIdPipe } from '../common/pipes/parse-id.pipe';
 import { TrimStringsPipe } from '../common/pipes/trim-strings.pipe';
 import { MaxLengthPipe } from '../common/pipes/max-length.pipe';
+import { Roles } from '../auth/roles.decorator';
+import { AuthUser } from '../common/types/auth-user.type';
 
 @ApiTags('assets')
 @ApiBearerAuth('JWT')
@@ -32,14 +34,16 @@ export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear activo' })
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Crear activo (solo ADMIN)' })
   @ApiBody({ type: CreateAssetDto })
   @ApiResponse({ status: 201, description: 'Activo creado' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
+  @ApiResponse({ status: 403, description: 'Solo ADMIN' })
   @ApiResponse({ status: 409, description: 'Código duplicado' })
   async create(
     @Body(TrimStringsPipe) dto: CreateAssetDto,
-    @Req() req: { user: { sub?: number } },
+    @Req() req: { user: AuthUser },
   ) {
     return this.assetsService.create(dto, req.user?.sub);
   }
@@ -69,13 +73,14 @@ export class AssetsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search', new MaxLengthPipe(100)) search?: string,
+    @Req() req?: { user: AuthUser },
   ) {
     const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
     const limitNum = Math.min(
       100,
       Math.max(1, parseInt(limit || '20', 10) || 20),
     );
-    return this.assetsService.findAll(pageNum, limitNum, search);
+    return this.assetsService.findAll(pageNum, limitNum, search, req?.user);
   }
 
   @Get(':id')
@@ -83,16 +88,21 @@ export class AssetsController {
   @ApiParam({ name: 'id', description: 'ID del activo' })
   @ApiResponse({ status: 200, description: 'Activo encontrado' })
   @ApiResponse({ status: 404, description: 'Activo no encontrado' })
-  findOne(@Param('id', ParseIdPipe) id: number) {
-    return this.assetsService.findOne(id);
+  findOne(
+    @Param('id', ParseIdPipe) id: number,
+    @Req() req: { user: AuthUser },
+  ) {
+    return this.assetsService.findOne(id, req.user);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Actualizar activo' })
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Actualizar activo (solo ADMIN)' })
   @ApiBody({ type: UpdateAssetDto })
   @ApiParam({ name: 'id', description: 'ID del activo' })
   @ApiResponse({ status: 200, description: 'Activo actualizado' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
+  @ApiResponse({ status: 403, description: 'Solo ADMIN' })
   @ApiResponse({ status: 404, description: 'Activo no encontrado' })
   @ApiResponse({ status: 409, description: 'Código duplicado' })
   update(
@@ -103,10 +113,12 @@ export class AssetsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar activo' })
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Eliminar activo (solo ADMIN)' })
   @ApiParam({ name: 'id', description: 'ID del activo' })
   @ApiResponse({ status: 200, description: 'Activo eliminado' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
+  @ApiResponse({ status: 403, description: 'Solo ADMIN' })
   @ApiResponse({ status: 404, description: 'Activo no encontrado' })
   remove(@Param('id', ParseIdPipe) id: number) {
     return this.assetsService.remove(id);
