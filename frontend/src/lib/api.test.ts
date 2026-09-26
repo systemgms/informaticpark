@@ -75,6 +75,49 @@ describe('api list params', () => {
     const [url] = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(url).toContain('/locations?all=true');
   });
+
+  it('public.assets.getAll requests /public/assets with page, limit and search', async () => {
+    await api.public.assets.getAll({ page: 2, limit: 10, search: 'dell' });
+
+    const [url] = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toContain('/public/assets?');
+    expect(url).toContain('page=2');
+    expect(url).toContain('limit=10');
+    expect(url).toContain('search=dell');
+  });
+
+  it('public.custodians.getAll requests /public/custodians with page, limit and search', async () => {
+    await api.public.custodians.getAll({ page: 1, limit: 20, search: 'ana' });
+
+    const [url] = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toContain('/public/custodians?');
+    expect(url).toContain('search=ana');
+  });
+});
+
+describe('api.public 401 handling on a public path', () => {
+  const originalPathname = window.location.pathname;
+
+  afterEach(() => {
+    window.history.pushState({}, '', originalPathname);
+  });
+
+  it('does not redirect to /login or drop the stored token on a 401 from a public page', async () => {
+    window.history.pushState({}, '', '/public/assets');
+    localStorage.setItem('token', 'stale-token');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      json: async () => ({ message: 'Unauthorized' }),
+    }) as unknown as typeof fetch;
+
+    await expect(api.public.assets.getAll()).rejects.toThrow();
+
+    expect(window.location.pathname).toBe('/public/assets');
+    expect(localStorage.getItem('token')).toBe('stale-token');
+    localStorage.removeItem('token');
+  });
 });
 
 describe('api.movements', () => {

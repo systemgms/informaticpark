@@ -93,6 +93,28 @@ export interface Asset {
   updatedAt: string;
 }
 
+export interface PublicGeoLocation {
+  canton?: string | null;
+  parroquia?: string | null;
+}
+
+export interface PublicAsset {
+  id: number;
+  code?: string | null;
+  assetName: string;
+  brand?: string | null;
+  model?: string | null;
+  currentValue?: number | null;
+  location?: string | null;
+  geoLocation?: PublicGeoLocation | null;
+}
+
+export interface PublicCustodian {
+  id: number;
+  fullName: string;
+  unit?: string | null;
+}
+
 export interface AssetStats {
   total: number;
   totalValue: number;

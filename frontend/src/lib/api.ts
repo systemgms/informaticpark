@@ -8,6 +8,8 @@ import {
   AssetStats,
   BrandSettings,
   BrandSettingsUpdate,
+  PublicAsset,
+  PublicCustodian,
 } from './types';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
@@ -258,6 +260,16 @@ export const api = {
       fetcherMultipart<BulkMovementActionResult>(`/movements/bulk/${groupId}/confirm`, formData, 'PATCH'),
     rejectBulk: (groupId: string) =>
       fetcher<BulkMovementActionResult>(`/movements/bulk/${groupId}/reject`, { method: 'PATCH' }),
+  },
+  public: {
+    assets: {
+      getAll: (params?: ListParams) =>
+        fetcher<PaginatedResponse<PublicAsset>>(`/public/assets${buildQueryString(params ?? {})}`),
+    },
+    custodians: {
+      getAll: (params?: ListParams) =>
+        fetcher<PaginatedResponse<PublicCustodian>>(`/public/custodians${buildQueryString(params ?? {})}`),
+    },
   },
   brandSettings: {
     get: () => fetcher<BrandSettings>('/brand-settings'),

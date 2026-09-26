@@ -1,48 +1,42 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-import { Asset } from "@/lib/types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Search, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { useCallback } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import { api } from '@/lib/api';
+import { PublicAsset } from '@/lib/types';
+import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { Pagination } from '@/components/pagination';
+import { ListSearchInput } from '@/components/list-search-input';
+import { PublicAssetList } from './asset-list';
 
 export default function PublicAssetsPage() {
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    api.assets
-      .getAll()
-      .then((data) => setAssets(Array.isArray(data) ? data : []))
-      .catch((err) => setError(err.message || "Error al cargar activos"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const filtered = assets.filter(
-    (a) =>
-      a.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchAssets = useCallback(
+    (params: { page: number; limit: number; search: string }) => api.public.assets.getAll(params),
+    [],
   );
+
+  const {
+    items: assets,
+    meta,
+    page,
+    setPage,
+    search,
+    setSearch,
+    isLoading,
+    error,
+  } = usePaginatedList<PublicAsset>({ fetchPage: fetchAssets });
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-4">
+      <header className="border-b px-4 py-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <Link href="/public" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
+          <Link
+            href="/public"
+            aria-label="Volver"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
             <h1 className="text-xl font-semibold">Parque Informático GPMS</h1>
@@ -51,68 +45,19 @@ export default function PublicAssetsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto py-8 px-4 space-y-6">
-        <div className="flex items-center gap-2 max-w-sm">
-          <Search className="w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nombre, código o marca..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <main className="container mx-auto space-y-6 px-4 py-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre, código o marca..." />
+          {!isLoading && meta && (
+            <span className="whitespace-nowrap text-sm text-muted-foreground">
+              {meta.total} {meta.total === 1 ? 'resultado' : 'resultados'}
+            </span>
+          )}
         </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Nombre del Activo</TableHead>
-                  <TableHead>Marca / Modelo</TableHead>
-                  <TableHead>Custodio</TableHead>
-                  <TableHead>Ubicación</TableHead>
-                  <TableHead>Valor Actual</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      Cargando...
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-destructive">
-                      {error}
-                    </TableCell>
-                  </TableRow>
-                ) : filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      No se encontraron activos.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((a) => (
-                    <TableRow key={a.id}>
-                      <TableCell className="font-mono">{a.code || "—"}</TableCell>
-                      <TableCell className="font-medium">{a.assetName}</TableCell>
-                      <TableCell>
-                        {[a.brand, a.model].filter(Boolean).join(" ") || "—"}
-                      </TableCell>
-                      <TableCell>{a.custodian?.fullName || "—"}</TableCell>
-                      <TableCell>{a.location || "—"}</TableCell>
-                      <TableCell>
-                        {a.currentValue != null ? `$${a.currentValue.toFixed(2)}` : "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <PublicAssetList assets={assets} isLoading={isLoading} error={error} hasSearch={search.length > 0} />
+
+        {meta && <Pagination page={page} totalPages={meta.totalPages} onPageChange={setPage} />}
       </main>
     </div>
   );
