@@ -111,10 +111,6 @@ export function UserForm({ userId }: UserFormProps) {
       if (isEdit) {
         await api.users.update(userId!, payload);
       } else {
-        if (!formValues.password) {
-          toast('La contraseña es requerida', 'error');
-          return;
-        }
         await api.users.create({ ...payload, password: formValues.password });
       }
       router.push('/admin/users');
@@ -166,18 +162,23 @@ export function UserForm({ userId }: UserFormProps) {
               />
             </div>
 
-            {!isEdit && (
-              <div className="grid gap-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formValues.password}
-                  onChange={(e) => setFormValues({ ...formValues, password: e.target.value })}
-                  required
-                />
-              </div>
-            )}
+            <div className="grid gap-2">
+              <Label htmlFor="password">{isEdit ? 'Nueva contraseña' : 'Contraseña'}</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                value={formValues.password}
+                onChange={(e) => setFormValues({ ...formValues, password: e.target.value })}
+                required={!isEdit}
+                aria-describedby={isEdit ? 'password-hint' : undefined}
+              />
+              {isEdit && (
+                <p id="password-hint" className="text-sm text-muted-foreground">
+                  Déjala vacía para mantener la contraseña actual.
+                </p>
+              )}
+            </div>
 
             <div className="grid gap-2">
               <Label htmlFor="role">Rol</Label>
