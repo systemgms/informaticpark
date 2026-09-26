@@ -150,6 +150,7 @@ export default function BrandAdminPage() {
                   />
                 </div>
                 {formData.logoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element -- logo URL is admin-uploaded/dynamic; next/image optimization needs extra loader config on the Cloudflare Workers deploy target
                   <img
                     src={formData.logoUrl}
                     alt="Vista previa del logo"
@@ -185,6 +186,7 @@ export default function BrandAdminPage() {
                   />
                 </div>
                 {formData.faviconUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element -- favicon URL is admin-uploaded/dynamic; next/image optimization needs extra loader config on the Cloudflare Workers deploy target
                   <img
                     src={formData.faviconUrl}
                     alt="Vista previa del favicon"
@@ -270,6 +272,7 @@ export default function BrandAdminPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-4 p-4 border rounded-lg">
                 {formData.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- logo URL is admin-uploaded/dynamic; next/image optimization needs extra loader config on the Cloudflare Workers deploy target
                   <img src={formData.logoUrl} alt="Logotipo" className="h-12 w-auto object-contain" />
                 ) : (
                   <ImageIcon className="w-10 h-10 text-muted-foreground" />

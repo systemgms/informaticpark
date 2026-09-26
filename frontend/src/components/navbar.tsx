@@ -98,7 +98,8 @@ export function Navbar() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex min-h-11 min-w-11 items-center gap-2 font-bold text-base shrink-0">
             {brand?.logoUrl ? (
-              <img src={brand.logoUrl} alt="" className="h-6 w-auto object-contain" />
+              // eslint-disable-next-line @next/next/no-img-element -- logo URL is admin-uploaded/dynamic; next/image optimization needs extra loader config on the Cloudflare Workers deploy target
+              <img src={brand.logoUrl} alt="Logotipo de la aplicación" className="h-6 w-auto object-contain" />
             ) : (
               <LayoutDashboard className="w-5 h-5 text-primary" />
             )}
