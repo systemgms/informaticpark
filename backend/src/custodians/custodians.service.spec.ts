@@ -201,6 +201,74 @@ describe('CustodiansService', () => {
     });
   });
 
+  describe('findPublic', () => {
+    const mockPublicCustodian = {
+      id: 1,
+      fullName: 'Juan Pérez',
+      unit: 'Tecnología',
+    };
+
+    it('should select only id, fullName and unit, with no identifier', async () => {
+      prisma.custodian.findMany.mockResolvedValue([mockPublicCustodian]);
+      prisma.custodian.count.mockResolvedValue(1);
+
+      await service.findPublic(1, 20);
+
+      expect(prisma.custodian.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: { id: true, fullName: true, unit: true },
+        }),
+      );
+
+      const selectArg = prisma.custodian.findMany.mock.calls[0][0].select;
+      expect(selectArg).not.toHaveProperty('identifier');
+    });
+
+    it('should filter out deleted custodians and order by fullName', async () => {
+      prisma.custodian.findMany.mockResolvedValue([]);
+      prisma.custodian.count.mockResolvedValue(0);
+
+      await service.findPublic(1, 20);
+
+      expect(prisma.custodian.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ isDeleted: false }),
+          orderBy: { fullName: 'asc' },
+        }),
+      );
+    });
+
+    it('should search over fullName and unit only', async () => {
+      prisma.custodian.findMany.mockResolvedValue([]);
+      prisma.custodian.count.mockResolvedValue(0);
+
+      await service.findPublic(1, 20, 'Juan');
+
+      expect(prisma.custodian.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { fullName: { contains: 'Juan', mode: 'insensitive' } },
+              { unit: { contains: 'Juan', mode: 'insensitive' } },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('should return the pagination envelope', async () => {
+      prisma.custodian.findMany.mockResolvedValue([mockPublicCustodian]);
+      prisma.custodian.count.mockResolvedValue(1);
+
+      const result = await service.findPublic(1, 20);
+
+      expect(result).toEqual({
+        data: [mockPublicCustodian],
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      });
+    });
+  });
+
   describe('remove', () => {
     it('should soft-delete a custodian', async () => {
       prisma.custodian.findUnique.mockResolvedValue(mockCustodian);

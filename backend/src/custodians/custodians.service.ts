@@ -89,6 +89,42 @@ export class CustodiansService {
     };
   }
 
+  async findPublic(page = 1, limit = 20, search?: string) {
+    const skip = (page - 1) * limit;
+    const where: Prisma.CustodianWhereInput = {
+      isDeleted: false,
+      ...(search
+        ? {
+            OR: [
+              { fullName: { contains: search, mode: 'insensitive' } },
+              { unit: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [custodians, total] = await Promise.all([
+      this.prisma.custodian.findMany({
+        where,
+        select: { id: true, fullName: true, unit: true },
+        orderBy: { fullName: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.custodian.count({ where }),
+    ]);
+
+    return {
+      data: custodians,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async findOptions() {
     return this.prisma.custodian.findMany({
       where: { isDeleted: false },

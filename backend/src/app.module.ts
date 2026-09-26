@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { AssetsModule } from './assets/assets.module';
 import { CustodiansModule } from './custodians/custodians.module';
 import { LocationsModule } from './locations/locations.module';
+import { PublicModule } from './public/public.module';
 import { MovementsModule } from './movements/movements.module';
 import { HealthModule } from './health/health.module';
 import { BrandSettingsModule } from './brand-settings/brand-settings.module';
@@ -43,6 +44,7 @@ import { RolesGuard } from './auth/roles.guard';
     AssetsModule,
     CustodiansModule,
     LocationsModule,
+    PublicModule,
     MovementsModule,
     BrandSettingsModule,
   ],

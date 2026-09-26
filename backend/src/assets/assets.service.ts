@@ -311,6 +311,56 @@ export class AssetsService {
     });
   }
 
+  async findPublic(page = 1, limit = 20, search?: string) {
+    const skip = (page - 1) * limit;
+    const where: Prisma.AssetWhereInput = {
+      isDeleted: false,
+      ...(search
+        ? {
+            OR: [
+              { assetName: { contains: search, mode: 'insensitive' } },
+              { code: { contains: search, mode: 'insensitive' } },
+              { brand: { contains: search, mode: 'insensitive' } },
+              { model: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [assets, total] = await Promise.all([
+      this.prisma.asset.findMany({
+        where,
+        select: {
+          id: true,
+          code: true,
+          assetName: true,
+          brand: true,
+          model: true,
+          currentValue: true,
+          location: true,
+          geoLocation: { select: { canton: true, parroquia: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.asset.count({ where }),
+    ]);
+
+    return {
+      data: assets.map((asset) => ({
+        ...asset,
+        currentValue: asset.currentValue ? Number(asset.currentValue) : null,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   private formatAsset<
     T extends {
       initialValue: Prisma.Decimal | null;

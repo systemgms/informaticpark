@@ -79,6 +79,41 @@ describe('App (e2e)', () => {
     });
   });
 
+  describe('Public', () => {
+    it('GET /api/public/assets — should be public and expose only allowed fields', async () => {
+      return request(app.getHttpServer())
+        .get('/api/public/assets?limit=2')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('data');
+          expect(res.body).toHaveProperty('meta');
+          expect(Array.isArray(res.body.data)).toBe(true);
+          if (res.body.data.length > 0) {
+            const keys = Object.keys(res.body.data[0]);
+            expect(keys).not.toContain('custodian');
+            expect(keys).not.toContain('custodianId');
+            expect(keys).not.toContain('serialNumber');
+            expect(keys).not.toContain('createdByUser');
+          }
+        });
+    });
+
+    it('GET /api/public/custodians — should be public and expose only allowed fields', async () => {
+      return request(app.getHttpServer())
+        .get('/api/public/custodians?limit=2')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('data');
+          expect(res.body).toHaveProperty('meta');
+          expect(Array.isArray(res.body.data)).toBe(true);
+          if (res.body.data.length > 0) {
+            const keys = Object.keys(res.body.data[0]);
+            expect(keys).not.toContain('identifier');
+          }
+        });
+    });
+  });
+
   describe('Locations', () => {
     it('GET /api/locations — should be public', () => {
       return request(app.getHttpServer()).get('/api/locations').expect(200);

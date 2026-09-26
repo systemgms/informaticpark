@@ -334,6 +334,92 @@ describe('AssetsService', () => {
     });
   });
 
+  describe('findPublic', () => {
+    const mockPublicAsset = {
+      id: 1,
+      code: 'LP-001',
+      assetName: 'Laptop Dell',
+      brand: 'Dell',
+      model: 'XPS 15',
+      location: 'Oficina Central',
+      currentValue: new Prisma.Decimal(1200),
+      geoLocation: { canton: 'Quito', parroquia: 'Iñaquito' },
+    };
+
+    it('should select only the allowed public fields, with no custodian data', async () => {
+      prisma.asset.findMany.mockResolvedValue([mockPublicAsset]);
+      prisma.asset.count.mockResolvedValue(1);
+
+      await service.findPublic(1, 20);
+
+      expect(prisma.asset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: {
+            id: true,
+            code: true,
+            assetName: true,
+            brand: true,
+            model: true,
+            currentValue: true,
+            location: true,
+            geoLocation: { select: { canton: true, parroquia: true } },
+          },
+        }),
+      );
+
+      const selectArg = prisma.asset.findMany.mock.calls[0][0].select;
+      expect(selectArg).not.toHaveProperty('custodian');
+      expect(selectArg).not.toHaveProperty('custodianId');
+      expect(selectArg).not.toHaveProperty('serialNumber');
+      expect(selectArg).not.toHaveProperty('createdByUser');
+    });
+
+    it('should filter out deleted assets', async () => {
+      prisma.asset.findMany.mockResolvedValue([]);
+      prisma.asset.count.mockResolvedValue(0);
+
+      await service.findPublic(1, 20);
+
+      expect(prisma.asset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ isDeleted: false }),
+        }),
+      );
+    });
+
+    it('should search over the exposed fields only', async () => {
+      prisma.asset.findMany.mockResolvedValue([]);
+      prisma.asset.count.mockResolvedValue(0);
+
+      await service.findPublic(1, 20, 'Laptop');
+
+      expect(prisma.asset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { assetName: { contains: 'Laptop', mode: 'insensitive' } },
+              { code: { contains: 'Laptop', mode: 'insensitive' } },
+              { brand: { contains: 'Laptop', mode: 'insensitive' } },
+              { model: { contains: 'Laptop', mode: 'insensitive' } },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('should return the pagination envelope with formatted currentValue', async () => {
+      prisma.asset.findMany.mockResolvedValue([mockPublicAsset]);
+      prisma.asset.count.mockResolvedValue(1);
+
+      const result = await service.findPublic(1, 20);
+
+      expect(result).toEqual({
+        data: [{ ...mockPublicAsset, currentValue: 1200 }],
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      });
+    });
+  });
+
   describe('remove', () => {
     it('should soft-delete an asset', async () => {
       prisma.asset.findUnique.mockResolvedValue(mockAsset);
