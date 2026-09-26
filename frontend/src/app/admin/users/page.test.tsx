@@ -14,7 +14,14 @@ vi.mock('@/lib/api', () => ({
   },
 }));
 
+// The real toast is memoized; a fresh fn per render would re-trigger effects that depend on it.
+const toastMock = vi.fn();
+vi.mock('@/components/ui/toast', () => ({
+  useToast: () => ({ toast: toastMock }),
+}));
+
 const getAllMock = api.users.getAll as unknown as ReturnType<typeof vi.fn>;
+const deleteMock = api.users.delete as unknown as ReturnType<typeof vi.fn>;
 
 function makeResponse(names: string[], page = 1, totalPages = 1) {
   return {
@@ -32,6 +39,8 @@ function makeResponse(names: string[], page = 1, totalPages = 1) {
 describe('UsersAdminPage', () => {
   beforeEach(() => {
     getAllMock.mockReset();
+    deleteMock.mockReset();
+    toastMock.mockReset();
     getAllMock.mockResolvedValue(makeResponse(['Carlos Pérez']));
   });
 
@@ -51,5 +60,20 @@ describe('UsersAdminPage', () => {
     await user.click(screen.getByRole('button', { name: /página siguiente/i }));
 
     await waitFor(() => expect(getAllMock).toHaveBeenCalledWith({ page: 2, limit: 20 }));
+  });
+
+  it('shows an error toast when the delete request is rejected', async () => {
+    deleteMock.mockRejectedValue(new Error('No tienes permisos para eliminar este usuario'));
+    const user = userEvent.setup();
+    render(<UsersAdminPage />);
+    await waitFor(() => expect(screen.getAllByText('Carlos Pérez').length).toBeGreaterThan(0));
+
+    await user.click(screen.getAllByRole('button', { name: 'Eliminar usuario' })[0]);
+    await user.click(screen.getByRole('button', { name: 'Eliminar' }));
+
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith('No tienes permisos para eliminar este usuario', 'error'),
+    );
+    expect(getAllMock).toHaveBeenCalledTimes(1);
   });
 });

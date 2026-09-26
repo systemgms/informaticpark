@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Custodian } from '@/lib/types';
 import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { useListItemDeletion } from '@/hooks/use-list-item-deletion';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/pagination';
 import { ListSearchInput } from '@/components/list-search-input';
@@ -13,9 +14,6 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { CustodianList } from './custodian-list';
 
 export default function CustodiansAdminPage() {
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [custodianToDelete, setCustodianToDelete] = useState<number | null>(null);
-
   const fetchCustodians = useCallback(
     (params: { page: number; limit: number; search: string }) => api.custodians.getAll(params),
     [],
@@ -33,25 +31,15 @@ export default function CustodiansAdminPage() {
     reload,
   } = usePaginatedList<Custodian>({ fetchPage: fetchCustodians });
 
-  function handleDeleteClick(id: number) {
-    setCustodianToDelete(id);
-    setDeleteDialogOpen(true);
-  }
-
-  async function handleDeleteConfirm() {
-    if (custodianToDelete === null) return;
-    const isLastItemOnPage = custodians.length === 1 && page > 1;
-    try {
-      await api.custodians.delete(custodianToDelete);
-      if (isLastItemOnPage) {
-        setPage(page - 1);
-      } else {
-        reload();
-      }
-    } catch {
-      // Error handled silently
-    }
-  }
+  const { isDialogOpen, setDialogOpen, requestDelete, confirmDelete } = useListItemDeletion({
+    items: custodians,
+    page,
+    setPage,
+    reload,
+    deleteItem: api.custodians.delete,
+    successMessage: 'Custodio eliminado',
+    errorMessage: 'No se pudo eliminar el custodio',
+  });
 
   return (
     <div className="space-y-6">
@@ -82,18 +70,18 @@ export default function CustodiansAdminPage() {
         isLoading={isLoading}
         error={error}
         hasSearch={search.length > 0}
-        onDeleteClick={handleDeleteClick}
+        onDeleteClick={requestDelete}
       />
 
       {meta && <Pagination page={page} totalPages={meta.totalPages} onPageChange={setPage} />}
 
       <ConfirmDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
+        open={isDialogOpen}
+        onOpenChange={setDialogOpen}
         title="Eliminar custodio"
         description="¿Estás seguro de que deseas eliminar este custodio? Los activos y traspasos vinculados podrían verse afectados."
         confirmLabel="Eliminar"
-        onConfirm={handleDeleteConfirm}
+        onConfirm={confirmDelete}
       />
     </div>
   );

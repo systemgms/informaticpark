@@ -1,20 +1,18 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import Link from 'next/link';
 import { UserPlus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { User } from '@/lib/types';
 import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { useListItemDeletion } from '@/hooks/use-list-item-deletion';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/pagination';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { UserList } from './user-list';
 
 export default function UsersAdminPage() {
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<number | null>(null);
-
   // The backend users endpoint does not support `search`, so this page only paginates
   // and strips the (unused) search field before calling the API.
   const fetchUsers = useCallback(
@@ -32,25 +30,15 @@ export default function UsersAdminPage() {
     reload,
   } = usePaginatedList<User>({ fetchPage: fetchUsers });
 
-  function handleDeleteClick(id: number) {
-    setUserToDelete(id);
-    setDeleteDialogOpen(true);
-  }
-
-  async function handleDeleteConfirm() {
-    if (userToDelete === null) return;
-    const isLastItemOnPage = users.length === 1 && page > 1;
-    try {
-      await api.users.delete(userToDelete);
-      if (isLastItemOnPage) {
-        setPage(page - 1);
-      } else {
-        reload();
-      }
-    } catch {
-      // Error handled silently
-    }
-  }
+  const { isDialogOpen, setDialogOpen, requestDelete, confirmDelete } = useListItemDeletion({
+    items: users,
+    page,
+    setPage,
+    reload,
+    deleteItem: api.users.delete,
+    successMessage: 'Usuario eliminado',
+    errorMessage: 'No se pudo eliminar el usuario',
+  });
 
   return (
     <div className="space-y-6">
@@ -67,17 +55,17 @@ export default function UsersAdminPage() {
         </Link>
       </div>
 
-      <UserList users={users} isLoading={isLoading} error={error} onDeleteClick={handleDeleteClick} />
+      <UserList users={users} isLoading={isLoading} error={error} onDeleteClick={requestDelete} />
 
       {meta && <Pagination page={page} totalPages={meta.totalPages} onPageChange={setPage} />}
 
       <ConfirmDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
+        open={isDialogOpen}
+        onOpenChange={setDialogOpen}
         title="Eliminar usuario"
         description="¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer."
         confirmLabel="Eliminar"
-        onConfirm={handleDeleteConfirm}
+        onConfirm={confirmDelete}
       />
     </div>
   );
