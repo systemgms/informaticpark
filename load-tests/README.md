@@ -40,11 +40,8 @@ Herramienta: [k6](https://k6.io/) (`k6 v2.3.0`).
    ```bash
    cd backend
    bun run build
-   # El script "start:prod" del package.json invoca "dist/main", pero nest
-   # (sourceRoot: "src") compila a dist/src/main.js -- ese script está roto.
-   # Arrancar el compilado directamente:
    DATABASE_URL="postgresql://informaticpark:informaticpark_dev@localhost:5432/informaticpark" \
-     node dist/src/main.js &
+     bun run start:prod &
    # Esperar a que responda:
    curl -sf http://localhost:4000/api/health
    ```
