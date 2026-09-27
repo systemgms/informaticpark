@@ -50,3 +50,8 @@ docker-compose.override.yml
 dist/
 .next/
 coverage/
+
+# Local AI tooling and browser session artifacts
+.atl/
+.opencode/
+.playwright-mcp/
