@@ -1,14 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { Asset } from '@/lib/types';
+import { Asset, AssetCondition, ASSET_CONDITION_LABELS } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ListEmptyState } from '@/components/list-empty-state';
 import { ListErrorState } from '@/components/list-error-state';
 import { Package, Pencil, Trash2 } from 'lucide-react';
+
+const CONDITION_BADGE_CLASSES: Record<AssetCondition, string> = {
+  [AssetCondition.BUENO]: 'border-transparent bg-green-100 text-green-800 hover:bg-green-100',
+  [AssetCondition.MALO]: 'border-transparent bg-red-100 text-red-800 hover:bg-red-100',
+  [AssetCondition.EN_MANTENIMIENTO]: 'border-transparent bg-amber-100 text-amber-800 hover:bg-amber-100',
+};
+
+function ConditionBadge({ condition }: { condition: AssetCondition }) {
+  return <Badge className={CONDITION_BADGE_CLASSES[condition]}>{ASSET_CONDITION_LABELS[condition]}</Badge>;
+}
 
 interface AssetListProps {
   assets: Asset[];
@@ -102,6 +113,7 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
                   {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
                 </p>
                 <p className="text-sm text-muted-foreground">{asset.location || '—'}</p>
+                <ConditionBadge condition={asset.condition} />
                 <div className="flex justify-end pt-1">
                   <AssetActions asset={asset} isAdmin={isAdmin} onDeleteClick={onDeleteClick} />
                 </div>
@@ -121,6 +133,7 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
                 <TableHead>Nombre del Activo</TableHead>
                 <TableHead>Marca / Modelo</TableHead>
                 <TableHead>Ubicación</TableHead>
+                <TableHead>Condición</TableHead>
                 <TableHead>Valor Actual</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -142,6 +155,9 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
                       <Skeleton className="h-4 w-24" />
                     </TableCell>
                     <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
                       <Skeleton className="h-4 w-16" />
                     </TableCell>
                     <TableCell className="text-right">
@@ -151,13 +167,13 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={7}>
                     <ListErrorState message={error} />
                   </TableCell>
                 </TableRow>
               ) : assets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={7}>
                     <ListEmptyState icon={Package} message={emptyMessage} action={emptyAction} />
                   </TableCell>
                 </TableRow>
@@ -170,6 +186,9 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
                       {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{asset.location || '—'}</TableCell>
+                    <TableCell>
+                      <ConditionBadge condition={asset.condition} />
+                    </TableCell>
                     <TableCell className="font-mono text-sm">{formatValue(asset.currentValue)}</TableCell>
                     <TableCell className="text-right">
                       <AssetActions asset={asset} isAdmin={isAdmin} onDeleteClick={onDeleteClick} />

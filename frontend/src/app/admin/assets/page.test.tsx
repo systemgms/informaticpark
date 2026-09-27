@@ -3,7 +3,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AssetsAdminPage from './page';
 import { api } from '@/lib/api';
-import { Role } from '@/lib/types';
+import { Role, AssetCondition } from '@/lib/types';
+
+// Radix Select relies on APIs jsdom doesn't implement.
+beforeAll(() => {
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  window.HTMLElement.prototype.hasPointerCapture = vi.fn().mockReturnValue(false);
+  window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+});
 
 vi.mock('@/lib/api', () => ({
   api: {
@@ -61,5 +68,27 @@ describe('AssetsAdminPage', () => {
     await user.click(screen.getByRole('button', { name: /página siguiente/i }));
 
     await waitFor(() => expect(getAllMock).toHaveBeenCalledWith({ page: 2, limit: 20, search: '' }));
+  });
+
+  it('calls the API with the selected condition and resets to page 1', async () => {
+    getAllMock.mockResolvedValue(makeResponse(['Laptop Dell'], 1, 2));
+    const user = userEvent.setup();
+    render(<AssetsAdminPage />);
+    await waitFor(() => expect(screen.getAllByText('Laptop Dell').length).toBeGreaterThan(0));
+
+    await user.click(screen.getByRole('button', { name: /página siguiente/i }));
+    await waitFor(() => expect(getAllMock).toHaveBeenCalledWith({ page: 2, limit: 20, search: '' }));
+
+    await user.click(screen.getByLabelText(/condición/i));
+    await user.click(await screen.findByRole('option', { name: 'Malo' }));
+
+    await waitFor(() =>
+      expect(getAllMock).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+        search: '',
+        condition: AssetCondition.MALO,
+      }),
+    );
   });
 });

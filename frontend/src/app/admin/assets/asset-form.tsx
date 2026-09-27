@@ -15,6 +15,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { AssetCondition, ASSET_CONDITION_LABELS } from '@/lib/types';
 
 const LocationPicker = dynamic(() => import('@/components/location-picker').then((m) => m.LocationPicker), {
   ssr: false,
@@ -84,6 +85,7 @@ interface AssetFormData {
   custodianId: string;
   canton: string;
   parroquia: string;
+  condition: AssetCondition;
 }
 
 interface Coordinates {
@@ -115,6 +117,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
     custodianId: '',
     canton: '',
     parroquia: '',
+    condition: AssetCondition.BUENO,
   });
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
 
@@ -137,6 +140,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
         custodianId: asset.custodianId?.toString() || '',
         canton: asset.geoLocation?.canton || '',
         parroquia: asset.geoLocation?.parroquia || '',
+        condition: asset.condition ?? AssetCondition.BUENO,
       });
       if (asset.geoLocation?.lat != null && asset.geoLocation?.lng != null) {
         setCoordinates({ lat: asset.geoLocation.lat, lng: asset.geoLocation.lng });
@@ -212,6 +216,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
         locationId,
         initialValue: formData.initialValue || null,
         currentValue: formData.currentValue || null,
+        condition: formData.condition,
       };
       if (isEdit) {
         await api.assets.update(assetId!, data);
@@ -378,6 +383,24 @@ export function AssetForm({ assetId }: AssetFormProps) {
                       {custodians.map((c) => (
                         <SelectItem key={c.id} value={String(c.id)}>
                           {c.fullName} ({c.identifier})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="condition">Condición</Label>
+                  <Select
+                    value={formData.condition}
+                    onValueChange={(value) => setFormData({ ...formData, condition: value as AssetCondition })}
+                  >
+                    <SelectTrigger id="condition">
+                      <SelectValue placeholder="Seleccionar condición" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(AssetCondition).map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {ASSET_CONDITION_LABELS[value]}
                         </SelectItem>
                       ))}
                     </SelectContent>

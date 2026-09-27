@@ -1,4 +1,5 @@
 import { api } from './api';
+import { AssetCondition } from './types';
 
 describe('api list params', () => {
   beforeEach(() => {
@@ -30,6 +31,20 @@ describe('api list params', () => {
 
     const [url] = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(url).not.toContain('search=');
+  });
+
+  it('assets.getAll sends the condition filter as a query param', async () => {
+    await api.assets.getAll({ page: 1, limit: 20, condition: AssetCondition.MALO });
+
+    const [url] = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toContain('condition=MALO');
+  });
+
+  it('assets.getAll omits the condition filter when not provided', async () => {
+    await api.assets.getAll({ page: 1, limit: 20 });
+
+    const [url] = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).not.toContain('condition=');
   });
 
   it('assets.getStats requests /assets/stats', async () => {

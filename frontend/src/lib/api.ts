@@ -4,6 +4,7 @@ import {
   CustodianOption,
   Location,
   Asset,
+  AssetCondition,
   AssetMovement,
   AssetStats,
   BrandSettings,
@@ -106,6 +107,7 @@ interface AssetPayloadBase {
   locationId?: number | null;
   initialValue?: number | null;
   currentValue?: number | null;
+  condition?: AssetCondition;
 }
 
 export interface CreateAssetPayload extends AssetPayloadBase {
@@ -114,6 +116,10 @@ export interface CreateAssetPayload extends AssetPayloadBase {
 
 export interface UpdateAssetPayload extends AssetPayloadBase {
   assetName?: string;
+}
+
+export interface AssetListParams extends ListParams {
+  condition?: AssetCondition;
 }
 
 async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -261,7 +267,7 @@ export const api = {
     delete: (id: number) => fetcher<void>(`/locations/${id}`, { method: 'DELETE' }),
   },
   assets: {
-    getAll: (params?: ListParams) => fetcher<PaginatedResponse<Asset>>(`/assets${buildQueryString(params ?? {})}`),
+    getAll: (params?: AssetListParams) => fetcher<PaginatedResponse<Asset>>(`/assets${buildQueryString(params ?? {})}`),
     getStats: () => fetcher<AssetStats>('/assets/stats'),
     getById: (id: number) => fetcher<Asset>(`/assets/${id}`),
     create: (data: CreateAssetPayload) => fetcher<Asset>('/assets', { method: 'POST', body: JSON.stringify(data) }),

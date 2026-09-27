@@ -42,6 +42,21 @@ export interface Location {
 
 export type MovementStatus = 'PENDIENTE' | 'COMPLETADO' | 'RECHAZADO';
 
+// Mirrors the Prisma `AssetCondition` enum (documented exception: member
+// names keep the database's Spanish values instead of PascalCase).
+export enum AssetCondition {
+  BUENO = 'BUENO',
+  MALO = 'MALO',
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- Prisma-mirrored enum, keeps the DB value.
+  EN_MANTENIMIENTO = 'EN_MANTENIMIENTO',
+}
+
+export const ASSET_CONDITION_LABELS: Record<AssetCondition, string> = {
+  [AssetCondition.BUENO]: 'Bueno',
+  [AssetCondition.MALO]: 'Malo',
+  [AssetCondition.EN_MANTENIMIENTO]: 'En mantenimiento',
+};
+
 export interface AssetMovement {
   id: number;
   transferDate: string;
@@ -89,6 +104,7 @@ export interface Asset {
   custodian?: Custodian | null;
   createdByUserId?: number | null;
   createdByUser?: User | null;
+  condition: AssetCondition;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,6 +136,7 @@ export interface AssetStats {
   totalValue: number;
   withoutCustodian: number;
   withoutLocation: number;
+  byCondition?: Record<AssetCondition, number>;
 }
 
 export interface BrandSettings {

@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { api } from '@/lib/api';
-import { Asset } from '@/lib/types';
+import { Asset, AssetCondition, ASSET_CONDITION_LABELS } from '@/lib/types';
 import { useAuth } from '@/components/auth-provider';
 import { usePaginatedList } from '@/hooks/use-paginated-list';
 import { useListItemDeletion } from '@/hooks/use-list-item-deletion';
@@ -12,14 +12,23 @@ import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/pagination';
 import { ListSearchInput } from '@/components/list-search-input';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AssetList } from './asset-list';
+
+const CONDITION_FILTER_ALL = 'ALL';
 
 export default function AssetsAdminPage() {
   const { user } = useAuth();
+  const [condition, setCondition] = useState<AssetCondition | typeof CONDITION_FILTER_ALL>(CONDITION_FILTER_ALL);
 
   const fetchAssets = useCallback(
-    (params: { page: number; limit: number; search: string }) => api.assets.getAll(params),
-    [],
+    (params: { page: number; limit: number; search: string }) =>
+      api.assets.getAll({
+        ...params,
+        condition: condition === CONDITION_FILTER_ALL ? undefined : condition,
+      }),
+    [condition],
   );
 
   const {
@@ -37,6 +46,11 @@ export default function AssetsAdminPage() {
   });
 
   const isAdmin = user?.role === 'ADMIN';
+
+  function handleConditionChange(value: string) {
+    setCondition(value === CONDITION_FILTER_ALL ? CONDITION_FILTER_ALL : (value as AssetCondition));
+    setPage(1);
+  }
 
   const { isDialogOpen, setDialogOpen, requestDelete, confirmDelete } = useListItemDeletion({
     items: assets,
@@ -66,7 +80,27 @@ export default function AssetsAdminPage() {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre, código o marca..." />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre, código o marca..." />
+          <div className="grid gap-2 sm:w-56">
+            <Label htmlFor="condition-filter" className="sr-only">
+              Condición
+            </Label>
+            <Select value={condition} onValueChange={handleConditionChange}>
+              <SelectTrigger id="condition-filter">
+                <SelectValue placeholder="Condición" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={CONDITION_FILTER_ALL}>Todas las condiciones</SelectItem>
+                {Object.values(AssetCondition).map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {ASSET_CONDITION_LABELS[value]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         {!isLoading && meta && (
           <span className="whitespace-nowrap text-sm text-muted-foreground">
             {meta.total} {meta.total === 1 ? 'resultado' : 'resultados'}
