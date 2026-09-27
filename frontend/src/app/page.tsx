@@ -16,6 +16,10 @@ interface InventoryCounts {
 
 const INSTITUTION_NAME = 'Gobernación Provincial de Morona Santiago';
 
+function formatRecordCount(count: number): string {
+  return `${count} ${count === 1 ? 'registrado' : 'registrados'}`;
+}
+
 export default function LandingPage() {
   const { user } = useAuth();
   const { brand } = useBrand();
@@ -98,7 +102,7 @@ export default function LandingPage() {
                   <div>
                     <p className="font-semibold">Activos</p>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      {counts.assets !== null ? `${counts.assets} registrados` : 'Ver el listado completo'}
+                      {counts.assets !== null ? formatRecordCount(counts.assets) : 'Ver el listado completo'}
                     </p>
                   </div>
                 </div>
@@ -116,7 +120,7 @@ export default function LandingPage() {
                   <div>
                     <p className="font-semibold">Custodios</p>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      {counts.custodians !== null ? `${counts.custodians} registrados` : 'Ver el listado completo'}
+                      {counts.custodians !== null ? formatRecordCount(counts.custodians) : 'Ver el listado completo'}
                     </p>
                   </div>
                 </div>

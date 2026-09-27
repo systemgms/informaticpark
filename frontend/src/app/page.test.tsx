@@ -64,6 +64,15 @@ describe('LandingPage', () => {
     expect(screen.getByText(/8/)).toBeDefined();
   });
 
+  it('uses the singular label for a single record', async () => {
+    vi.mocked(api.public.assets.getAll).mockReset().mockResolvedValue(metaResponse(1));
+
+    render(<LandingPage />);
+
+    await waitFor(() => expect(screen.getByText('1 registrado')).toBeDefined());
+    expect(screen.getByText('8 registrados')).toBeDefined();
+  });
+
   it('renders without counts when the API rejects', async () => {
     vi.mocked(api.public.assets.getAll).mockReset().mockRejectedValue(new Error('down'));
     vi.mocked(api.public.custodians.getAll).mockReset().mockRejectedValue(new Error('down'));
