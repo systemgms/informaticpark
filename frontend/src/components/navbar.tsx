@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { isPublicPath } from '@/lib/public-path';
 
 function getTokenExpiry(): number | null {
   try {
@@ -88,7 +89,7 @@ export function Navbar() {
     return () => clearInterval(id);
   }, [user, logout]);
 
-  if (!user) return null;
+  if (!user || isPublicPath(pathname)) return null;
 
   const isExpiringSoon = remaining !== null && remaining <= 300;
 
@@ -96,7 +97,7 @@ export function Navbar() {
     <nav className="border-b bg-card sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex min-h-11 min-w-11 items-center gap-2 font-bold text-base shrink-0">
+          <Link href="/dashboard" className="flex min-h-11 min-w-11 items-center gap-2 font-bold text-base shrink-0">
             {brand?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo URL is admin-uploaded/dynamic; next/image optimization needs extra loader config on the Cloudflare Workers deploy target
               <img src={brand.logoUrl} alt="Logotipo de la aplicación" className="h-6 w-auto object-contain" />
