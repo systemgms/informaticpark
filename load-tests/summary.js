@@ -68,8 +68,13 @@ export function scenarioMarkdown(scenarioName, data) {
   for (const tag of ENDPOINT_TAGS) {
     const d = values(data, `http_req_duration{endpoint:${tag}}`);
     const f = values(data, `http_req_failed{endpoint:${tag}}`);
+    // The tagged http_req_duration Trend doesn't expose a request count in
+    // this k6 summary format, but the tagged http_req_failed Rate does:
+    // its `passes` (value=1, i.e. failed) + `fails` (value=0, i.e. ok) add
+    // up to every request carrying that tag.
+    const count = f ? f.passes + f.fails : 'n/a';
     lines.push(
-      `| ${tag} | ${d ? d.count ?? 'n/a' : 'n/a'} | ${d ? fmt(d['p(95)']) : 'n/a'} | ${f ? fmt(f.rate * 100) : 'n/a'} |`,
+      `| ${tag} | ${count} | ${d ? fmt(d['p(95)']) : 'n/a'} | ${f ? fmt(f.rate * 100) : 'n/a'} |`,
     );
   }
   lines.push('');

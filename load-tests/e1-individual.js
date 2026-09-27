@@ -3,7 +3,7 @@
 // zero contention. This is the baseline every other scenario is compared
 // against.
 import { login, runJourney, xffForVU } from './journey.js';
-import { buildHandleSummary } from './summary.js';
+import { buildHandleSummary, buildEndpointThresholds } from './summary.js';
 
 export const options = {
   scenarios: {
@@ -19,6 +19,10 @@ export const options = {
     http_req_failed: ['rate<0.01'],
     http_req_duration: ['p(95)<500'],
     checks: ['rate>0.99'],
+    // Referencing the tagged `{endpoint:...}` sub-metrics in a threshold is
+    // what makes k6 compute and expose them, which is what the per-endpoint
+    // table in summary.js reads back (see summary.js's top comment).
+    ...buildEndpointThresholds(500, 0.01),
   },
 };
 

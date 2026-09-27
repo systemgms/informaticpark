@@ -78,8 +78,12 @@ export function login(xff) {
       tags: { endpoint: 'auth_login' },
     },
   );
-  check(res, { 'login: status 200': (r) => r.status === 200 });
-  if (res.status !== 200 || !res.body) {
+  // AuthController#login has no explicit @HttpCode, so Nest uses the
+  // default success status for POST: 201 (the @ApiResponse({status: 200})
+  // in auth.controller.ts is Swagger documentation only, not the actual
+  // runtime status).
+  check(res, { 'login: status 201': (r) => r.status === 201 });
+  if (res.status !== 201 || !res.body) {
     return undefined;
   }
   const body = res.json();
