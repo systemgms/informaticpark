@@ -5,10 +5,12 @@ import {
   IsInt,
   IsNumber,
   IsDateString,
+  IsEnum,
   MaxLength,
   Min,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { AssetCondition } from '@prisma/client';
 
 export class CreateAssetDto {
   @ApiPropertyOptional({ example: 'ACT-0001' })
@@ -129,4 +131,11 @@ export class CreateAssetDto {
   @IsInt()
   @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
   locationId?: number;
+
+  @ApiPropertyOptional({ enum: AssetCondition, example: AssetCondition.BUENO })
+  @IsOptional()
+  @IsEnum(AssetCondition, {
+    message: 'La condición debe ser BUENO, MALO o EN_MANTENIMIENTO',
+  })
+  condition?: AssetCondition;
 }

@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, AssetCondition } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
@@ -74,6 +74,7 @@ export class AssetsService {
         ...(dto.locationId !== undefined && {
           geoLocation: { connect: { id: dto.locationId } },
         }),
+        ...(dto.condition !== undefined && { condition: dto.condition }),
         ...(createdByUserId && {
           createdByUser: { connect: { id: createdByUserId } },
         }),
@@ -100,7 +101,13 @@ export class AssetsService {
     }
   }
 
-  async findAll(page = 1, limit = 20, search?: string, caller?: AuthUser) {
+  async findAll(
+    page = 1,
+    limit = 20,
+    search?: string,
+    caller?: AuthUser,
+    condition?: AssetCondition,
+  ) {
     const isRestrictedCaller = !!caller && caller.role !== 'ADMIN';
 
     if (isRestrictedCaller && !caller?.custodianId) {
@@ -114,6 +121,7 @@ export class AssetsService {
     const where: Prisma.AssetWhereInput = {
       isDeleted: false,
       ...(isRestrictedCaller ? { custodianId: caller?.custodianId } : {}),
+      ...(condition ? { condition } : {}),
       ...this.buildAssetSearchFilter(search),
     };
 
@@ -145,6 +153,11 @@ export class AssetsService {
 
   async stats(caller?: AuthUser) {
     const isRestrictedCaller = !!caller && caller.role !== 'ADMIN';
+    const emptyByCondition: Record<AssetCondition, number> = {
+      BUENO: 0,
+      MALO: 0,
+      EN_MANTENIMIENTO: 0,
+    };
 
     if (isRestrictedCaller && !caller?.custodianId) {
       return {
@@ -152,6 +165,7 @@ export class AssetsService {
         totalValue: 0,
         withoutCustodian: 0,
         withoutLocation: 0,
+        byCondition: emptyByCondition,
       };
     }
 
@@ -160,16 +174,31 @@ export class AssetsService {
       ...(isRestrictedCaller ? { custodianId: caller?.custodianId } : {}),
     };
 
-    const [total, aggregate, withoutCustodian, withoutLocation] =
-      await Promise.all([
-        this.prisma.asset.count({ where }),
-        this.prisma.asset.aggregate({
-          where,
-          _sum: { currentValue: true },
-        }),
-        this.prisma.asset.count({ where: { ...where, custodianId: null } }),
-        this.prisma.asset.count({ where: { ...where, locationId: null } }),
-      ]);
+    const [
+      total,
+      aggregate,
+      withoutCustodian,
+      withoutLocation,
+      conditionGroups,
+    ] = await Promise.all([
+      this.prisma.asset.count({ where }),
+      this.prisma.asset.aggregate({
+        where,
+        _sum: { currentValue: true },
+      }),
+      this.prisma.asset.count({ where: { ...where, custodianId: null } }),
+      this.prisma.asset.count({ where: { ...where, locationId: null } }),
+      this.prisma.asset.groupBy({
+        by: ['condition'],
+        where,
+        _count: { _all: true },
+      }),
+    ]);
+
+    const byCondition = { ...emptyByCondition };
+    for (const group of conditionGroups) {
+      byCondition[group.condition] = group._count._all;
+    }
 
     return {
       total,
@@ -178,6 +207,7 @@ export class AssetsService {
         : 0,
       withoutCustodian,
       withoutLocation,
+      byCondition,
     };
   }
 
@@ -260,6 +290,7 @@ export class AssetsService {
           ? { connect: { id: dto.locationId } }
           : { disconnect: true };
       }
+      if (dto.condition !== undefined) data.condition = dto.condition;
 
       const asset = await this.prisma.asset.update({
         where: { id },

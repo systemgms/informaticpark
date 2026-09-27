@@ -71,6 +71,52 @@ describe('App (e2e)', () => {
           });
       }
     });
+
+    it('PATCH /api/assets/:id — should persist a valid condition and reject an invalid one', async () => {
+      // A single login/create/delete round trip is reused for both
+      // assertions on purpose: each extra POST /api/auth/login call here
+      // also counts against that route's own 5-per-minute throttle bucket,
+      // which the "Rate Limiting" test below depends on being nearly empty.
+      const loginRes = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ email: 'admin@example.com', password: 'Admin123!' });
+
+      if (loginRes.status !== 200) {
+        return;
+      }
+      const token = loginRes.body.accessToken;
+
+      const createRes = await request(app.getHttpServer())
+        .post('/api/assets')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ assetName: 'Activo E2E condición' });
+      expect(createRes.status).toBe(201);
+      const assetId = createRes.body.id;
+
+      const validPatchRes = await request(app.getHttpServer())
+        .patch(`/api/assets/${assetId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ condition: 'EN_MANTENIMIENTO' });
+
+      expect(validPatchRes.status).toBe(200);
+      expect(validPatchRes.body.condition).toBe('EN_MANTENIMIENTO');
+
+      const getRes = await request(app.getHttpServer())
+        .get(`/api/assets/${assetId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(getRes.body.condition).toBe('EN_MANTENIMIENTO');
+
+      const invalidPatchRes = await request(app.getHttpServer())
+        .patch(`/api/assets/${assetId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ condition: 'ROTO' });
+
+      expect(invalidPatchRes.status).toBe(400);
+
+      await request(app.getHttpServer())
+        .delete(`/api/assets/${assetId}`)
+        .set('Authorization', `Bearer ${token}`);
+    });
   });
 
   describe('Custodians', () => {
@@ -94,6 +140,7 @@ describe('App (e2e)', () => {
             expect(keys).not.toContain('custodianId');
             expect(keys).not.toContain('serialNumber');
             expect(keys).not.toContain('createdByUser');
+            expect(keys).not.toContain('condition');
           }
         });
     });

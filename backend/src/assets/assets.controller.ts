@@ -4,11 +4,13 @@ import {
   Delete,
   Get,
   Param,
+  ParseEnumPipe,
   Patch,
   Post,
   Query,
   Req,
 } from '@nestjs/common';
+import { AssetCondition } from '@prisma/client';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -69,15 +71,29 @@ export class AssetsController {
     type: String,
     description: 'Búsqueda por nombre o código',
   })
+  @ApiQuery({
+    name: 'condition',
+    required: false,
+    enum: AssetCondition,
+    description: 'Filtrar por condición del activo',
+  })
   @ApiResponse({ status: 200, description: 'Lista de activos' })
   findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search', new MaxLengthPipe(100)) search?: string,
+    @Query('condition', new ParseEnumPipe(AssetCondition, { optional: true }))
+    condition?: AssetCondition,
     @Req() req?: { user: AuthUser },
   ) {
     const { page: pageNum, limit: limitNum } = parsePagination(page, limit);
-    return this.assetsService.findAll(pageNum, limitNum, search, req?.user);
+    return this.assetsService.findAll(
+      pageNum,
+      limitNum,
+      search,
+      req?.user,
+      condition,
+    );
   }
 
   @Get('stats')

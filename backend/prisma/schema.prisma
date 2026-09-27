@@ -17,6 +17,12 @@ enum MovementStatus {
   RECHAZADO
 }
 
+enum AssetCondition {
+  BUENO
+  MALO
+  EN_MANTENIMIENTO
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -98,6 +104,7 @@ model Asset {
   currentValue     Decimal?  @db.Decimal(12, 2)
   note             String?
   isDeleted        Boolean   @default(false)
+  condition        AssetCondition @default(BUENO)
 
   custodianId      Int?
   custodian        Custodian? @relation(fields: [custodianId], references: [id], onDelete: SetNull)
@@ -119,6 +126,7 @@ model Asset {
   @@index([assetName])
   @@index([code])
   @@index([isDeleted])
+  @@index([condition])
 }
 
 model AssetMovement {

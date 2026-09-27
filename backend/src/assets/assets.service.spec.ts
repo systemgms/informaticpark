@@ -15,6 +15,7 @@ describe('AssetsService', () => {
       delete: jest.Mock;
       count: jest.Mock;
       aggregate: jest.Mock;
+      groupBy: jest.Mock;
     };
     assetMovement: {
       count: jest.Mock;
@@ -45,6 +46,7 @@ describe('AssetsService', () => {
     custodian: null,
     createdByUser: null,
     geoLocation: null,
+    condition: 'BUENO',
   };
 
   beforeEach(async () => {
@@ -57,6 +59,7 @@ describe('AssetsService', () => {
         delete: jest.fn(),
         count: jest.fn(),
         aggregate: jest.fn(),
+        groupBy: jest.fn(),
       },
       assetMovement: {
         count: jest.fn(),
@@ -103,6 +106,30 @@ describe('AssetsService', () => {
       await expect(
         service.create({ assetName: 'Test', code: 'DUP-001' }),
       ).rejects.toThrow(ConflictException);
+    });
+
+    it('should not send a condition to Prisma when none is provided, letting the schema default to BUENO', async () => {
+      prisma.asset.create.mockResolvedValue(mockAsset);
+
+      await service.create({ assetName: 'Laptop Dell' });
+
+      const dataArg = prisma.asset.create.mock.calls[0][0].data;
+      expect(dataArg).not.toHaveProperty('condition');
+    });
+
+    it('should forward an explicit condition to Prisma', async () => {
+      prisma.asset.create.mockResolvedValue({
+        ...mockAsset,
+        condition: 'MALO',
+      });
+
+      await service.create({ assetName: 'Laptop Dell', condition: 'MALO' });
+
+      expect(prisma.asset.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ condition: 'MALO' }),
+        }),
+      );
     });
   });
 
@@ -193,6 +220,51 @@ describe('AssetsService', () => {
         expect.objectContaining({ where: { isDeleted: false } }),
       );
     });
+
+    it('should filter by condition', async () => {
+      prisma.asset.findMany.mockResolvedValue([mockAsset]);
+      prisma.asset.count.mockResolvedValue(1);
+
+      await service.findAll(1, 20, undefined, undefined, 'MALO');
+
+      expect(prisma.asset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            condition: 'MALO',
+          }),
+        }),
+      );
+    });
+
+    it('should combine the condition filter with search and USER custodian scoping', async () => {
+      prisma.asset.findMany.mockResolvedValue([mockAsset]);
+      prisma.asset.count.mockResolvedValue(1);
+
+      await service.findAll(
+        1,
+        20,
+        'Laptop',
+        { role: 'USER', custodianId: 5 },
+        'EN_MANTENIMIENTO',
+      );
+
+      expect(prisma.asset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDeleted: false,
+            custodianId: 5,
+            condition: 'EN_MANTENIMIENTO',
+            OR: [
+              { assetName: { contains: 'Laptop', mode: 'insensitive' } },
+              { code: { contains: 'Laptop', mode: 'insensitive' } },
+              { brand: { contains: 'Laptop', mode: 'insensitive' } },
+              { model: { contains: 'Laptop', mode: 'insensitive' } },
+            ],
+          }),
+        }),
+      );
+    });
   });
 
   describe('stats', () => {
@@ -204,6 +276,11 @@ describe('AssetsService', () => {
       prisma.asset.aggregate.mockResolvedValue({
         _sum: { currentValue: new Prisma.Decimal(4500) },
       });
+      prisma.asset.groupBy.mockResolvedValue([
+        { condition: 'BUENO', _count: { _all: 7 } },
+        { condition: 'MALO', _count: { _all: 2 } },
+        { condition: 'EN_MANTENIMIENTO', _count: { _all: 1 } },
+      ]);
 
       const result = await service.stats({ role: 'ADMIN', custodianId: null });
 
@@ -212,9 +289,15 @@ describe('AssetsService', () => {
         totalValue: 4500,
         withoutCustodian: 2,
         withoutLocation: 3,
+        byCondition: { BUENO: 7, MALO: 2, EN_MANTENIMIENTO: 1 },
       });
       expect(prisma.asset.count).toHaveBeenNthCalledWith(1, {
         where: { isDeleted: false },
+      });
+      expect(prisma.asset.groupBy).toHaveBeenCalledWith({
+        by: ['condition'],
+        where: { isDeleted: false },
+        _count: { _all: true },
       });
     });
 
@@ -226,6 +309,9 @@ describe('AssetsService', () => {
       prisma.asset.aggregate.mockResolvedValue({
         _sum: { currentValue: new Prisma.Decimal(1200) },
       });
+      prisma.asset.groupBy.mockResolvedValue([
+        { condition: 'BUENO', _count: { _all: 4 } },
+      ]);
 
       const result = await service.stats({ role: 'USER', custodianId: 7 });
 
@@ -234,9 +320,15 @@ describe('AssetsService', () => {
         totalValue: 1200,
         withoutCustodian: 0,
         withoutLocation: 1,
+        byCondition: { BUENO: 4, MALO: 0, EN_MANTENIMIENTO: 0 },
       });
       expect(prisma.asset.count).toHaveBeenNthCalledWith(1, {
         where: { isDeleted: false, custodianId: 7 },
+      });
+      expect(prisma.asset.groupBy).toHaveBeenCalledWith({
+        by: ['condition'],
+        where: { isDeleted: false, custodianId: 7 },
+        _count: { _all: true },
       });
     });
 
@@ -248,9 +340,11 @@ describe('AssetsService', () => {
         totalValue: 0,
         withoutCustodian: 0,
         withoutLocation: 0,
+        byCondition: { BUENO: 0, MALO: 0, EN_MANTENIMIENTO: 0 },
       });
       expect(prisma.asset.count).not.toHaveBeenCalled();
       expect(prisma.asset.aggregate).not.toHaveBeenCalled();
+      expect(prisma.asset.groupBy).not.toHaveBeenCalled();
     });
 
     it('should return zero totalValue when the sum is null', async () => {
@@ -261,10 +355,16 @@ describe('AssetsService', () => {
       prisma.asset.aggregate.mockResolvedValue({
         _sum: { currentValue: null },
       });
+      prisma.asset.groupBy.mockResolvedValue([]);
 
       const result = await service.stats({ role: 'ADMIN', custodianId: null });
 
       expect(result.totalValue).toBe(0);
+      expect(result.byCondition).toEqual({
+        BUENO: 0,
+        MALO: 0,
+        EN_MANTENIMIENTO: 0,
+      });
     });
   });
 
@@ -332,6 +432,25 @@ describe('AssetsService', () => {
         ConflictException,
       );
     });
+
+    it('should update the condition', async () => {
+      prisma.asset.findUnique.mockResolvedValue(mockAsset);
+      prisma.asset.update.mockResolvedValue({
+        ...mockAsset,
+        condition: 'EN_MANTENIMIENTO',
+      });
+
+      const result = await service.update(1, {
+        condition: 'EN_MANTENIMIENTO',
+      });
+
+      expect(prisma.asset.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ condition: 'EN_MANTENIMIENTO' }),
+        }),
+      );
+      expect(result.condition).toBe('EN_MANTENIMIENTO');
+    });
   });
 
   describe('findPublic', () => {
@@ -372,6 +491,7 @@ describe('AssetsService', () => {
       expect(selectArg).not.toHaveProperty('custodianId');
       expect(selectArg).not.toHaveProperty('serialNumber');
       expect(selectArg).not.toHaveProperty('createdByUser');
+      expect(selectArg).not.toHaveProperty('condition');
     });
 
     it('should filter out deleted assets', async () => {
