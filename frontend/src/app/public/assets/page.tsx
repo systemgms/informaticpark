@@ -32,7 +32,7 @@ export default function PublicAssetsPage() {
       <header className="border-b px-4 py-4 sm:px-6">
         <div className="flex items-center gap-3">
           <Link
-            href="/public"
+            href="/"
             aria-label="Volver"
             className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
           >
