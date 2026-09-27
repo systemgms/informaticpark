@@ -60,3 +60,9 @@ coverage/
 .gga
 AGENTS.md
 CLAUDE.md
+
+# Load tests (OE3): raw k6 summaries and generated seed ids are local run
+# artifacts; the per-scenario Markdown summaries in load-tests/results/ are
+# versioned for the thesis.
+load-tests/results/*.json
+load-tests/seed-data.json
