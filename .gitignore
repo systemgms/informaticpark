@@ -55,3 +55,8 @@ coverage/
 .atl/
 .opencode/
 .playwright-mcp/
+
+# Local AI assistant and code-review config
+.gga
+AGENTS.md
+CLAUDE.md
