@@ -3,10 +3,22 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, Building2, Package, MapPin, DollarSign, AlertTriangle, Clock, ArrowRight } from 'lucide-react';
+import {
+  Users,
+  Building2,
+  Package,
+  MapPin,
+  DollarSign,
+  AlertTriangle,
+  AlertCircle,
+  Clock,
+  ArrowRight,
+  RefreshCw,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import { AssetMovement } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 
 interface AdminStats {
@@ -82,6 +94,32 @@ function AlertCard({ label, value }: AlertCardProps) {
   );
 }
 
+interface StatsErrorProps {
+  message: string;
+  onRetry: () => void;
+}
+
+function StatsError({ message, onRetry }: StatsErrorProps) {
+  return (
+    <div
+      role="alert"
+      className="flex flex-col items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+    >
+      <div className="flex items-start gap-3">
+        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
+        <div>
+          <p className="font-medium text-destructive">No se pudieron cargar las estadísticas.</p>
+          <p className="text-sm text-muted-foreground">{message}</p>
+        </div>
+      </div>
+      <Button type="button" variant="outline" onClick={onRetry}>
+        <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+        Reintentar
+      </Button>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
@@ -90,9 +128,15 @@ export default function HomePage() {
   const [custodianStats, setCustodianStats] = useState<CustodianStats | null>(null);
   const [pendingMovements, setPendingMovements] = useState<AssetMovement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadCount, setReloadCount] = useState(0);
 
   useEffect(() => {
+    let isCancelled = false;
+
     async function loadStats() {
+      setIsLoading(true);
+      setError(null);
       try {
         if (isAdmin) {
           const [users, custodians, locations, stats] = await Promise.all([
@@ -101,6 +145,7 @@ export default function HomePage() {
             api.locations.getAll({ limit: 1 }),
             api.assets.getStats(),
           ]);
+          if (isCancelled) return;
           setAdminStats({
             users: users.meta.total,
             custodians: custodians.meta.total,
@@ -112,30 +157,26 @@ export default function HomePage() {
           });
         } else {
           const [stats, pending] = await Promise.all([api.assets.getStats(), api.movements.getPendingForMe()]);
+          if (isCancelled) return;
           setCustodianStats({
             assets: stats.total,
             totalValue: stats.totalValue,
           });
           setPendingMovements(pending || []);
         }
-      } catch {
-        if (isAdmin)
-          setAdminStats({
-            users: 0,
-            custodians: 0,
-            assets: 0,
-            locations: 0,
-            totalValue: 0,
-            withoutCustodian: 0,
-            withoutLocation: 0,
-          });
-        else setCustodianStats({ assets: 0, totalValue: 0 });
+      } catch (err) {
+        if (isCancelled) return;
+        setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) setIsLoading(false);
       }
     }
     if (user !== null) loadStats();
-  }, [user, isAdmin]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, isAdmin, reloadCount]);
 
   const fmt = (n: number) =>
     n.toLocaleString('es-EC', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -147,7 +188,9 @@ export default function HomePage() {
         <p className="text-muted-foreground mt-1">Gobernación Provincial de Morona Santiago</p>
       </div>
 
-      {isAdmin ? (
+      {error ? (
+        <StatsError message={error} onRetry={() => setReloadCount((count) => count + 1)} />
+      ) : isAdmin ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard

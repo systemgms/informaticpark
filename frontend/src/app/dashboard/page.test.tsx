@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import HomePage from './page';
 import { api } from '@/lib/api';
 import { Role } from '@/lib/types';
@@ -79,5 +80,42 @@ describe('HomePage', () => {
 
     await waitFor(() => expect(screen.getByText('123')).toBeDefined());
     expect(screen.getByRole('heading', { level: 1, name: 'Mis activos' })).toBeDefined();
+  });
+
+  it('shows an error instead of zeroed stats when the admin stats fail to load', async () => {
+    authMock.mockReturnValue({ user: { id: 1, role: Role.ADMIN, custodianId: null } });
+    vi.mocked(api.assets.getStats).mockRejectedValue(new Error('No se pudo conectar con el servidor'));
+
+    render(<HomePage />);
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('No se pudieron cargar las estadísticas');
+    expect(alert.textContent).toContain('No se pudo conectar con el servidor');
+    expect(screen.queryByText('0')).toBeNull();
+    expect(screen.queryByText('Valor total del parque')).toBeNull();
+  });
+
+  it('shows an error instead of zeroed stats when the custodian stats fail to load', async () => {
+    authMock.mockReturnValue({ user: { id: 2, role: Role.USER, custodianId: 5 } });
+    vi.mocked(api.assets.getStats).mockRejectedValue(new Error('boom'));
+
+    render(<HomePage />);
+
+    await screen.findByRole('alert');
+    expect(screen.queryByText('0')).toBeNull();
+    expect(screen.queryByText('Valor total')).toBeNull();
+  });
+
+  it('loads the stats again when the user retries after an error', async () => {
+    const user = userEvent.setup();
+    authMock.mockReturnValue({ user: { id: 1, role: Role.ADMIN, custodianId: null } });
+    vi.mocked(api.assets.getStats).mockRejectedValueOnce(new Error('boom'));
+
+    render(<HomePage />);
+
+    await user.click(await screen.findByRole('button', { name: 'Reintentar' }));
+
+    await waitFor(() => expect(screen.getByText('123')).toBeDefined());
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });
