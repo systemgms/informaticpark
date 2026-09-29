@@ -244,26 +244,26 @@ export function AssetForm({ assetId }: AssetFormProps) {
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Activo' : 'Nuevo Activo'}</h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar activo' : 'Nuevo activo'}</h1>
         {isEdit && (
           <Button asChild variant="outline" className="ml-auto">
             <Link href={`/admin/assets/${assetId}/historial`}>
               <History className="w-4 h-4 mr-2" />
-              Historial de Traspasos
+              Historial de traspasos
             </Link>
           </Button>
         )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Ubicación Geográfica */}
+        {/* Geographic location */}
         <Card>
           <CardHeader>
             <CardTitle>Ubicación en Morona Santiago</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2">
-              <Label>Coordenadas de Ubicación</Label>
+              <Label>Coordenadas de ubicación</Label>
               <LocationPicker value={coordinates} onChange={setCoordinates} />
               {coordinates && (
                 <input type="hidden" name="coordinates" value={`${coordinates.lat},${coordinates.lng}`} />
@@ -313,16 +313,16 @@ export function AssetForm({ assetId }: AssetFormProps) {
           </CardContent>
         </Card>
 
-        {/* Información del Activo */}
+        {/* Asset information */}
         <Card>
           <CardHeader>
-            <CardTitle>Información del Activo</CardTitle>
+            <CardTitle>Información del activo</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="assetName">Nombre del Activo</Label>
+                  <Label htmlFor="assetName">Nombre del activo</Label>
                   <Input
                     id="assetName"
                     value={formData.assetName}
@@ -331,7 +331,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="code">Código de Activo</Label>
+                  <Label htmlFor="code">Código de activo</Label>
                   <Input
                     id="code"
                     value={formData.code}
@@ -355,7 +355,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="serialNumber">Número de Serie</Label>
+                  <Label htmlFor="serialNumber">Número de serie</Label>
                   <Input
                     id="serialNumber"
                     value={formData.serialNumber}
@@ -371,13 +371,13 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="custodianId">Custodio Responsable</Label>
+                  <Label htmlFor="custodianId">Custodio responsable</Label>
                   <Select
                     value={formData.custodianId}
                     onValueChange={(value) => setFormData({ ...formData, custodianId: value })}
                   >
                     <SelectTrigger id="custodianId">
-                      <SelectValue placeholder="Seleccionar Custodio" />
+                      <SelectValue placeholder="Seleccionar custodio" />
                     </SelectTrigger>
                     <SelectContent>
                       {custodians.map((c) => (
@@ -407,7 +407,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="initialValue">Valor Inicial</Label>
+                  <Label htmlFor="initialValue">Valor inicial</Label>
                   <Input
                     id="initialValue"
                     type="number"
@@ -417,7 +417,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="currentValue">Valor Actual</Label>
+                  <Label htmlFor="currentValue">Valor actual</Label>
                   <Input
                     id="currentValue"
                     type="number"
@@ -441,7 +441,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
 
         <Button type="submit" className="w-full" disabled={isSaving}>
           <Save className="w-4 h-4 mr-2" />
-          {isSaving ? 'Guardando...' : 'Guardar Activo'}
+          {isSaving ? 'Guardando...' : 'Guardar activo'}
         </Button>
       </form>
     </div>

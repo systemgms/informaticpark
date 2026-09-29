@@ -125,7 +125,7 @@ export default function BulkTransferPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Traspaso Masivo</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Traspaso masivo</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Selecciona uno o más activos para traspasar simultáneamente.
           </p>
@@ -134,7 +134,7 @@ export default function BulkTransferPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Seleccionar Activos</CardTitle>
+          <CardTitle className="text-lg">Seleccionar activos</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -174,7 +174,7 @@ export default function BulkTransferPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
-              Datos del Traspaso ({selectedList.length} activo{selectedList.length > 1 ? 's' : ''})
+              Datos del traspaso ({selectedList.length} activo{selectedList.length > 1 ? 's' : ''})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

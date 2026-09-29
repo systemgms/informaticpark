@@ -51,7 +51,7 @@ export default function LocationsAdminPage() {
         <Button asChild className="w-full cursor-pointer sm:w-auto">
           <Link href="/admin/locations/new">
             <Plus className="mr-2 h-4 w-4" />
-            Nueva Ubicación
+            Nueva ubicación
           </Link>
         </Button>
       </div>

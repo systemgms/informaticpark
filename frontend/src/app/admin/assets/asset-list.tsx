@@ -130,11 +130,11 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead>Código</TableHead>
-                <TableHead>Nombre del Activo</TableHead>
+                <TableHead>Nombre del activo</TableHead>
                 <TableHead>Marca / Modelo</TableHead>
                 <TableHead>Ubicación</TableHead>
                 <TableHead>Condición</TableHead>
-                <TableHead>Valor Actual</TableHead>
+                <TableHead>Valor actual</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>

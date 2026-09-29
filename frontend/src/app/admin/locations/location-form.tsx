@@ -113,12 +113,12 @@ export function LocationForm({ locationId }: LocationFormProps) {
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Ubicación' : 'Nueva Ubicación'}</h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar ubicación' : 'Nueva ubicación'}</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Datos de la Ubicación</CardTitle>
+          <CardTitle>Datos de la ubicación</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,7 +168,7 @@ export function LocationForm({ locationId }: LocationFormProps) {
             </div>
             <Button type="submit" className="w-full" disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Guardando...' : 'Guardar Ubicación'}
+              {isSaving ? 'Guardando...' : 'Guardar ubicación'}
             </Button>
           </form>
         </CardContent>

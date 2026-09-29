@@ -99,10 +99,10 @@ export function SelectableAssetList({
               <TableRow className="bg-muted/40">
                 <TableHead className="w-10" />
                 <TableHead>Código</TableHead>
-                <TableHead>Nombre del Activo</TableHead>
+                <TableHead>Nombre del activo</TableHead>
                 <TableHead>Marca / Modelo</TableHead>
                 <TableHead>Ubicación</TableHead>
-                <TableHead>Custodio Actual</TableHead>
+                <TableHead>Custodio actual</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

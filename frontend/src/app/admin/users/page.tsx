@@ -51,7 +51,7 @@ export default function UsersAdminPage() {
         <Button asChild className="w-full cursor-pointer sm:w-auto">
           <Link href="/admin/users/new">
             <UserPlus className="mr-2 h-4 w-4" />
-            Nuevo Usuario
+            Nuevo usuario
           </Link>
         </Button>
       </div>

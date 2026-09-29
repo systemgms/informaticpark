@@ -74,7 +74,7 @@ describe('UsersAdminPage', () => {
     });
   });
 
-  it('renders "Nuevo Usuario" as a single anchor without a nested button', async () => {
+  it('renders "Nuevo usuario" as a single anchor without a nested button', async () => {
     render(<UsersAdminPage />);
     await waitFor(() => expect(screen.getAllByText('Carlos Pérez').length).toBeGreaterThan(0));
 

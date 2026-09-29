@@ -62,4 +62,22 @@ describe('HomePage', () => {
     await waitFor(() => expect(screen.getByText('123')).toBeDefined());
     expect(api.users.getAll).not.toHaveBeenCalled();
   });
+
+  it('titles the admin heading in Spanish sentence case', async () => {
+    authMock.mockReturnValue({ user: { id: 1, role: Role.ADMIN, custodianId: null } });
+
+    render(<HomePage />);
+
+    await waitFor(() => expect(screen.getByText('123')).toBeDefined());
+    expect(screen.getByRole('heading', { level: 1, name: 'Panel de administración' })).toBeDefined();
+  });
+
+  it('titles the non-admin heading in Spanish sentence case', async () => {
+    authMock.mockReturnValue({ user: { id: 2, role: Role.USER, custodianId: 5 } });
+
+    render(<HomePage />);
+
+    await waitFor(() => expect(screen.getByText('123')).toBeDefined());
+    expect(screen.getByRole('heading', { level: 1, name: 'Mis activos' })).toBeDefined();
+  });
 });

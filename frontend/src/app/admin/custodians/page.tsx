@@ -51,7 +51,7 @@ export default function CustodiansAdminPage() {
         <Button asChild className="w-full cursor-pointer sm:w-auto">
           <Link href="/admin/custodians/new">
             <Plus className="mr-2 h-4 w-4" />
-            Nuevo Custodio
+            Nuevo custodio
           </Link>
         </Button>
       </div>

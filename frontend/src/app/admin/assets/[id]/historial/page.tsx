@@ -223,10 +223,10 @@ export default function AssetMovementHistoryPage() {
     const headers = [
       'Fecha',
       'Estado',
-      'Custodio Origen',
-      'Custodio Destino',
-      'Ubicación Origen',
-      'Ubicación Destino',
+      'Custodio origen',
+      'Custodio destino',
+      'Ubicación origen',
+      'Ubicación destino',
       'Observaciones',
       'Registrado por',
       'Confirmado por',
@@ -270,7 +270,7 @@ export default function AssetMovementHistoryPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Historial de Traspasos</h1>
+            <h1 className="text-3xl font-bold">Historial de traspasos</h1>
             <p className="text-muted-foreground">
               {asset.assetName}
               {asset.code ? ` (${asset.code})` : ''}
@@ -287,7 +287,7 @@ export default function AssetMovementHistoryPage() {
           {canInitiate && (
             <Button onClick={() => setIsFormVisible((v) => !v)}>
               <Plus className="w-4 h-4 mr-2" />
-              Nuevo Traspaso
+              Nuevo traspaso
             </Button>
           )}
         </div>
@@ -296,7 +296,7 @@ export default function AssetMovementHistoryPage() {
       {isFormVisible && (
         <Card>
           <CardHeader>
-            <CardTitle>Iniciar Traspaso</CardTitle>
+            <CardTitle>Iniciar traspaso</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -348,7 +348,7 @@ export default function AssetMovementHistoryPage() {
               </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={isSaving}>
-                  {isSaving ? 'Guardando...' : 'Registrar Traspaso'}
+                  {isSaving ? 'Guardando...' : 'Registrar traspaso'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setIsFormVisible(false)}>
                   Cancelar

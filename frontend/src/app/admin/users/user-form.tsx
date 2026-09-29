@@ -132,17 +132,17 @@ export function UserForm({ userId }: UserFormProps) {
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar usuario' : 'Nuevo usuario'}</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Información del Usuario</CardTitle>
+          <CardTitle>Información del usuario</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmitFn} className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nombre Completo</Label>
+              <Label htmlFor="name">Nombre completo</Label>
               <Input
                 id="name"
                 value={formValues.name}
@@ -229,13 +229,13 @@ export function UserForm({ userId }: UserFormProps) {
                 onChange={(e) => setFormValues({ ...formValues, isActive: e.target.checked })}
               />
               <Label htmlFor="isActive" className="cursor-pointer">
-                Usuario Activo
+                Usuario activo
               </Label>
             </div>
 
             <Button type="submit" className="w-full" disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Guardando...' : 'Guardar Usuario'}
+              {isSaving ? 'Guardando...' : 'Guardar usuario'}
             </Button>
           </form>
         </CardContent>

@@ -101,7 +101,7 @@ export function CustodianList({ custodians, isLoading, error, hasSearch, onDelet
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead>Nombre Completo</TableHead>
+                <TableHead>Nombre completo</TableHead>
                 <TableHead>Identificador</TableHead>
                 <TableHead>Unidad</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>

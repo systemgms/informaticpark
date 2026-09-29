@@ -73,7 +73,7 @@ export default function AssetsAdminPage() {
           <Button asChild className="w-full cursor-pointer sm:w-auto">
             <Link href="/admin/assets/new">
               <Plus className="mr-2 h-4 w-4" />
-              Nuevo Activo
+              Nuevo activo
             </Link>
           </Button>
         )}

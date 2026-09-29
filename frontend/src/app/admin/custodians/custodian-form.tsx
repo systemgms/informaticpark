@@ -93,17 +93,17 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Custodio' : 'Nuevo Custodio'}</h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar custodio' : 'Nuevo custodio'}</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Información del Custodio</CardTitle>
+          <CardTitle>Información del custodio</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="fullName">Nombre Completo</Label>
+              <Label htmlFor="fullName">Nombre completo</Label>
               <Input
                 id="fullName"
                 value={formData.fullName}
@@ -130,7 +130,7 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
             </div>
             <Button type="submit" className="w-full" disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Guardando...' : 'Guardar Custodio'}
+              {isSaving ? 'Guardando...' : 'Guardar custodio'}
             </Button>
           </form>
         </CardContent>
