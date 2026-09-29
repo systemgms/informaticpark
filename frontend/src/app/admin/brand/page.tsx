@@ -143,7 +143,7 @@ export default function BrandAdminPage() {
                   <Input
                     id="logoFile"
                     type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/webp"
+                    accept="image/png,image/jpeg,image/jpg,image/x-icon,image/vnd.microsoft.icon,image/webp"
                     onChange={(e) => handleFileUpload(e, 'logo')}
                     className="hidden"
                     disabled={uploadState.isLogoUploading}
@@ -179,7 +179,7 @@ export default function BrandAdminPage() {
                   <Input
                     id="faviconFile"
                     type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/webp"
+                    accept="image/png,image/jpeg,image/jpg,image/x-icon,image/vnd.microsoft.icon,image/webp"
                     onChange={(e) => handleFileUpload(e, 'favicon')}
                     className="hidden"
                     disabled={uploadState.isFaviconUploading}
