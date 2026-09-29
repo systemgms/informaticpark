@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Map as LeafletMap, Marker as LeafletMarker, LeafletMouseEvent } from 'leaflet';
 import { Button } from '@/components/ui/button';
 import { MapPin, Crosshair } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 interface LocationPickerProps {
   value: { lat: number; lng: number } | null;
@@ -12,7 +13,12 @@ interface LocationPickerProps {
 
 // Leaflet stamps this internal id on the container to detect re-initialization;
 // it isn't part of the public typings.
-type LeafletContainer = HTMLDivElement & { _leaflet_id?: number };
+interface LeafletContainer extends HTMLDivElement {
+  _leaflet_id?: number;
+}
+
+// Macas, capital of Morona Santiago.
+const DEFAULT_CENTER: [number, number] = [-2.3087, -78.1114];
 
 export function LocationPicker({ value, onChange }: LocationPickerProps) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -23,6 +29,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
   onChangeRef.current = onChange;
   const [isLocating, setIsLocating] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const mapElement = mapRef.current as LeafletContainer | null;
@@ -41,7 +48,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
       });
 
       const initialValue = initialValueRef.current;
-      const initialCenter: [number, number] = initialValue ? [initialValue.lat, initialValue.lng] : [4.711, -74.0721]; // Bogotá por defecto
+      const initialCenter: [number, number] = initialValue ? [initialValue.lat, initialValue.lng] : DEFAULT_CENTER;
 
       const map = L.map(mapElement).setView(initialCenter, initialValue ? 16 : 12);
 
@@ -112,7 +119,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
 
   function handleLocate() {
     if (!navigator.geolocation) {
-      alert('Tu navegador no soporta geolocalización.');
+      toast('Tu navegador no soporta geolocalización.', 'error');
       return;
     }
     setIsLocating(true);
@@ -126,7 +133,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         setIsLocating(false);
       },
       () => {
-        alert('No se pudo obtener la ubicación. Verifica los permisos del navegador.');
+        toast('No se pudo obtener la ubicación. Verifica los permisos del navegador.', 'error');
         setIsLocating(false);
       },
       { enableHighAccuracy: true },
@@ -159,7 +166,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
       {value ? (
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           <MapPin className="w-3 h-3" />
-          Lat: {value.lat}, Lng: {value.lng} — Arrastra el marcador para ajustar
+          Lat: {value.lat}, Lng: {value.lng}. Arrastra el marcador para ajustar.
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
