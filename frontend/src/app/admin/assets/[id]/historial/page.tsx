@@ -273,7 +273,7 @@ export default function AssetMovementHistoryPage() {
             <h1 className="text-3xl font-bold">Historial de Traspasos</h1>
             <p className="text-muted-foreground">
               {asset.assetName}
-              {asset.code ? ` — ${asset.code}` : ''}
+              {asset.code ? ` (${asset.code})` : ''}
             </p>
           </div>
         </div>

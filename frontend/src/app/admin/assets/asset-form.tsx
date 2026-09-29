@@ -259,7 +259,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
         {/* Ubicación Geográfica */}
         <Card>
           <CardHeader>
-            <CardTitle>Ubicación Geográfica — Morona Santiago</CardTitle>
+            <CardTitle>Ubicación en Morona Santiago</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2">

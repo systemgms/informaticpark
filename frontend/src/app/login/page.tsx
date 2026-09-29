@@ -45,7 +45,7 @@ export default function LoginPage() {
             )}
           </div>
           <h1 className="text-2xl font-bold">{brand?.appName || 'Parque Informático'}</h1>
-          <p className="text-sm text-muted-foreground">GPMS — Morona Santiago</p>
+          <p className="text-sm text-muted-foreground">Gobernación Provincial de Morona Santiago</p>
         </div>
 
         <Card className="shadow-sm">

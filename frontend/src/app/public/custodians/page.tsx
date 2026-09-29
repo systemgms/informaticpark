@@ -39,8 +39,9 @@ export default function PublicCustodiansPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-semibold">Parque Informático GPMS</h1>
-            <p className="text-sm text-muted-foreground">Custodios registrados</p>
+            <h1 className="text-xl font-semibold">Parque Informático</h1>
+            <p className="text-sm text-muted-foreground">Gobernación Provincial de Morona Santiago</p>
+            <p className="text-sm font-medium">Custodios registrados</p>
           </div>
         </div>
       </header>

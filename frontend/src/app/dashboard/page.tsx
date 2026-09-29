@@ -144,7 +144,7 @@ export default function HomePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{isAdmin ? 'Panel de Administración' : 'Mis Activos'}</h1>
-        <p className="text-muted-foreground mt-1">Parque Informático — GPMS Morona Santiago</p>
+        <p className="text-muted-foreground mt-1">Gobernación Provincial de Morona Santiago</p>
       </div>
 
       {isAdmin ? (
