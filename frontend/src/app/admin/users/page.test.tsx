@@ -67,7 +67,7 @@ describe('UsersAdminPage', () => {
     render(<UsersAdminPage />);
     await waitFor(() => expect(screen.getAllByText('Carlos Pérez').length).toBeGreaterThan(0));
 
-    await user.type(screen.getByPlaceholderText(/buscar por nombre o email/i), 'ana');
+    await user.type(screen.getByPlaceholderText(/buscar por nombre o correo/i), 'ana');
 
     await waitFor(() => expect(getAllMock).toHaveBeenCalledWith(expect.objectContaining({ search: 'ana' })), {
       timeout: 1000,

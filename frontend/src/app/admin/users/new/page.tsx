@@ -1,4 +1,4 @@
-import { UserForm } from "../user-form";
+import { UserForm } from '../user-form';
 
 export default function NewUserPage() {
   return <UserForm />;

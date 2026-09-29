@@ -57,7 +57,7 @@ export default function UsersAdminPage() {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre o email..." />
+        <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre o correo..." />
         {!isLoading && meta && (
           <span className="whitespace-nowrap text-sm text-muted-foreground">
             {meta.total} {meta.total === 1 ? 'resultado' : 'resultados'}

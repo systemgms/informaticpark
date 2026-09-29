@@ -44,6 +44,14 @@ describe('UserForm in edit mode', () => {
     updateMock.mockResolvedValue(EXISTING_USER);
   });
 
+  it('labels the email field in Spanish', async () => {
+    render(<UserForm userId={7} />);
+
+    const emailInput = await screen.findByLabelText<HTMLInputElement>('Correo electrónico');
+
+    expect(emailInput.value).toBe('ana@example.com');
+  });
+
   it('offers an optional new password field', async () => {
     render(<UserForm userId={7} />);
 

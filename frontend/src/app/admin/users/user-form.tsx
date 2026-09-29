@@ -85,7 +85,7 @@ export function UserForm({ userId }: UserFormProps) {
       return;
     }
     if (!formValues.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.email)) {
-      toast('El email es requerido y debe ser válido', 'error');
+      toast('El correo electrónico es requerido y debe ser válido', 'error');
       return;
     }
     if (!isEdit && !formValues.password) {
@@ -152,7 +152,7 @@ export function UserForm({ userId }: UserFormProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Correo electrónico</Label>
               <Input
                 id="email"
                 type="email"

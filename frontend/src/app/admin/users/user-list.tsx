@@ -105,7 +105,7 @@ export function UserList({ users, isLoading, error, onDeleteClick }: UserListPro
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead>Nombre</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Correo electrónico</TableHead>
                 <TableHead>Rol</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
