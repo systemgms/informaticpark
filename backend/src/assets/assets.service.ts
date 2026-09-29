@@ -349,7 +349,6 @@ export class AssetsService {
           assetName: true,
           brand: true,
           model: true,
-          currentValue: true,
           location: true,
           geoLocation: { select: { canton: true, parroquia: true } },
         },
@@ -361,10 +360,7 @@ export class AssetsService {
     ]);
 
     return {
-      data: assets.map((asset) => ({
-        ...asset,
-        currentValue: asset.currentValue ? Number(asset.currentValue) : null,
-      })),
+      data: assets,
       meta: {
         total,
         page,

@@ -461,11 +461,10 @@ describe('AssetsService', () => {
       brand: 'Dell',
       model: 'XPS 15',
       location: 'Oficina Central',
-      currentValue: new Prisma.Decimal(1200),
       geoLocation: { canton: 'Quito', parroquia: 'Iñaquito' },
     };
 
-    it('should select only the allowed public fields, with no custodian data', async () => {
+    it('should select only the allowed public fields, with no custodian data or monetary value', async () => {
       prisma.asset.findMany.mockResolvedValue([mockPublicAsset]);
       prisma.asset.count.mockResolvedValue(1);
 
@@ -479,7 +478,6 @@ describe('AssetsService', () => {
             assetName: true,
             brand: true,
             model: true,
-            currentValue: true,
             location: true,
             geoLocation: { select: { canton: true, parroquia: true } },
           },
@@ -492,6 +490,8 @@ describe('AssetsService', () => {
       expect(selectArg).not.toHaveProperty('serialNumber');
       expect(selectArg).not.toHaveProperty('createdByUser');
       expect(selectArg).not.toHaveProperty('condition');
+      expect(selectArg).not.toHaveProperty('currentValue');
+      expect(selectArg).not.toHaveProperty('initialValue');
     });
 
     it('should filter out deleted assets', async () => {
@@ -527,16 +527,17 @@ describe('AssetsService', () => {
       );
     });
 
-    it('should return the pagination envelope with formatted currentValue', async () => {
+    it('should return the pagination envelope without a monetary value field', async () => {
       prisma.asset.findMany.mockResolvedValue([mockPublicAsset]);
       prisma.asset.count.mockResolvedValue(1);
 
       const result = await service.findPublic(1, 20);
 
       expect(result).toEqual({
-        data: [{ ...mockPublicAsset, currentValue: 1200 }],
+        data: [mockPublicAsset],
         meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
       });
+      expect(result.data[0]).not.toHaveProperty('currentValue');
     });
   });
 

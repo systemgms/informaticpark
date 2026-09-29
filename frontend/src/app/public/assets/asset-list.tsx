@@ -15,10 +15,6 @@ interface PublicAssetListProps {
   hasSearch: boolean;
 }
 
-function formatValue(value?: number | null): string {
-  return value != null ? `$${value.toFixed(2)}` : '—';
-}
-
 function formatLocation(asset: PublicAsset): string {
   const parts = [asset.geoLocation?.canton, asset.geoLocation?.parroquia].filter(Boolean);
   if (parts.length > 0) return parts.join(' / ');
@@ -58,12 +54,9 @@ export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicA
           assets.map((asset) => (
             <Card key={asset.id}>
               <CardContent className="space-y-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium">{asset.assetName}</p>
-                    <p className="font-mono text-xs text-muted-foreground">{asset.code || '—'}</p>
-                  </div>
-                  <p className="font-mono text-sm">{formatValue(asset.currentValue)}</p>
+                <div>
+                  <p className="font-medium">{asset.assetName}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{asset.code || '—'}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
@@ -85,7 +78,6 @@ export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicA
                 <TableHead>Nombre</TableHead>
                 <TableHead>Marca / Modelo</TableHead>
                 <TableHead>Ubicación</TableHead>
-                <TableHead>Valor actual</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -104,20 +96,17 @@ export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicA
                     <TableCell>
                       <Skeleton className="h-4 w-24" />
                     </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-16" />
-                    </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={5}>
+                  <TableCell colSpan={4}>
                     <ListErrorState message={error} />
                   </TableCell>
                 </TableRow>
               ) : assets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5}>
+                  <TableCell colSpan={4}>
                     <ListEmptyState icon={Package} message={emptyMessage} />
                   </TableCell>
                 </TableRow>
@@ -130,7 +119,6 @@ export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicA
                       {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{formatLocation(asset)}</TableCell>
-                    <TableCell className="font-mono text-sm">{formatValue(asset.currentValue)}</TableCell>
                   </TableRow>
                 ))
               )}

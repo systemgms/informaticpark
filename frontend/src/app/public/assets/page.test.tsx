@@ -57,6 +57,13 @@ describe('PublicAssetsPage', () => {
     expect(screen.queryByText(/custodio/i)).toBeNull();
   });
 
+  it('has no asset value column or text', async () => {
+    render(<PublicAssetsPage />);
+
+    await waitFor(() => expect(screen.getAllByText('Laptop Dell').length).toBeGreaterThan(0));
+    expect(screen.queryByText(/valor/i)).toBeNull();
+  });
+
   it('calls the API with the search term when searching', async () => {
     const user = userEvent.setup();
     render(<PublicAssetsPage />);

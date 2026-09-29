@@ -120,7 +120,6 @@ export interface PublicAsset {
   assetName: string;
   brand?: string | null;
   model?: string | null;
-  currentValue?: number | null;
   location?: string | null;
   geoLocation?: PublicGeoLocation | null;
 }
