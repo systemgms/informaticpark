@@ -312,7 +312,7 @@ describe('parseSurvey assets', () => {
   it('sets entryDate, location text and leaves code and values null', () => {
     const { assets } = parseSurvey([row(3)]);
     expect(assets[0].entryDate?.toISOString()).toBe('2024-04-04T13:17:00.000Z');
-    expect(assets[0].location).toBe('SAN JUAN BOSCO');
+    expect(assets[0].location).toBe('San Juan Bosco');
     expect(assets[0].brand).toBeNull();
     expect(assets[0].model).toBeNull();
   });
@@ -387,6 +387,40 @@ describe('parseSurvey custodians', () => {
     const { assets, anomalies } = parseSurvey([row(3, { AA: '' })]);
     expect(assets[0].custodianKey).toBeNull();
     expect(anomalies.map((a) => a.kind)).toContain('missing-custodian');
+  });
+});
+
+describe('parseSurvey canonical locations', () => {
+  it('stores canonical names, key and asset location text', () => {
+    const { locations, assets, anomalies } = parseSurvey([
+      row(3, { D: 'SANTIAGO DE MENDEZ', E: 'MENDEZ' }),
+      row(4, { D: 'Santiago', E: 'Méndez' }),
+    ]);
+    expect(locations).toEqual([
+      { key: 'SANTIAGO|MENDEZ', canton: 'Santiago', parroquia: 'Méndez' },
+    ]);
+    expect(assets.map((a) => a.locationKey)).toEqual([
+      'SANTIAGO|MENDEZ',
+      'SANTIAGO|MENDEZ',
+    ]);
+    expect(assets[0].location).toBe('Méndez');
+    expect(anomalies.map((a) => a.kind)).not.toContain('unknown-location');
+  });
+
+  it('reports unknown locations once per row and keeps them title-cased', () => {
+    const { locations, assets, anomalies } = parseSurvey([
+      row(3, { D: 'NARNIA', E: 'CAIR PARAVEL' }),
+    ]);
+    expect(locations[0]).toMatchObject({
+      canton: 'Narnia',
+      parroquia: 'Cair Paravel',
+    });
+    expect(assets[0].location).toBe('Cair Paravel');
+    expect(anomalies).toContainEqual({
+      kind: 'unknown-location',
+      sheetRow: 3,
+      message: 'Ubicacion fuera del catalogo: "NARNIA" / "CAIR PARAVEL"',
+    });
   });
 });
 

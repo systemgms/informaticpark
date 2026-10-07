@@ -5,6 +5,10 @@
  */
 
 import { createHash } from 'crypto';
+import { canonicalizeLocation } from '../locations/morona-santiago.catalog';
+import { normalizeKey, titleCase } from '../locations/location-text';
+
+export { normalizeKey, titleCase };
 
 export type SurveyCondition = 'BUENO' | 'REGULAR' | 'MALO';
 
@@ -20,6 +24,7 @@ export type AnomalyKind =
   | 'invalid-date'
   | 'missing-custodian'
   | 'missing-location'
+  | 'unknown-location'
   | 'missing-submission-id';
 
 export interface Anomaly {
@@ -149,32 +154,6 @@ const TYPE_COLUMNS: Record<string, TypeColumns> = {
 };
 
 const CONDITIONS: readonly SurveyCondition[] = ['BUENO', 'REGULAR', 'MALO'];
-
-const LOWERCASE_PARTICLES = new Set(['de', 'del', 'la', 'las', 'los', 'y']);
-
-/** Uppercase, strip accents, collapse whitespace. Used for dedupe keys. */
-export function normalizeKey(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toUpperCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-export function titleCase(value: string): string {
-  return value
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase()
-    .split(' ')
-    .map((word, index) =>
-      index > 0 && LOWERCASE_PARTICLES.has(word)
-        ? word
-        : word.charAt(0).toUpperCase() + word.slice(1),
-    )
-    .join(' ');
-}
 
 export function slugify(value: string): string {
   return normalizeKey(value)
@@ -386,13 +365,23 @@ export function parseSurvey(rows: RawRow[]): SurveyParseResult {
       flag('invalid-date', `Fecha invalida: "${cell(row, COL.createdAt)}"`);
     }
 
-    const canton = cell(row, COL.canton).replace(/\s+/g, ' ') || null;
-    const parroquia = cell(row, COL.parroquia).replace(/\s+/g, ' ') || null;
+    const rawCanton = cell(row, COL.canton).replace(/\s+/g, ' ') || null;
+    const rawParroquia = cell(row, COL.parroquia).replace(/\s+/g, ' ') || null;
     let resolvedLocationKey: string | null = null;
     let locationText: string | null = null;
-    if (canton === null && parroquia === null) {
+    if (rawCanton === null && rawParroquia === null) {
       flag('missing-location', 'Fila sin canton ni parroquia');
     } else {
+      const { canton, parroquia, isKnown } = canonicalizeLocation(
+        rawCanton,
+        rawParroquia,
+      );
+      if (!isKnown) {
+        flag(
+          'unknown-location',
+          `Ubicacion fuera del catalogo: "${rawCanton ?? ''}" / "${rawParroquia ?? ''}"`,
+        );
+      }
       resolvedLocationKey = locationKey(canton, parroquia);
       if (!locations.has(resolvedLocationKey)) {
         locations.set(resolvedLocationKey, {
