@@ -113,6 +113,21 @@ describe('App (e2e)', () => {
 
       expect(invalidPatchRes.status).toBe(400);
 
+      const regularPatchRes = await request(app.getHttpServer())
+        .patch(`/api/assets/${assetId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ condition: 'REGULAR' });
+      expect(regularPatchRes.status).toBe(200);
+      expect(regularPatchRes.body.condition).toBe('REGULAR');
+
+      const filterRes = await request(app.getHttpServer())
+        .get('/api/assets?condition=REGULAR')
+        .set('Authorization', `Bearer ${token}`);
+      expect(filterRes.status).toBe(200);
+      expect(
+        filterRes.body.data.some((a: { id: number }) => a.id === assetId),
+      ).toBe(true);
+
       await request(app.getHttpServer())
         .delete(`/api/assets/${assetId}`)
         .set('Authorization', `Bearer ${token}`);

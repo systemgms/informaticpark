@@ -19,6 +19,7 @@ enum MovementStatus {
 
 enum AssetCondition {
   BUENO
+  REGULAR
   MALO
   EN_MANTENIMIENTO
 }
