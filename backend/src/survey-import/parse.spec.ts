@@ -274,9 +274,39 @@ describe('parseSurvey per-type column selection', () => {
 });
 
 describe('parseSurvey assets', () => {
-  it('builds previousCode from submission id and sheet row', () => {
+  it('builds previousCode from submission id and a content fingerprint', () => {
     const { assets } = parseSurvey([row(7, { A: 'abc-123' })]);
-    expect(assets[0].previousCode).toBe('abc-123#7');
+    expect(assets[0].previousCode).toMatch(/^abc-123#[0-9a-f]{12}$/);
+  });
+
+  it('keeps previousCode stable when rows move to another sheet position', () => {
+    const laptop = { F: 'LAPTOP', L: 'BUENO', M: 'LP-9' };
+    const original = parseSurvey([row(3), row(4, laptop)]);
+    const resorted = parseSurvey([row(10, laptop), row(20)]);
+    const codes = (result: typeof original) =>
+      result.assets.map((asset) => asset.previousCode).sort();
+    expect(codes(resorted)).toEqual(codes(original));
+  });
+
+  it('gives identical rows in one submission distinct, order-independent codes', () => {
+    const placeholder = { H: 'S/N' };
+    const { assets } = parseSurvey([row(3, placeholder), row(9, placeholder)]);
+    const [first, second] = assets.map((asset) => asset.previousCode);
+    expect(first).not.toBe(second);
+    expect(second).toBe(`${first}-2`);
+  });
+
+  it('distinguishes rows of the same submission by their equipment data', () => {
+    const { assets } = parseSurvey([row(3), row(4, { H: 'SN-002' })]);
+    expect(assets[0].previousCode).not.toBe(assets[1].previousCode);
+  });
+
+  it('flags a row without submission id and uses a placeholder prefix', () => {
+    const { assets, anomalies } = parseSurvey([row(3, { A: '' })]);
+    expect(assets[0].previousCode).toMatch(/^SIN-ID#[0-9a-f]{12}$/);
+    expect(anomalies).toContainEqual(
+      expect.objectContaining({ kind: 'missing-submission-id', sheetRow: 3 }),
+    );
   });
 
   it('sets entryDate, location text and leaves code and values null', () => {
@@ -413,7 +443,7 @@ describe('planImport', () => {
 
   it('skips existing assets, locations and custodians (idempotent re-run)', () => {
     const plan = planImport(parsed, {
-      previousCodes: new Set(['s1#3', 's1#4', 's2#5']),
+      previousCodes: new Set(parsed.assets.map((asset) => asset.previousCode)),
       locations: [
         { id: 10, canton: 'morona', parroquia: 'san juan  bosco' },
         { id: 11, canton: 'Palora', parroquia: 'Palora' },

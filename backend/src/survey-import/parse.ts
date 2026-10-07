@@ -4,6 +4,8 @@
  * reads the file and talks to the database.
  */
 
+import { createHash } from 'crypto';
+
 export type SurveyCondition = 'BUENO' | 'REGULAR' | 'MALO';
 
 export type AnomalyKind =
@@ -17,7 +19,8 @@ export type AnomalyKind =
   | 'weird-serial'
   | 'invalid-date'
   | 'missing-custodian'
-  | 'missing-location';
+  | 'missing-location'
+  | 'missing-submission-id';
 
 export interface Anomaly {
   kind: AnomalyKind;
@@ -87,6 +90,8 @@ const GUAYAQUIL_UTC_OFFSET_HOURS = 5;
 const IDENTIFIER_PREFIX = 'SIN-CEDULA-';
 const DEFAULT_OTHER_NAME = 'Otro equipo';
 const WEIRD_SERIAL_MAX_LENGTH = 40;
+const MISSING_SUBMISSION_ID = 'SIN-ID';
+const FINGERPRINT_LENGTH = 12;
 
 /** Column indexes (0-based, A = 0). */
 const COL = {
@@ -290,6 +295,18 @@ function cell(row: RawRow, index: number): string {
   return (row.values[index] ?? '').trim();
 }
 
+/**
+ * Hashes the fields that identify a piece of equipment within a submission.
+ * The sheet row is deliberately excluded so re-sorted or filtered re-exports
+ * map to the same previousCode.
+ */
+function equipmentFingerprint(fields: string[]): string {
+  return createHash('sha256')
+    .update(fields.map(normalizeKey).join('\u0000'))
+    .digest('hex')
+    .slice(0, FINGERPRINT_LENGTH);
+}
+
 function composeNote(parts: {
   observation: string;
   present: string;
@@ -321,6 +338,7 @@ export function parseSurvey(rows: RawRow[]): SurveyParseResult {
   const anomalies: Anomaly[] = [];
   const locations = new Map<string, ParsedLocation>();
   const custodians = new Map<string, ParsedCustodian>();
+  const codeOccurrences = new Map<string, number>();
 
   for (const row of rows) {
     const flag = (kind: AnomalyKind, message: string) =>
@@ -406,8 +424,23 @@ export function parseSurvey(rows: RawRow[]): SurveyParseResult {
       }
     }
 
+    let submissionId = cell(row, COL.submissionId);
+    if (submissionId === '') {
+      submissionId = MISSING_SUBMISSION_ID;
+      flag('missing-submission-id', 'Fila sin Submission Id');
+    }
+    const baseCode = `${submissionId}#${equipmentFingerprint([
+      typeKey,
+      assetName,
+      cell(row, columns.serial),
+    ])}`;
+    // Identical equipment rows are interchangeable, so numbering them by
+    // occurrence keeps the codes independent of sheet order.
+    const occurrence = (codeOccurrences.get(baseCode) ?? 0) + 1;
+    codeOccurrences.set(baseCode, occurrence);
+
     assets.push({
-      previousCode: `${cell(row, COL.submissionId)}#${row.sheetRow}`,
+      previousCode: occurrence === 1 ? baseCode : `${baseCode}-${occurrence}`,
       sheetRow: row.sheetRow,
       assetName,
       brand: serial.brand,
