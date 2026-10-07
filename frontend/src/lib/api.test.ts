@@ -133,6 +133,25 @@ describe('api.public 401 handling on a public path', () => {
     expect(localStorage.getItem('token')).toBe('stale-token');
     localStorage.removeItem('token');
   });
+
+  // The landing page and /login are public too: an expired token there must not
+  // hard-redirect. AuthProvider clears the session itself on the ApiError.
+  it.each(['/', '/login'])('does not hard-redirect on a 401 from /auth/me while on %s', async (path) => {
+    window.history.pushState({}, '', path);
+    localStorage.setItem('token', 'expired-token');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      json: async () => ({ message: 'Unauthorized' }),
+    }) as unknown as typeof fetch;
+
+    await expect(api.auth.me()).rejects.toThrow();
+
+    expect(window.location.pathname).toBe(path);
+    expect(localStorage.getItem('token')).toBe('expired-token');
+    localStorage.removeItem('token');
+  });
 });
 
 describe('api.movements', () => {
