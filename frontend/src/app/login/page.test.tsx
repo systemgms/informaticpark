@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { api } from '@/lib/api';
 import LoginPage from './page';
 
 vi.mock('@/lib/api', () => ({
@@ -20,5 +21,15 @@ describe('LoginPage', () => {
   it('labels the email field "Correo electrónico" in Spanish', () => {
     render(<LoginPage />);
     expect(screen.getByLabelText('Correo electrónico')).toBeDefined();
+  });
+
+  it('announces a failed login as an alert', async () => {
+    vi.mocked(api.auth.login).mockRejectedValueOnce(new Error('Credenciales incorrectas'));
+    render(<LoginPage />);
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), { target: { value: 'a@b.co' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'x' } });
+    fireEvent.submit(screen.getByLabelText('Correo electrónico').closest('form')!);
+    const alert = await waitFor(() => screen.getByRole('alert'));
+    expect(alert.textContent).toContain('Credenciales incorrectas');
   });
 });

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect, createContext, useContext, useCallback } from "react";
-import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
-type ToastType = "success" | "error" | "info";
+type ToastType = 'success' | 'error' | 'info';
 
 interface Toast {
   id: number;
@@ -24,7 +24,7 @@ export function useToast() {
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = useCallback((message: string, type: ToastType = "info") => {
+  const toast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
   }, []);
@@ -49,15 +49,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   };
 
   const bgColors = {
-    success: "bg-green-50 border-green-200",
-    error: "bg-red-50 border-red-200",
-    info: "bg-blue-50 border-blue-200",
+    success: 'bg-green-50 border-green-200',
+    error: 'bg-red-50 border-red-200',
+    info: 'bg-blue-50 border-blue-200',
   };
 
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
+      <div role="status" aria-live="polite" className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
         {toasts.map((t) => (
           <div
             key={t.id}
@@ -65,10 +65,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           >
             {icons[t.type]}
             <span className="text-sm flex-1">{t.message}</span>
-            <button
-              onClick={() => removeToast(t.id)}
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <button onClick={() => removeToast(t.id)} className="text-muted-foreground hover:text-foreground">
               <X className="w-4 h-4" />
             </button>
           </div>
