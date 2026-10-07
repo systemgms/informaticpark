@@ -58,7 +58,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <div className="flex-1">
         <section className="mx-auto max-w-2xl space-y-4 px-4 py-10 text-center sm:py-16">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{appName}</h1>
           <p className="text-lg font-medium text-muted-foreground">{INSTITUTION_NAME}</p>
@@ -128,7 +128,7 @@ export default function LandingPage() {
             </Card>
           </Link>
         </section>
-      </main>
+      </div>
 
       <footer className="border-t px-4 py-6 text-center text-sm text-muted-foreground">{INSTITUTION_NAME}</footer>
     </div>

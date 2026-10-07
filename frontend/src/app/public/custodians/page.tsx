@@ -39,7 +39,7 @@ export default function PublicCustodiansPage() {
         </div>
       </header>
 
-      <main className="container mx-auto space-y-6 px-4 py-8">
+      <div className="container mx-auto space-y-6 px-4 py-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre o unidad..." />
           {!isLoading && meta && (
@@ -57,7 +57,7 @@ export default function PublicCustodiansPage() {
         />
 
         {meta && <Pagination page={page} totalPages={meta.totalPages} onPageChange={setPage} />}
-      </main>
+      </div>
     </div>
   );
 }

@@ -39,7 +39,7 @@ export default function PublicAssetsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto space-y-6 px-4 py-8">
+      <div className="container mx-auto space-y-6 px-4 py-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <ListSearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre, código o marca..." />
           {!isLoading && meta && (
@@ -52,7 +52,7 @@ export default function PublicAssetsPage() {
         <PublicAssetList assets={assets} isLoading={isLoading} error={error} hasSearch={search.length > 0} />
 
         {meta && <Pagination page={page} totalPages={meta.totalPages} onPageChange={setPage} />}
-      </main>
+      </div>
     </div>
   );
 }
