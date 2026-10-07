@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import { api } from '@/lib/api';
 import { PublicAsset } from '@/lib/types';
 import { usePaginatedList } from '@/hooks/use-paginated-list';
@@ -31,14 +30,8 @@ export default function PublicAssetsPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b px-4 py-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            aria-label="Volver"
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
+          <BackButton href="/" variant="ghost" />
+          <div className="min-w-0">
             <h1 className="text-xl font-semibold">Parque Informático</h1>
             <p className="text-sm text-muted-foreground">Gobernación Provincial de Morona Santiago</p>
             <p className="text-sm font-medium">Inventario de activos</p>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Asset } from '@/lib/types';
@@ -10,13 +9,14 @@ import { usePaginatedList } from '@/hooks/use-paginated-list';
 import { useCustodianOptions } from '@/hooks/use-custodian-options';
 import { useLocationOptions } from '@/hooks/use-location-options';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/back-button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Pagination } from '@/components/pagination';
 import { ListSearchInput } from '@/components/list-search-input';
-import { ArrowLeft, Send, X } from 'lucide-react';
+import { Send, X } from 'lucide-react';
 import { SelectableAssetList } from './selectable-asset-list';
 
 interface BulkTransferForm {
@@ -118,14 +118,10 @@ export default function BulkTransferPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Button asChild variant="outline" size="icon" className="h-11 w-11">
-          <Link href="/admin/assets">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Traspaso masivo</h1>
+      <div className="flex flex-wrap items-center gap-4">
+        <BackButton href="/admin/assets" />
+        <div className="min-w-0">
+          <h1 className="break-words text-3xl font-bold tracking-tight">Traspaso masivo</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Selecciona uno o más activos para traspasar simultáneamente.
           </p>
