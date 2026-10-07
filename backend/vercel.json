@@ -4,6 +4,7 @@
   "installCommand": "bun install",
   "framework": null,
   "outputDirectory": "dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
