@@ -135,7 +135,7 @@ export class CreateAssetDto {
   @ApiPropertyOptional({ enum: AssetCondition, example: AssetCondition.BUENO })
   @IsOptional()
   @IsEnum(AssetCondition, {
-    message: 'La condición debe ser BUENO, MALO o EN_MANTENIMIENTO',
+    message: 'La condición debe ser BUENO, REGULAR, MALO o EN_MANTENIMIENTO',
   })
   condition?: AssetCondition;
 }

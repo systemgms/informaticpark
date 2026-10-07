@@ -15,6 +15,17 @@ describe('CreateAssetDto', () => {
     expect(errors).toHaveLength(0);
   });
 
+  it('should accept the REGULAR condition', async () => {
+    const dto = plainToInstance(CreateAssetDto, {
+      assetName: 'Laptop Dell',
+      condition: 'REGULAR',
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors).toHaveLength(0);
+  });
+
   it('should accept a missing condition (optional)', async () => {
     const dto = plainToInstance(CreateAssetDto, {
       assetName: 'Laptop Dell',

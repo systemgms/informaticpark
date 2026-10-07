@@ -21,6 +21,7 @@ describe('AssetList condition badge', () => {
       makeAsset({ id: 1, assetName: 'Laptop Dell', condition: AssetCondition.BUENO }),
       makeAsset({ id: 2, assetName: 'Impresora HP', condition: AssetCondition.MALO }),
       makeAsset({ id: 3, assetName: 'Router TP-Link', condition: AssetCondition.EN_MANTENIMIENTO }),
+      makeAsset({ id: 4, assetName: 'Monitor LG', condition: AssetCondition.REGULAR }),
     ];
 
     render(
@@ -38,5 +39,6 @@ describe('AssetList condition badge', () => {
     expect(screen.getAllByText('Bueno').length).toBe(2);
     expect(screen.getAllByText('Malo').length).toBe(2);
     expect(screen.getAllByText('En mantenimiento').length).toBe(2);
+    expect(screen.getAllByText('Regular').length).toBe(2);
   });
 });

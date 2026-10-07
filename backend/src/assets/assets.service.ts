@@ -155,6 +155,7 @@ export class AssetsService {
     const isRestrictedCaller = !!caller && caller.role !== 'ADMIN';
     const emptyByCondition: Record<AssetCondition, number> = {
       BUENO: 0,
+      REGULAR: 0,
       MALO: 0,
       EN_MANTENIMIENTO: 0,
     };

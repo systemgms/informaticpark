@@ -46,6 +46,7 @@ export type MovementStatus = 'PENDIENTE' | 'COMPLETADO' | 'RECHAZADO';
 // names keep the database's Spanish values instead of PascalCase).
 export enum AssetCondition {
   BUENO = 'BUENO',
+  REGULAR = 'REGULAR',
   MALO = 'MALO',
   // eslint-disable-next-line @typescript-eslint/naming-convention -- Prisma-mirrored enum, keeps the DB value.
   EN_MANTENIMIENTO = 'EN_MANTENIMIENTO',
@@ -53,6 +54,7 @@ export enum AssetCondition {
 
 export const ASSET_CONDITION_LABELS: Record<AssetCondition, string> = {
   [AssetCondition.BUENO]: 'Bueno',
+  [AssetCondition.REGULAR]: 'Regular',
   [AssetCondition.MALO]: 'Malo',
   [AssetCondition.EN_MANTENIMIENTO]: 'En mantenimiento',
 };

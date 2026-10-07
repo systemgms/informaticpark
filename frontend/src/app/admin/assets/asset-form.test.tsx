@@ -79,4 +79,22 @@ describe('AssetForm condition field', () => {
       expect.objectContaining({ condition: AssetCondition.EN_MANTENIMIENTO }),
     );
   });
+
+  it('loads and sends the Regular condition', async () => {
+    getByIdMock.mockResolvedValue({
+      id: 6,
+      assetName: 'Monitor',
+      condition: AssetCondition.REGULAR,
+    });
+    updateMock.mockResolvedValue({ id: 6 });
+    const user = userEvent.setup();
+
+    const { getByRole, getByLabelText } = render(<AssetForm assetId={6} />);
+
+    await waitFor(() => expect(getByLabelText(/condición/i).textContent).toBe('Regular'));
+    await user.click(getByRole('button', { name: /guardar activo/i }));
+
+    await waitFor(() => expect(updateMock).toHaveBeenCalled());
+    expect(updateMock.mock.calls[0][1]).toEqual(expect.objectContaining({ condition: AssetCondition.REGULAR }));
+  });
 });

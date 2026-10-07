@@ -278,6 +278,7 @@ describe('AssetsService', () => {
       });
       prisma.asset.groupBy.mockResolvedValue([
         { condition: 'BUENO', _count: { _all: 7 } },
+        { condition: 'REGULAR', _count: { _all: 3 } },
         { condition: 'MALO', _count: { _all: 2 } },
         { condition: 'EN_MANTENIMIENTO', _count: { _all: 1 } },
       ]);
@@ -289,7 +290,7 @@ describe('AssetsService', () => {
         totalValue: 4500,
         withoutCustodian: 2,
         withoutLocation: 3,
-        byCondition: { BUENO: 7, MALO: 2, EN_MANTENIMIENTO: 1 },
+        byCondition: { BUENO: 7, REGULAR: 3, MALO: 2, EN_MANTENIMIENTO: 1 },
       });
       expect(prisma.asset.count).toHaveBeenNthCalledWith(1, {
         where: { isDeleted: false },
@@ -320,7 +321,7 @@ describe('AssetsService', () => {
         totalValue: 1200,
         withoutCustodian: 0,
         withoutLocation: 1,
-        byCondition: { BUENO: 4, MALO: 0, EN_MANTENIMIENTO: 0 },
+        byCondition: { BUENO: 4, REGULAR: 0, MALO: 0, EN_MANTENIMIENTO: 0 },
       });
       expect(prisma.asset.count).toHaveBeenNthCalledWith(1, {
         where: { isDeleted: false, custodianId: 7 },
@@ -340,7 +341,7 @@ describe('AssetsService', () => {
         totalValue: 0,
         withoutCustodian: 0,
         withoutLocation: 0,
-        byCondition: { BUENO: 0, MALO: 0, EN_MANTENIMIENTO: 0 },
+        byCondition: { BUENO: 0, REGULAR: 0, MALO: 0, EN_MANTENIMIENTO: 0 },
       });
       expect(prisma.asset.count).not.toHaveBeenCalled();
       expect(prisma.asset.aggregate).not.toHaveBeenCalled();
@@ -362,6 +363,7 @@ describe('AssetsService', () => {
       expect(result.totalValue).toBe(0);
       expect(result.byCondition).toEqual({
         BUENO: 0,
+        REGULAR: 0,
         MALO: 0,
         EN_MANTENIMIENTO: 0,
       });
