@@ -122,6 +122,16 @@ export interface AssetListParams extends ListParams {
   condition?: AssetCondition;
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   let token: string | null = null;
   if (typeof window !== 'undefined') {
@@ -173,7 +183,7 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
       window.location.href = '/login';
     }
     const error = (await response.json().catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
-    throw new Error(error.message || `Error ${response.status}: ${response.statusText}`);
+    throw new ApiError(error.message || `Error ${response.status}: ${response.statusText}`, response.status);
   }
 
   return response.json();
@@ -225,7 +235,7 @@ async function fetcherMultipart<T>(endpoint: string, body: FormData, method = 'P
       window.location.href = '/login';
     }
     const error = (await response.json().catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
-    throw new Error(error.message || `Error ${response.status}`);
+    throw new ApiError(error.message || `Error ${response.status}`, response.status);
   }
   return response.json();
 }

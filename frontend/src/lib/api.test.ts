@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, ApiError } from './api';
 import { AssetCondition } from './types';
 
 describe('api list params', () => {
@@ -168,5 +168,35 @@ describe('api.movements', () => {
       assetIds: [1, 2, 3],
       toLocationId: 7,
     });
+  });
+});
+
+describe('api errors', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('throws an ApiError carrying the HTTP status for a non-ok response', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      statusText: 'Forbidden',
+      json: async () => ({ message: 'Prohibido' }),
+    }) as unknown as typeof fetch;
+
+    const error = await api.auth.me().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(403);
+    expect((error as ApiError).message).toBe('Prohibido');
+  });
+
+  it('throws a plain Error without status for a network failure', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch')) as unknown as typeof fetch;
+
+    const error = await api.auth.me().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error).not.toBeInstanceOf(ApiError);
   });
 });

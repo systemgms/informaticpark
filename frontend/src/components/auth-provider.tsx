@@ -3,7 +3,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@/lib/types';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
+import { parseCachedUser } from '@/lib/parse-cached-user';
 
 interface AuthContextType {
   user: User | null;
@@ -25,16 +26,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       return;
     }
+    const cachedUser = parseCachedUser(localStorage.getItem('user'));
+    if (cachedUser) {
+      setUser(cachedUser);
+      setIsLoading(false);
+    }
     api.auth
       .me()
       .then((userData) => {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
       })
-      .catch(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
+      .catch((error: unknown) => {
+        // Only an auth rejection ends the session; network errors and timeouts keep it.
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
       })
       .finally(() => setIsLoading(false));
   }, []);
