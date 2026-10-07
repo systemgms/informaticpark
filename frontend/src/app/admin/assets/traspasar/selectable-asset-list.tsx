@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ListEmptyState } from '@/components/list-empty-state';
 import { ListErrorState } from '@/components/list-error-state';
 import { CheckSquare, Package, Square } from 'lucide-react';
+import { EMPTY_FIELD } from '@/lib/display';
 
 interface SelectableAssetListProps {
   assets: Asset[];
@@ -76,14 +77,14 @@ export function SelectableAssetList({
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{asset.assetName}</p>
-                    <p className="font-mono text-xs text-muted-foreground">{asset.code || '—'}</p>
+                    <p className="font-mono text-xs text-muted-foreground">{asset.code || EMPTY_FIELD}</p>
                   </div>
                   <SelectionIndicator isSelected={isSelected} />
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
+                  {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
                 </p>
-                <p className="text-sm text-muted-foreground">{asset.location || '—'}</p>
+                <p className="text-sm text-muted-foreground">{asset.location || EMPTY_FIELD}</p>
                 <p className="text-sm text-muted-foreground">{asset.custodian?.fullName || 'Sin custodio'}</p>
               </button>
             );
@@ -153,13 +154,17 @@ export function SelectableAssetList({
                       <TableCell>
                         <SelectionIndicator isSelected={isSelected} />
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{asset.code || '—'}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {asset.code || EMPTY_FIELD}
+                      </TableCell>
                       <TableCell className="font-medium">{asset.assetName}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
+                        {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{asset.location || '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{asset.custodian?.fullName || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{asset.location || EMPTY_FIELD}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {asset.custodian?.fullName || EMPTY_FIELD}
+                      </TableCell>
                     </TableRow>
                   );
                 })

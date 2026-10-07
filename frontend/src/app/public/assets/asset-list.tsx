@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ListEmptyState } from '@/components/list-empty-state';
 import { ListErrorState } from '@/components/list-error-state';
 import { Package } from 'lucide-react';
+import { EMPTY_FIELD } from '@/lib/display';
 
 interface PublicAssetListProps {
   assets: PublicAsset[];
@@ -18,7 +19,7 @@ interface PublicAssetListProps {
 function formatLocation(asset: PublicAsset): string {
   const parts = [asset.geoLocation?.canton, asset.geoLocation?.parroquia].filter(Boolean);
   if (parts.length > 0) return parts.join(' / ');
-  return asset.location || '—';
+  return asset.location || EMPTY_FIELD;
 }
 
 export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicAssetListProps) {
@@ -56,10 +57,10 @@ export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicA
               <CardContent className="space-y-2 p-4">
                 <div>
                   <p className="font-medium">{asset.assetName}</p>
-                  <p className="font-mono text-xs text-muted-foreground">{asset.code || '—'}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{asset.code || EMPTY_FIELD}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
+                  {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
                 </p>
                 <p className="text-sm text-muted-foreground">{formatLocation(asset)}</p>
               </CardContent>
@@ -113,10 +114,12 @@ export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicA
               ) : (
                 assets.map((asset) => (
                   <TableRow key={asset.id} className="transition-colors hover:bg-muted/40">
-                    <TableCell className="font-mono text-xs text-muted-foreground">{asset.code || '—'}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {asset.code || EMPTY_FIELD}
+                    </TableCell>
                     <TableCell className="font-medium">{asset.assetName}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
+                      {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{formatLocation(asset)}</TableCell>
                   </TableRow>

@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ListEmptyState } from '@/components/list-empty-state';
 import { ListErrorState } from '@/components/list-error-state';
 import { Package, Pencil, Trash2 } from 'lucide-react';
+import { EMPTY_FIELD } from '@/lib/display';
 
 const CONDITION_BADGE_CLASSES: Record<AssetCondition, string> = {
   [AssetCondition.BUENO]: 'border-transparent bg-green-100 text-green-800 hover:bg-green-100',
@@ -32,7 +33,7 @@ interface AssetListProps {
 }
 
 function formatValue(value?: number | null): string {
-  return value != null ? `$${value.toFixed(2)}` : '—';
+  return value != null ? `$${value.toFixed(2)}` : EMPTY_FIELD;
 }
 
 interface AssetActionsProps {
@@ -106,14 +107,14 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{asset.assetName}</p>
-                    <p className="font-mono text-xs text-muted-foreground">{asset.code || '—'}</p>
+                    <p className="font-mono text-xs text-muted-foreground">{asset.code || EMPTY_FIELD}</p>
                   </div>
                   <p className="font-mono text-sm">{formatValue(asset.currentValue)}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
+                  {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
                 </p>
-                <p className="text-sm text-muted-foreground">{asset.location || '—'}</p>
+                <p className="text-sm text-muted-foreground">{asset.location || EMPTY_FIELD}</p>
                 <ConditionBadge condition={asset.condition} />
                 <div className="flex justify-end pt-1">
                   <AssetActions asset={asset} isAdmin={isAdmin} onDeleteClick={onDeleteClick} />
@@ -181,12 +182,14 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
               ) : (
                 assets.map((asset) => (
                   <TableRow key={asset.id} className="transition-colors hover:bg-muted/40">
-                    <TableCell className="font-mono text-xs text-muted-foreground">{asset.code || '—'}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {asset.code || EMPTY_FIELD}
+                    </TableCell>
                     <TableCell className="font-medium">{asset.assetName}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {[asset.brand, asset.model].filter(Boolean).join(' ') || '—'}
+                      {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{asset.location || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{asset.location || EMPTY_FIELD}</TableCell>
                     <TableCell>
                       <ConditionBadge condition={asset.condition} />
                     </TableCell>

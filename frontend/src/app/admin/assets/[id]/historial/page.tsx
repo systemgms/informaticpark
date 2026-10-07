@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { EMPTY_FIELD } from '@/lib/display';
 import {
   ArrowRight,
   FileText,
@@ -459,7 +460,7 @@ export default function AssetMovementHistoryPage() {
                               <FileText className="w-3.5 h-3.5" /> Ver acta
                             </a>
                           )}
-                          <span>Iniciado por: {m.registeredBy?.name ?? '—'}</span>
+                          <span>Iniciado por: {m.registeredBy?.name ?? EMPTY_FIELD}</span>
                           {m.confirmedBy && <span>Confirmado por: {m.confirmedBy.name}</span>}
                         </div>
                       </div>
@@ -572,7 +573,7 @@ interface ChangeProps {
 }
 
 function CustodianChange({ from, to }: ChangeProps) {
-  if (!from && !to) return <>—</>;
+  if (!from && !to) return <>{EMPTY_FIELD}</>;
   if (!to) return <span className="text-muted-foreground">{from}</span>;
   return (
     <span className="flex items-center gap-1 flex-wrap">
@@ -584,7 +585,7 @@ function CustodianChange({ from, to }: ChangeProps) {
 }
 
 function LocationChange({ from, to }: ChangeProps) {
-  if (!from && !to) return <>—</>;
+  if (!from && !to) return <>{EMPTY_FIELD}</>;
   if (!to) return <span className="text-muted-foreground">{from}</span>;
   return (
     <span className="flex items-center gap-1 flex-wrap">

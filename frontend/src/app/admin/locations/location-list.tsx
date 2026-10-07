@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ListEmptyState } from '@/components/list-empty-state';
 import { ListErrorState } from '@/components/list-error-state';
 import { MapPin, Pencil, Trash2 } from 'lucide-react';
+import { EMPTY_FIELD } from '@/lib/display';
 
 interface LocationListProps {
   locations: Location[];
@@ -19,7 +20,9 @@ interface LocationListProps {
 }
 
 function formatCoordinates(location: Location): string {
-  return location.lat != null && location.lng != null ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : '—';
+  return location.lat != null && location.lng != null
+    ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+    : EMPTY_FIELD;
 }
 
 interface LocationActionsProps {
@@ -81,8 +84,8 @@ export function LocationList({ locations, isLoading, error, hasSearch, onDeleteC
           locations.map((location) => (
             <Card key={location.id}>
               <CardContent className="space-y-2 p-4">
-                <p className="font-medium">{location.canton || '—'}</p>
-                <p className="text-sm text-muted-foreground">{location.parroquia || '—'}</p>
+                <p className="font-medium">{location.canton || EMPTY_FIELD}</p>
+                <p className="text-sm text-muted-foreground">{location.parroquia || EMPTY_FIELD}</p>
                 <p className="font-mono text-xs text-muted-foreground">{formatCoordinates(location)}</p>
                 <div className="flex justify-end pt-1">
                   <LocationActions location={location} onDeleteClick={onDeleteClick} />
@@ -138,8 +141,8 @@ export function LocationList({ locations, isLoading, error, hasSearch, onDeleteC
               ) : (
                 locations.map((location) => (
                   <TableRow key={location.id} className="transition-colors hover:bg-muted/40">
-                    <TableCell className="font-medium">{location.canton || '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{location.parroquia || '—'}</TableCell>
+                    <TableCell className="font-medium">{location.canton || EMPTY_FIELD}</TableCell>
+                    <TableCell className="text-muted-foreground">{location.parroquia || EMPTY_FIELD}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {formatCoordinates(location)}
                     </TableCell>

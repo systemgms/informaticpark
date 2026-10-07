@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ListEmptyState } from '@/components/list-empty-state';
 import { ListErrorState } from '@/components/list-error-state';
 import { Building2, Pencil, Trash2 } from 'lucide-react';
+import { EMPTY_FIELD } from '@/lib/display';
 
 interface CustodianListProps {
   custodians: Custodian[];
@@ -85,7 +86,7 @@ export function CustodianList({ custodians, isLoading, error, hasSearch, onDelet
               <CardContent className="space-y-2 p-4">
                 <p className="font-medium">{custodian.fullName}</p>
                 <p className="font-mono text-xs text-muted-foreground">{custodian.identifier}</p>
-                <p className="text-sm text-muted-foreground">{custodian.unit || '—'}</p>
+                <p className="text-sm text-muted-foreground">{custodian.unit || EMPTY_FIELD}</p>
                 <div className="flex justify-end pt-1" onClick={(e) => e.stopPropagation()}>
                   <CustodianActions custodian={custodian} onDeleteClick={onDeleteClick} />
                 </div>
@@ -146,7 +147,7 @@ export function CustodianList({ custodians, isLoading, error, hasSearch, onDelet
                   >
                     <TableCell className="font-medium">{custodian.fullName}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{custodian.identifier}</TableCell>
-                    <TableCell className="text-muted-foreground">{custodian.unit || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{custodian.unit || EMPTY_FIELD}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <CustodianActions custodian={custodian} onDeleteClick={onDeleteClick} />
                     </TableCell>
