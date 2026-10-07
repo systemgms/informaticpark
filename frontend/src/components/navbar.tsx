@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { useBrand } from '@/components/brand-provider';
 import { Button } from '@/components/ui/button';
+import { MobileNav } from '@/components/mobile-nav';
 import {
   LogOut,
   User as UserIcon,
@@ -96,8 +97,13 @@ export function Navbar() {
   return (
     <nav className="border-b bg-card sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="flex min-h-11 min-w-11 items-center gap-2 font-bold text-base shrink-0">
+        <div className="flex items-center gap-2 md:gap-6">
+          <MobileNav links={navLinks} pathname={pathname} />
+          <Link
+            href="/dashboard"
+            aria-label={brand?.appName || 'Parque Informático'}
+            className="flex min-h-11 min-w-11 items-center gap-2 font-bold text-base shrink-0"
+          >
             {brand?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo URL is admin-uploaded/dynamic; next/image optimization needs extra loader config on the Cloudflare Workers deploy target
               <img src={brand.logoUrl} alt="Logotipo de la aplicación" className="h-6 w-auto object-contain" />
@@ -149,6 +155,7 @@ export function Navbar() {
             variant="ghost"
             size="sm"
             onClick={logout}
+            aria-label="Cerrar sesión"
             className="min-w-11 text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
