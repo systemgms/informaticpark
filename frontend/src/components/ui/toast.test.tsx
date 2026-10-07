@@ -28,6 +28,20 @@ describe('ToastProvider', () => {
     expect(screen.getByRole('status').textContent).toContain('Guardado');
   });
 
+  it('has a named 44px close button that dismisses the toast', () => {
+    render(
+      <ToastProvider>
+        <Trigger />
+      </ToastProvider>,
+    );
+    act(() => screen.getByText('go').click());
+    const close = screen.getByRole('button', { name: 'Cerrar notificación' });
+    expect(close.getAttribute('type')).toBe('button');
+    expect(close.className).toContain('size-11');
+    fireEvent.click(close);
+    expect(screen.getByRole('status').textContent).not.toContain('Guardado');
+  });
+
   it('does not re-render toast-only consumers when a toast is added', () => {
     let renderCount = 0;
     let showToast: ReturnType<typeof useToast>['toast'] = () => {};

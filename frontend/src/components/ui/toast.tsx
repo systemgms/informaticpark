@@ -70,8 +70,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           >
             {TOAST_ICONS[t.type]}
             <span className="text-sm flex-1">{t.message}</span>
-            <button onClick={() => removeToast(t.id)} className="text-muted-foreground hover:text-foreground">
-              <X className="w-4 h-4" />
+            {/* 44px hit area; the negative margin keeps the visual 16px icon in place */}
+            <button
+              type="button"
+              aria-label="Cerrar notificación"
+              onClick={() => removeToast(t.id)}
+              className="-m-3 flex size-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         ))}
