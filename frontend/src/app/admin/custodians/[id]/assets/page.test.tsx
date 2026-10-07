@@ -82,7 +82,20 @@ describe('CustodianAssetsPage', () => {
     expect(heading.className).toContain('text-2xl');
     expect(heading.className).toContain('md:text-3xl');
     expect(heading.className).toContain('break-words');
-    expect(screen.getByText(/SIN-CEDULA-1234567890/).className).toContain('break-all');
+    // break-words only splits tokens that overflow; break-all also split plain words.
+    const identifier = screen.getByText(/SIN-CEDULA-1234567890/);
+    expect(identifier.className).toContain('break-words');
+    expect(identifier.className).not.toContain('break-all');
+  });
+
+  it('labels each field in the mobile asset card', async () => {
+    getByIdMock.mockResolvedValue(custodian);
+    render(<CustodianAssetsPage />);
+
+    await screen.findByRole('heading', { name: 'Ana Torres' });
+    for (const label of ['Código', 'Marca y modelo', 'Serie', 'Ubicación']) {
+      expect(screen.getAllByText(label).some((el) => el.tagName === 'DT')).toBe(true);
+    }
   });
 
   it('has a 44px back link to the custodian list', async () => {

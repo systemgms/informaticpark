@@ -57,12 +57,16 @@ function AssetCard({ asset }: { asset: Asset }) {
         >
           {asset.assetName}
         </Link>
-        <p className="font-mono text-xs text-muted-foreground">{asset.code ?? EMPTY_FIELD}</p>
-        <p className="text-sm text-muted-foreground">
-          {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
-        </p>
-        <p className="break-all text-sm text-muted-foreground">{asset.serialNumber ?? EMPTY_FIELD}</p>
-        <p className="text-sm text-muted-foreground">{asset.location ?? EMPTY_FIELD}</p>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+          <dt className="text-muted-foreground">Código</dt>
+          <dd className="min-w-0 break-words font-mono">{asset.code ?? EMPTY_FIELD}</dd>
+          <dt className="text-muted-foreground">Marca y modelo</dt>
+          <dd className="min-w-0 break-words">{[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}</dd>
+          <dt className="text-muted-foreground">Serie</dt>
+          <dd className="min-w-0 break-words">{asset.serialNumber ?? EMPTY_FIELD}</dd>
+          <dt className="text-muted-foreground">Ubicación</dt>
+          <dd className="min-w-0 break-words">{asset.location ?? EMPTY_FIELD}</dd>
+        </dl>
       </CardContent>
     </Card>
   );
@@ -100,12 +104,11 @@ export default function CustodianAssetsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-4">
         <BackButton href="/admin/custodians" variant="ghost" />
-        <div className="min-w-0 flex-1">
+        {/* basis-48 lets the actions wrap below the title instead of squeezing it */}
+        <div className="min-w-0 flex-1 basis-48">
           <h1 className="break-words text-2xl font-bold md:text-3xl">{custodian.fullName}</h1>
-          <p className="break-all text-sm text-muted-foreground">
-            {custodian.identifier}
-            {custodian.unit ? ` · ${custodian.unit}` : ''}
-          </p>
+          <p className="break-words text-sm text-muted-foreground">{custodian.identifier}</p>
+          {custodian.unit && <p className="break-words text-sm text-muted-foreground">{custodian.unit}</p>}
         </div>
         <Button asChild variant="outline" size="sm" className="sm:ml-auto">
           <Link href={`/admin/custodians/${id}`}>
