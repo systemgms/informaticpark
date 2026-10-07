@@ -47,6 +47,17 @@ describe('LocationPicker', () => {
     expect(center[1]).toBeCloseTo(-78.1114, 2);
   });
 
+  it('scopes 44px touch targets for the Leaflet zoom controls to the map container', () => {
+    const { container } = render(<LocationPicker value={null} onChange={vi.fn()} />);
+
+    const mapElement = container.querySelector('[data-testid="location-picker-map"]');
+    expect(mapElement).not.toBeNull();
+    const classes = mapElement!.className;
+    expect(classes).toContain('[&_.leaflet-control-zoom_a]:!h-11');
+    expect(classes).toContain('[&_.leaflet-control-zoom_a]:!w-11');
+    expect(classes).toContain('[&_.leaflet-control-zoom_a]:!leading-[44px]');
+  });
+
   it('shows an error toast instead of an alert when geolocation is unavailable', () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     Object.defineProperty(navigator, 'geolocation', { value: undefined, configurable: true });
