@@ -1,48 +1,46 @@
-"use client";
+'use client';
 
-import Error from "next/error";
+// global-error replaces the root layout when active, so it does not inherit
+// globals.css, the providers or the <html>/<body> from app/layout.tsx.
+import './globals.css';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-/**
- * Página de error personalizada para la aplicación Infopark.
- * Se muestra cuando ocurre un error no capturado en el cliente.
- * 
- * Este componente actúa como un error boundary a nivel de aplicación,
- * mostrando una interfaz amigable en lugar de la pantalla blanca o error predeterminado.
- */
-export default function CustomError({
-  error, // eslint-disable-line @typescript-eslint/no-unused-vars
-  reset,
-}: {
-  error: Error;
+interface GlobalErrorProps {
+  error: Error & { digest?: string };
   reset: () => void;
-}) {
+}
+
+export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
-    <div className="min-h-screen bg-background font-sans antialiased flex items-center justify-center">
-      <div className="bg-card rounded-lg p-8 shadow-xl max-w-md w-full text-center">
-        <div className="text-4xl font-bold text-destructive mb-4">
-          <span role="presentation">⚠️</span>
-          Error
-        </div>
-        
-        <p className="text-muted-foreground mb-6">
-          Ocurrió un error inesperado. Estamos trabajando en solucionarlo.
-        </p>
-
-        <div className="mb-6">
-          <button
-            onClick={reset}
-            className="btn btn-ghost text-sm hover:text-foreground transition-colors"
-          >
-            <span role="presentation">↻</span>
-            Reintentar
-          </button>
-        </div>
-
-        <div className="text-xs text-muted-foreground">
-          <p>Si el problema persiste, <a href="https://example.com/soporte" target="_blank" rel="noopener noreferrer">contacta soporte</a>.</p>
-          <p>Código de error: Ver consola del desarrollador.</p>
-        </div>
-      </div>
-    </div>
-  )
+    <html lang="es">
+      <body className="bg-background font-sans text-foreground antialiased">
+        <title>Error | Parque Informático</title>
+        <main className="flex min-h-screen items-center justify-center p-4">
+          <div role="alert" className="w-full max-w-md rounded-lg bg-card p-8 text-center shadow-xl">
+            <AlertTriangle className="mx-auto mb-4 h-10 w-10 text-destructive" aria-hidden="true" />
+            <h1 className="mb-2 text-2xl font-bold">Ocurrió un error inesperado</h1>
+            <p className="mb-6 text-muted-foreground">
+              No pudimos cargar la aplicación. Intenta de nuevo en unos segundos.
+            </p>
+            <Button type="button" onClick={reset} className="mb-6">
+              <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+              Reintentar
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Si el problema persiste, contacta al administrador
+              {error.digest ? (
+                <>
+                  {' '}
+                  e indica el código <span className="font-mono">{error.digest}</span>.
+                </>
+              ) : (
+                '.'
+              )}
+            </p>
+          </div>
+        </main>
+      </body>
+    </html>
+  );
 }
