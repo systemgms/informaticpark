@@ -60,6 +60,15 @@ coverage/
 .gga
 AGENTS.md
 CLAUDE.md
+.agents/
+.aider-desk/
+.augment/
+.autohand/
+.claude/
+.hermes/
+.inferencesh/
+skills-lock.json
+backend/data/
 
 # Load tests (OE3): raw k6 summaries and generated seed ids are local run
 # artifacts; the per-scenario Markdown summaries in load-tests/results/ are
