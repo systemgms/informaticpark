@@ -69,6 +69,7 @@ CLAUDE.md
 .inferencesh/
 skills-lock.json
 backend/data/
+design-references/
 
 # Load tests (OE3): raw k6 summaries and generated seed ids are local run
 # artifacts; the per-scenario Markdown summaries in load-tests/results/ are
