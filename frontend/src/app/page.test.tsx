@@ -83,4 +83,9 @@ describe('LandingPage', () => {
     expect(screen.queryByText(/42/)).toBeNull();
     expect(screen.queryByText(/8/)).toBeNull();
   });
+
+  it('does not nest a main landmark (the root layout provides it)', () => {
+    const { container } = render(<LandingPage />);
+    expect(container.querySelector('main')).toBeNull();
+  });
 });

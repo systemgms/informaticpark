@@ -49,4 +49,49 @@ describe('fetchAllPages', () => {
     expect(result).toEqual([1, 2, 3]);
     expect(fetchPage).toHaveBeenCalledTimes(1);
   });
+
+  it('requests pages 2..N concurrently once page 1 has resolved', async () => {
+    const resolvers = new Map<number, (r: PaginatedResponse<number>) => void>();
+    const fetchPage = vi.fn((page: number, limit: number) => {
+      if (page === 1) {
+        return Promise.resolve({ data: [1], meta: { total: 3, page, limit, totalPages: 3 } });
+      }
+      return new Promise<PaginatedResponse<number>>((resolve) => resolvers.set(page, resolve));
+    });
+
+    const promise = fetchAllPages(fetchPage, 1);
+    await vi.waitFor(() => expect(fetchPage).toHaveBeenCalledTimes(3));
+    // Both remaining pages are in flight before either has resolved.
+    expect(resolvers.size).toBe(2);
+
+    resolvers.get(2)!({ data: [2], meta: { total: 3, page: 2, limit: 1, totalPages: 3 } });
+    resolvers.get(3)!({ data: [3], meta: { total: 3, page: 3, limit: 1, totalPages: 3 } });
+    expect(await promise).toEqual([1, 2, 3]);
+  });
+
+  it('keeps page order even when later pages resolve first', async () => {
+    const resolvers = new Map<number, (r: PaginatedResponse<number>) => void>();
+    const fetchPage = vi.fn((page: number, limit: number) => {
+      if (page === 1) {
+        return Promise.resolve({ data: [1], meta: { total: 3, page, limit, totalPages: 3 } });
+      }
+      return new Promise<PaginatedResponse<number>>((resolve) => resolvers.set(page, resolve));
+    });
+
+    const promise = fetchAllPages(fetchPage, 1);
+    await vi.waitFor(() => expect(resolvers.size).toBe(2));
+    resolvers.get(3)!({ data: [3], meta: { total: 3, page: 3, limit: 1, totalPages: 3 } });
+    resolvers.get(2)!({ data: [2], meta: { total: 3, page: 2, limit: 1, totalPages: 3 } });
+
+    expect(await promise).toEqual([1, 2, 3]);
+  });
+
+  it('rejects when any page fails', async () => {
+    const fetchPage = vi.fn(async (page: number, limit: number) => {
+      if (page === 3) throw new Error('boom');
+      return { data: [page], meta: { total: 3, page, limit, totalPages: 3 } };
+    });
+
+    await expect(fetchAllPages(fetchPage, 1)).rejects.toThrow('boom');
+  });
 });

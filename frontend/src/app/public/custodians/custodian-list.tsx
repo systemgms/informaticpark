@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ListEmptyState } from '@/components/list-empty-state';
 import { ListErrorState } from '@/components/list-error-state';
 import { Users } from 'lucide-react';
+import { EMPTY_FIELD } from '@/lib/display';
 
 interface PublicCustodianListProps {
   custodians: PublicCustodian[];
@@ -48,7 +49,7 @@ export function PublicCustodianList({ custodians, isLoading, error, hasSearch }:
             <Card key={custodian.id}>
               <CardContent className="space-y-2 p-4">
                 <p className="font-medium">{custodian.fullName}</p>
-                <p className="text-sm text-muted-foreground">{custodian.unit || '—'}</p>
+                <p className="text-sm text-muted-foreground">{custodian.unit || EMPTY_FIELD}</p>
               </CardContent>
             </Card>
           ))
@@ -93,7 +94,7 @@ export function PublicCustodianList({ custodians, isLoading, error, hasSearch }:
                 custodians.map((custodian) => (
                   <TableRow key={custodian.id} className="transition-colors hover:bg-muted/40">
                     <TableCell className="font-medium">{custodian.fullName}</TableCell>
-                    <TableCell className="text-muted-foreground">{custodian.unit || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{custodian.unit || EMPTY_FIELD}</TableCell>
                   </TableRow>
                 ))
               )}

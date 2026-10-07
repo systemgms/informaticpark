@@ -20,6 +20,7 @@ import { AssetMovement } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
+import { EMPTY_FIELD } from '@/lib/display';
 
 interface AdminStats {
   users: number;
@@ -206,7 +207,7 @@ export default function HomePage() {
               icon={DollarSign}
               color="text-emerald-600 bg-emerald-50"
               label="Valor total del parque"
-              value={isLoading ? '—' : fmt(adminStats?.totalValue ?? 0)}
+              value={isLoading ? EMPTY_FIELD : fmt(adminStats?.totalValue ?? 0)}
               sub="Suma del valor actual de todos los activos"
               isLoading={isLoading}
             />
@@ -262,7 +263,7 @@ export default function HomePage() {
               icon={DollarSign}
               color="text-emerald-600 bg-emerald-50"
               label="Valor total"
-              value={isLoading ? '—' : fmt(custodianStats?.totalValue ?? 0)}
+              value={isLoading ? EMPTY_FIELD : fmt(custodianStats?.totalValue ?? 0)}
               sub="Valor actual de tus activos"
               isLoading={isLoading}
             />
@@ -289,7 +290,9 @@ export default function HomePage() {
                         {m.asset?.assetName ?? `Activo #${m.assetId}`}
                       </span>
                       {m.asset?.code && <span className="text-yellow-700 ml-2 font-mono text-xs">{m.asset.code}</span>}
-                      <p className="text-yellow-700 text-xs mt-0.5">Enviado por: {m.registeredBy?.name ?? '—'}</p>
+                      <p className="text-yellow-700 text-xs mt-0.5">
+                        Enviado por: {m.registeredBy?.name ?? EMPTY_FIELD}
+                      </p>
                     </div>
                     <span className="text-xs text-yellow-700 shrink-0 inline-flex items-center gap-1">
                       Ver traspaso <ArrowRight className="h-3 w-3" aria-hidden="true" />

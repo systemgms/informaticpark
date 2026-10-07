@@ -65,4 +65,10 @@ describe('PublicCustodiansPage', () => {
 
     await waitFor(() => expect(getAllMock).toHaveBeenCalledWith({ page: 2, limit: 20, search: '' }));
   });
+
+  it('does not nest a main landmark (the root layout provides it)', async () => {
+    const { container } = render(<PublicCustodiansPage />);
+    await waitFor(() => expect(getAllMock).toHaveBeenCalled());
+    expect(container.querySelector('main')).toBeNull();
+  });
 });

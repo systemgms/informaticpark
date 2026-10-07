@@ -86,4 +86,10 @@ describe('PublicAssetsPage', () => {
 
     await waitFor(() => expect(getAllMock).toHaveBeenCalledWith({ page: 2, limit: 20, search: '' }));
   });
+
+  it('does not nest a main landmark (the root layout provides it)', async () => {
+    const { container } = render(<PublicAssetsPage />);
+    await waitFor(() => expect(screen.getAllByText('Laptop Dell').length).toBeGreaterThan(0));
+    expect(container.querySelector('main')).toBeNull();
+  });
 });

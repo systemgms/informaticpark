@@ -12,8 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BackButton } from '@/components/back-button';
 import { ListEmptyState } from '@/components/list-empty-state';
 import { Laptop, Pencil } from 'lucide-react';
+import { EMPTY_FIELD } from '@/lib/display';
 
-const EMPTY_FIELD = 'Sin dato';
 const EMPTY_MESSAGE = 'Este custodio no tiene equipos asignados.';
 
 function AssetsPageSkeleton() {
