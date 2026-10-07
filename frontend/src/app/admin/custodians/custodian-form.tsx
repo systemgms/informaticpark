@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/back-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Save } from 'lucide-react';
-import Link from 'next/link';
+import { Save } from 'lucide-react';
 
 interface CustodianFormProps {
   custodianId?: number;
@@ -87,13 +87,9 @@ export function CustodianForm({ custodianId }: CustodianFormProps) {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Button asChild variant="outline" size="icon">
-          <Link href="/admin/custodians">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-        </Button>
-        <h1 className="text-3xl font-bold">{isEdit ? 'Editar custodio' : 'Nuevo custodio'}</h1>
+      <div className="flex flex-wrap items-center gap-4">
+        <BackButton href="/admin/custodians" />
+        <h1 className="min-w-0 break-words text-3xl font-bold">{isEdit ? 'Editar custodio' : 'Nuevo custodio'}</h1>
       </div>
 
       <Card>

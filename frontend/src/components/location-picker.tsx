@@ -161,7 +161,12 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
       {/* Leaflet CSS */}
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-      <div ref={mapRef} className="w-full rounded-md border border-input overflow-hidden" style={{ height: '320px' }} />
+      <div
+        ref={mapRef}
+        data-testid="location-picker-map"
+        className="w-full overflow-hidden rounded-md border border-input [&_.leaflet-control-zoom_a]:!flex [&_.leaflet-control-zoom_a]:!h-11 [&_.leaflet-control-zoom_a]:!w-11 [&_.leaflet-control-zoom_a]:!items-center [&_.leaflet-control-zoom_a]:!justify-center [&_.leaflet-control-zoom_a]:!leading-[44px]"
+        style={{ height: '320px' }}
+      />
 
       {value ? (
         <p className="text-xs text-muted-foreground flex items-center gap-1">

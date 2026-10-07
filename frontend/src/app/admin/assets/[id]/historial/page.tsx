@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Asset, AssetMovement, MovementStatus } from '@/lib/types';
 import { useCustodianDestinationOptions } from '@/hooks/use-custodian-destination-options';
@@ -10,6 +9,7 @@ import { useLocationOptions } from '@/hooks/use-location-options';
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/back-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import {
-  ArrowLeft,
   ArrowRight,
   FileText,
   Plus,
@@ -264,14 +263,10 @@ export default function AssetMovementHistoryPage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button asChild variant="outline" size="icon">
-            <Link href={`/admin/assets/${assetId}`}>
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Historial de traspasos</h1>
-            <p className="text-muted-foreground">
+          <BackButton href={`/admin/assets/${assetId}`} />
+          <div className="min-w-0">
+            <h1 className="break-words text-3xl font-bold">Historial de traspasos</h1>
+            <p className="break-words text-muted-foreground">
               {asset.assetName}
               {asset.code ? ` (${asset.code})` : ''}
             </p>
