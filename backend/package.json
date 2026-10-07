@@ -23,7 +23,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "bun run prisma/seed.ts",
     "prisma:generate": "prisma generate",
-    "import:survey": "bun run scripts/import-survey.ts"
+    "import:survey": "bun run scripts/import-survey.ts",
+    "normalize:locations": "bun run scripts/normalize-locations.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.2",

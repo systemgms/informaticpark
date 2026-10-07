@@ -16,6 +16,7 @@ import dynamic from 'next/dynamic';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { AssetCondition, ASSET_CONDITION_LABELS } from '@/lib/types';
+import { normalizeText } from '@/lib/normalize-text';
 
 const LocationPicker = dynamic(() => import('@/components/location-picker').then((m) => m.LocationPicker), {
   ssr: false,
@@ -26,20 +27,36 @@ const LocationPicker = dynamic(() => import('@/components/location-picker').then
   ),
 });
 
+/**
+ * Canonical canton -> parroquias catalog for Morona Santiago.
+ * Source: es.wikipedia.org canton pages, fetched 2026-10-07.
+ *
+ * Keep in sync with backend/src/locations/morona-santiago.catalog.ts.
+ */
 const MORONA_SANTIAGO: Record<string, string[]> = {
   Morona: [
     'Macas',
     'Alshi',
+    'Cuchaentza',
     'General Proaño',
-    'Huambi',
-    'Proaño',
     'Río Blanco',
     'San Isidro',
     'Sevilla Don Bosco',
     'Sinaí',
     'Zuñac',
   ],
-  Gualaquiza: ['Gualaquiza', 'Amazonas', 'Bomboiza', 'Chiguinda', 'El Ideal', 'El Rosario', 'Nueva Tarqui'],
+  Gualaquiza: [
+    'Gualaquiza',
+    'Mercedes Molina',
+    'Amazonas',
+    'Bermejos',
+    'Bomboiza',
+    'Chigüinda',
+    'El Ideal',
+    'El Rosario',
+    'Nueva Tarqui',
+    'San Miguel de Cuyes',
+  ],
   Huamboya: ['Huamboya', 'Chiguaza'],
   'Limón Indanza': [
     'General Leonidas Plaza Gutiérrez',
@@ -51,19 +68,27 @@ const MORONA_SANTIAGO: Record<string, string[]> = {
   ],
   Logroño: ['Logroño', 'Nambija', 'Shimpis'],
   'Pablo Sexto': ['Pablo Sexto'],
-  Palora: ['Palora', 'Arapicos', 'Cumandá', 'Guiaza', 'Sangay'],
+  Palora: ['Palora', '16 de Agosto', 'Arapicos', 'Cumandá', 'Sangay'],
   'San Juan Bosco': [
     'San Juan Bosco',
-    'El Rosario',
     'Pan de Azúcar',
+    'San Carlos de Limón',
     'San Jacinto de Wakambeis',
     'Santiago de Pananza',
   ],
-  Santiago: ['Santiago de Méndez', 'Copal', 'Chupianza', 'Patuca', 'San Luis del Acho', 'Tayuza'],
+  Santiago: ['Méndez', 'Copal', 'Chupianza', 'Patuca', 'San Francisco de Chinimbimi', 'San Luis del Acho', 'Tayuza'],
   Sucúa: ['Sucúa', 'Asunción', 'Huambi', 'Santa Marianita de Jesús'],
   Taisha: ['Taisha', 'Huasaga', 'Macuma', 'Pumpuentsa', 'Tuutinentza'],
   Tiwintza: ['San José de Morona', 'Santiago'],
 };
+
+/** Maps stored names to catalog spellings; values outside the catalog are kept as stored. */
+function toCatalogNames(canton: string, parroquia: string): { canton: string; parroquia: string } {
+  const cantonKey = Object.keys(MORONA_SANTIAGO).find((key) => normalizeText(key) === normalizeText(canton));
+  if (!cantonKey) return { canton, parroquia };
+  const parroquiaKey = MORONA_SANTIAGO[cantonKey].find((name) => normalizeText(name) === normalizeText(parroquia));
+  return { canton: cantonKey, parroquia: parroquiaKey ?? parroquia };
+}
 
 interface AssetFormProps {
   assetId?: number;
@@ -124,6 +149,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
   const loadAsset = useCallback(async () => {
     try {
       const asset = await api.assets.getById(assetId!);
+      const geoNames = toCatalogNames(asset.geoLocation?.canton || '', asset.geoLocation?.parroquia || '');
       setFormData({
         code: asset.code || '',
         previousCode: asset.previousCode || '',
@@ -138,8 +164,8 @@ export function AssetForm({ assetId }: AssetFormProps) {
         currentValue: asset.currentValue || 0,
         note: asset.note || '',
         custodianId: asset.custodianId?.toString() || '',
-        canton: asset.geoLocation?.canton || '',
-        parroquia: asset.geoLocation?.parroquia || '',
+        canton: geoNames.canton,
+        parroquia: geoNames.parroquia,
         condition: asset.condition ?? AssetCondition.BUENO,
       });
       if (asset.geoLocation?.lat != null && asset.geoLocation?.lng != null) {
@@ -162,7 +188,10 @@ export function AssetForm({ assetId }: AssetFormProps) {
     const { canton, parroquia } = formData;
     if (!canton && !parroquia && !coordinates) return null;
 
-    const existing = locations.find((l) => l.canton === canton && l.parroquia === parroquia);
+    const existing = locations.find(
+      (l) =>
+        normalizeText(l.canton) === normalizeText(canton) && normalizeText(l.parroquia) === normalizeText(parroquia),
+    );
     if (existing) return existing.id;
 
     try {
