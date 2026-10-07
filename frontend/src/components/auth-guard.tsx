@@ -26,16 +26,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, router, isCurrentPathPublic, isAdminOnlyPath]);
 
+  if (isCurrentPathPublic) {
+    return <>{children}</>;
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
-  }
-
-  if (isCurrentPathPublic) {
-    return <>{children}</>;
   }
 
   if (!user) {

@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, ApiError } from './api';
 import { AssetCondition } from './types';
 
 describe('api list params', () => {
@@ -133,6 +133,25 @@ describe('api.public 401 handling on a public path', () => {
     expect(localStorage.getItem('token')).toBe('stale-token');
     localStorage.removeItem('token');
   });
+
+  // The landing page and /login are public too: an expired token there must not
+  // hard-redirect. AuthProvider clears the session itself on the ApiError.
+  it.each(['/', '/login'])('does not hard-redirect on a 401 from /auth/me while on %s', async (path) => {
+    window.history.pushState({}, '', path);
+    localStorage.setItem('token', 'expired-token');
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      json: async () => ({ message: 'Unauthorized' }),
+    }) as unknown as typeof fetch;
+
+    await expect(api.auth.me()).rejects.toThrow();
+
+    expect(window.location.pathname).toBe(path);
+    expect(localStorage.getItem('token')).toBe('expired-token');
+    localStorage.removeItem('token');
+  });
 });
 
 describe('api.movements', () => {
@@ -168,5 +187,35 @@ describe('api.movements', () => {
       assetIds: [1, 2, 3],
       toLocationId: 7,
     });
+  });
+});
+
+describe('api errors', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('throws an ApiError carrying the HTTP status for a non-ok response', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      statusText: 'Forbidden',
+      json: async () => ({ message: 'Prohibido' }),
+    }) as unknown as typeof fetch;
+
+    const error = await api.auth.me().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(403);
+    expect((error as ApiError).message).toBe('Prohibido');
+  });
+
+  it('throws a plain Error without status for a network failure', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch')) as unknown as typeof fetch;
+
+    const error = await api.auth.me().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error).not.toBeInstanceOf(ApiError);
   });
 });

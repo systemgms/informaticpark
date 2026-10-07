@@ -12,6 +12,7 @@ import {
   PublicAsset,
   PublicCustodian,
 } from './types';
+import { isPublicPath } from './public-path';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 const API_URL = `${BACKEND_URL}/api`;
@@ -122,6 +123,29 @@ export interface AssetListParams extends ListParams {
   condition?: AssetCondition;
 }
 
+/**
+ * Ends an expired session on a 401 from a private page. Public pages (the
+ * landing, /login and /public/*) stay put: AuthProvider clears the session
+ * itself when /auth/me answers with an ApiError, without a hard redirect.
+ */
+function redirectToLoginOnUnauthorized(status: number, url: string): void {
+  if (status !== 401 || typeof window === 'undefined') return;
+  if (url.includes('/auth/login') || isPublicPath(window.location.pathname)) return;
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = '/login';
+}
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   let token: string | null = null;
   if (typeof window !== 'undefined') {
@@ -162,18 +186,9 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    if (
-      response.status === 401 &&
-      typeof window !== 'undefined' &&
-      !url.includes('/auth/login') &&
-      !window.location.pathname.startsWith('/public')
-    ) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
+    redirectToLoginOnUnauthorized(response.status, url);
     const error = (await response.json().catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
-    throw new Error(error.message || `Error ${response.status}: ${response.statusText}`);
+    throw new ApiError(error.message || `Error ${response.status}: ${response.statusText}`, response.status);
   }
 
   return response.json();
@@ -214,18 +229,9 @@ async function fetcherMultipart<T>(endpoint: string, body: FormData, method = 'P
   }
 
   if (!response.ok) {
-    if (
-      response.status === 401 &&
-      typeof window !== 'undefined' &&
-      !url.includes('/auth/login') &&
-      !window.location.pathname.startsWith('/public')
-    ) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
+    redirectToLoginOnUnauthorized(response.status, url);
     const error = (await response.json().catch(() => ({ message: 'Ocurrió un error' }))) as { message?: string };
-    throw new Error(error.message || `Error ${response.status}`);
+    throw new ApiError(error.message || `Error ${response.status}`, response.status);
   }
   return response.json();
 }
