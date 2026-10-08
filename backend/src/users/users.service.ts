@@ -58,19 +58,36 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
 
-    return this.prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: hashedPassword,
-        role: data.role || Role.USER,
-        isActive: data.isActive ?? true,
-        ...(data.custodianId !== undefined
-          ? { custodianId: data.custodianId }
-          : {}),
-      },
-      select: USER_SELECT,
-    });
+    try {
+      return await this.prisma.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password: hashedPassword,
+          role: data.role || Role.USER,
+          isActive: data.isActive ?? true,
+          ...(data.custodianId !== undefined
+            ? { custodianId: data.custodianId }
+            : {}),
+        },
+        select: USER_SELECT,
+      });
+    } catch (error) {
+      this.rethrowDuplicateEmail(error);
+      throw error;
+    }
+  }
+
+  private rethrowDuplicateEmail(error: unknown): void {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002' &&
+      // Prisma reports the violated field in meta.target, or inside
+      // meta.driverAdapterError when the pg driver adapter is used.
+      JSON.stringify(error.meta ?? {}).includes('email')
+    ) {
+      throw new ConflictException('Ya existe un usuario con ese correo');
+    }
   }
 
   async updateUserAsAdmin(
@@ -121,11 +138,16 @@ export class UsersService {
       updateData.password = await bcrypt.hash(data.password, 12);
     }
 
-    return this.prisma.user.update({
-      where: { id },
-      data: updateData,
-      select: USER_SELECT,
-    });
+    try {
+      return await this.prisma.user.update({
+        where: { id },
+        data: updateData,
+        select: USER_SELECT,
+      });
+    } catch (error) {
+      this.rethrowDuplicateEmail(error);
+      throw error;
+    }
   }
 
   setActive(id: number, isActive: boolean) {
