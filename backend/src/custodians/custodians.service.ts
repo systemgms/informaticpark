@@ -180,7 +180,7 @@ export class CustodiansService {
             : {}),
         },
         include: {
-          assets: true,
+          assets: { where: { isDeleted: false } },
         },
       });
     } catch (error) {

@@ -193,6 +193,19 @@ describe('CustodiansService', () => {
       expect(result.fullName).toBe('María López');
     });
 
+    it('should return only non-deleted assets after an update', async () => {
+      prisma.custodian.findUnique.mockResolvedValue(mockCustodian);
+      prisma.custodian.update.mockResolvedValue(mockCustodian);
+
+      await service.update(1, { fullName: 'María López' });
+
+      expect(prisma.custodian.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: { assets: { where: { isDeleted: false } } },
+        }),
+      );
+    });
+
     it('should throw NotFoundException if custodian not found', async () => {
       prisma.custodian.findUnique.mockResolvedValue(null);
 
