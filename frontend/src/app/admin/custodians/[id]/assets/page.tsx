@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { TechnicalValue } from '@/components/technical-value';
 import { api } from '@/lib/api';
 import { Custodian, Asset } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -63,11 +64,15 @@ function AssetCard({ asset }: AssetCardProps) {
         </Link>
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
           <dt className="text-muted-foreground">Código</dt>
-          <dd className="min-w-0 break-words font-mono">{asset.code ?? EMPTY_FIELD}</dd>
+          <dd className="min-w-0 break-words">
+            <TechnicalValue value={asset.code} />
+          </dd>
           <dt className="text-muted-foreground">Marca y modelo</dt>
           <dd className="min-w-0 break-words">{[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}</dd>
           <dt className="text-muted-foreground">Serie</dt>
-          <dd className="min-w-0 break-words font-mono">{asset.serialNumber ?? EMPTY_FIELD}</dd>
+          <dd className="min-w-0 break-words">
+            <TechnicalValue value={asset.serialNumber} />
+          </dd>
           <dt className="text-muted-foreground">Ubicación</dt>
           <dd className="min-w-0 break-words">{asset.location ?? EMPTY_FIELD}</dd>
         </dl>
@@ -161,7 +166,9 @@ export default function CustodianAssetsPage() {
                 ) : (
                   assets.map((asset) => (
                     <TableRow key={asset.id} className="hover:bg-muted/50">
-                      <TableCell className="font-mono text-xs">{asset.code ?? EMPTY_FIELD}</TableCell>
+                      <TableCell className="text-xs">
+                        <TechnicalValue value={asset.code} />
+                      </TableCell>
                       <TableCell className="font-medium">
                         <Link href={`/admin/assets/${asset.id}`} className="hover:underline">
                           {asset.assetName}
@@ -169,7 +176,9 @@ export default function CustodianAssetsPage() {
                       </TableCell>
                       <TableCell>{asset.brand ?? EMPTY_FIELD}</TableCell>
                       <TableCell>{asset.model ?? EMPTY_FIELD}</TableCell>
-                      <TableCell className="font-mono text-xs">{asset.serialNumber ?? EMPTY_FIELD}</TableCell>
+                      <TableCell className="text-xs">
+                        <TechnicalValue value={asset.serialNumber} />
+                      </TableCell>
                       <TableCell>{asset.location ?? EMPTY_FIELD}</TableCell>
                     </TableRow>
                   ))

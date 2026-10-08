@@ -125,9 +125,9 @@ describe('CustodianAssetsPage', () => {
     const cells = Array.from(table.querySelectorAll('td'));
     const codeCell = cells.find((td) => td.textContent === 'EQ-001');
     const serialCell = cells.find((td) => td.textContent === 'SN2');
-    expect(codeCell?.className).toContain('font-mono');
-    expect(serialCell?.className).toContain('font-mono');
+    expect(codeCell?.querySelector('span')?.className).toContain('font-mono');
+    expect(serialCell?.querySelector('span')?.className).toContain('font-mono');
     const serialDd = Array.from(container.querySelectorAll('dd')).find((dd) => dd.textContent === 'SN2');
-    expect(serialDd?.className).toContain('font-mono');
+    expect(serialDd?.querySelector('span')?.className).toContain('font-mono');
   });
 });
