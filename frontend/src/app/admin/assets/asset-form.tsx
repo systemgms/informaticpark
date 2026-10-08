@@ -363,6 +363,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   <Input
                     id="code"
                     value={formData.code}
+                    className="font-mono"
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   />
                 </div>
@@ -387,6 +388,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   <Input
                     id="serialNumber"
                     value={formData.serialNumber}
+                    className="font-mono"
                     onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
                   />
                 </div>

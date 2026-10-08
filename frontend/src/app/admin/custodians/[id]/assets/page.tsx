@@ -47,7 +47,11 @@ function AssetsPageSkeleton() {
   );
 }
 
-function AssetCard({ asset }: { asset: Asset }) {
+interface AssetCardProps {
+  asset: Asset;
+}
+
+function AssetCard({ asset }: AssetCardProps) {
   return (
     <Card>
       <CardContent className="space-y-1 p-4">
@@ -63,7 +67,7 @@ function AssetCard({ asset }: { asset: Asset }) {
           <dt className="text-muted-foreground">Marca y modelo</dt>
           <dd className="min-w-0 break-words">{[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}</dd>
           <dt className="text-muted-foreground">Serie</dt>
-          <dd className="min-w-0 break-words">{asset.serialNumber ?? EMPTY_FIELD}</dd>
+          <dd className="min-w-0 break-words font-mono">{asset.serialNumber ?? EMPTY_FIELD}</dd>
           <dt className="text-muted-foreground">Ubicación</dt>
           <dd className="min-w-0 break-words">{asset.location ?? EMPTY_FIELD}</dd>
         </dl>
@@ -107,7 +111,7 @@ export default function CustodianAssetsPage() {
         {/* basis-48 lets the actions wrap below the title instead of squeezing it */}
         <div className="min-w-0 flex-1 basis-48">
           <h1 className="tracking-tight break-words text-2xl font-semibold md:text-3xl">{custodian.fullName}</h1>
-          <p className="break-words text-sm text-muted-foreground">{custodian.identifier}</p>
+          <p className="break-words font-mono text-sm text-muted-foreground">{custodian.identifier}</p>
           {custodian.unit && <p className="break-words text-sm text-muted-foreground">{custodian.unit}</p>}
         </div>
         <Button asChild variant="outline" size="sm" className="sm:ml-auto">
@@ -157,7 +161,7 @@ export default function CustodianAssetsPage() {
                 ) : (
                   assets.map((asset) => (
                     <TableRow key={asset.id} className="hover:bg-muted/50">
-                      <TableCell>{asset.code ?? EMPTY_FIELD}</TableCell>
+                      <TableCell className="font-mono text-xs">{asset.code ?? EMPTY_FIELD}</TableCell>
                       <TableCell className="font-medium">
                         <Link href={`/admin/assets/${asset.id}`} className="hover:underline">
                           {asset.assetName}
@@ -165,7 +169,7 @@ export default function CustodianAssetsPage() {
                       </TableCell>
                       <TableCell>{asset.brand ?? EMPTY_FIELD}</TableCell>
                       <TableCell>{asset.model ?? EMPTY_FIELD}</TableCell>
-                      <TableCell>{asset.serialNumber ?? EMPTY_FIELD}</TableCell>
+                      <TableCell className="font-mono text-xs">{asset.serialNumber ?? EMPTY_FIELD}</TableCell>
                       <TableCell>{asset.location ?? EMPTY_FIELD}</TableCell>
                     </TableRow>
                   ))

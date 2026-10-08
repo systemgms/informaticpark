@@ -16,7 +16,11 @@ export default function AdminError({ error, reset }: AdminErrorProps) {
       <p className="text-muted-foreground text-center max-w-md">
         Ocurrió un error inesperado. Por favor, intenta de nuevo.
       </p>
-      {error.digest && <p className="text-xs text-muted-foreground">Código de referencia: {error.digest}</p>}
+      {error.digest && (
+        <p className="text-xs text-muted-foreground">
+          Código de referencia: <span className="font-mono">{error.digest}</span>
+        </p>
+      )}
       <Button onClick={reset} variant="outline">
         Intentar de nuevo
       </Button>

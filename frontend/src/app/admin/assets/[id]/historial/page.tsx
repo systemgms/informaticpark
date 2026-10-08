@@ -269,7 +269,12 @@ export default function AssetMovementHistoryPage() {
             <h1 className="tracking-tight break-words text-3xl font-semibold">Historial de traspasos</h1>
             <p className="break-words text-muted-foreground">
               {asset.assetName}
-              {asset.code ? ` (${asset.code})` : ''}
+              {asset.code ? (
+                <>
+                  {' '}
+                  (<span className="font-mono text-sm">{asset.code}</span>)
+                </>
+              ) : null}
             </p>
           </div>
         </div>
