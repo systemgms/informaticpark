@@ -80,6 +80,7 @@ export class UsersService {
       email?: string;
       password?: string;
       role?: Role;
+      isActive?: boolean;
       custodianId?: number | null;
     },
   ) {
@@ -109,6 +110,7 @@ export class UsersService {
     if (data.name !== undefined) updateData.name = data.name;
     if (data.email !== undefined) updateData.email = data.email;
     if (data.role !== undefined) updateData.role = data.role;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if ('custodianId' in data) {
       updateData.custodian = data.custodianId
         ? { connect: { id: data.custodianId } }

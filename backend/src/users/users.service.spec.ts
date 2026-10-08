@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Role } from '@prisma/client';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { USER_SELECT } from '../common/utils/user.util';
@@ -168,6 +171,39 @@ describe('UsersService', () => {
       await service.updateUserAsAdmin(1, { password: 'NewPassword123!' });
 
       expect(prisma.user.update).toHaveBeenCalled();
+    });
+
+    it.each([true, false])('should persist isActive=%s', async (isActive) => {
+      prisma.user.update.mockResolvedValue({ ...mockUser, isActive });
+
+      await service.updateUserAsAdmin(1, { isActive });
+
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({ isActive }),
+        }),
+      );
+    });
+  });
+
+  describe('UpdateUserDto isActive', () => {
+    const toErrors = (payload: object) =>
+      validate(plainToInstance(UpdateUserDto, payload), {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
+
+    it('should accept a boolean isActive', async () => {
+      expect(await toErrors({ isActive: true })).toHaveLength(0);
+      expect(await toErrors({ isActive: false })).toHaveLength(0);
+    });
+
+    it('should reject a non-boolean isActive', async () => {
+      const errors = await toErrors({ isActive: 'yes' });
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0].property).toBe('isActive');
     });
   });
 
