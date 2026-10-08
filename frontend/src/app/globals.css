@@ -67,3 +67,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer base {
+  /* Government identity scope: descendants inherit these instead of the root brand values. */
+  .gov-theme {
+    --primary: 238 44% 27%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 238 44% 27%;
+    --accent: 238 44% 95%;
+    --accent-foreground: 238 44% 27%;
+    font-family: var(--font-gov), var(--font-sans), sans-serif;
+  }
+}
