@@ -7,6 +7,7 @@ import { AuthGuard } from '@/components/auth-guard';
 import { BrandProvider } from '@/components/brand-provider';
 import { ToastProvider } from '@/components/ui/toast';
 import { Navbar } from '@/components/navbar';
+import { MainContainer } from '@/components/main-container';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -49,10 +50,7 @@ export default function RootLayout({
             <AuthGuard>
               <ToastProvider>
                 <Navbar />
-                <main className="container mx-auto py-8 px-4">
-                  {/* Children rendered directly - error handling at higher level */}
-                  {children}
-                </main>
+                <MainContainer>{children}</MainContainer>
               </ToastProvider>
             </AuthGuard>
           </AuthProvider>
