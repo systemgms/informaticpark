@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Role } from '@prisma/client';
+import { ConflictException } from '@nestjs/common';
+import { Prisma, Role } from '@prisma/client';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { USER_SELECT } from '../common/utils/user.util';
@@ -18,6 +22,13 @@ describe('UsersService', () => {
       findUnique: jest.Mock;
     };
   };
+
+  const duplicateEmailError = () =>
+    new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: 'test',
+      meta: { target: ['email'] },
+    });
 
   const mockUser = {
     id: 1,
@@ -142,6 +153,21 @@ describe('UsersService', () => {
         }),
       );
     });
+
+    it('should throw ConflictException when the email already exists', async () => {
+      prisma.user.create.mockRejectedValue(duplicateEmailError());
+
+      const promise = service.createUserAsAdmin({
+        name: 'Dup',
+        email: 'test@example.com',
+        password: 'Password123!',
+      });
+
+      await expect(promise).rejects.toThrow(ConflictException);
+      await expect(promise).rejects.toThrow(
+        'Ya existe un usuario con ese correo',
+      );
+    });
   });
 
   describe('updateUserAsAdmin', () => {
@@ -168,6 +194,69 @@ describe('UsersService', () => {
       await service.updateUserAsAdmin(1, { password: 'NewPassword123!' });
 
       expect(prisma.user.update).toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException when the email belongs to another user', async () => {
+      prisma.user.update.mockRejectedValue(duplicateEmailError());
+
+      const promise = service.updateUserAsAdmin(1, {
+        email: 'other@example.com',
+      });
+
+      await expect(promise).rejects.toThrow(ConflictException);
+      await expect(promise).rejects.toThrow(
+        'Ya existe un usuario con ese correo',
+      );
+    });
+
+    it('should not conflict when the user keeps its own email', async () => {
+      prisma.user.update.mockResolvedValue(mockUser);
+
+      await expect(
+        service.updateUserAsAdmin(1, { email: 'test@example.com' }),
+      ).resolves.toEqual(mockUser);
+    });
+
+    it('should rethrow unrelated errors', async () => {
+      const error = new Error('db down');
+      prisma.user.update.mockRejectedValue(error);
+
+      await expect(service.updateUserAsAdmin(1, { name: 'X' })).rejects.toBe(
+        error,
+      );
+    });
+
+    it.each([true, false])('should persist isActive=%s', async (isActive) => {
+      prisma.user.update.mockResolvedValue({ ...mockUser, isActive });
+
+      await service.updateUserAsAdmin(1, { isActive });
+
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({ isActive }),
+        }),
+      );
+    });
+  });
+
+  describe('UpdateUserDto isActive', () => {
+    const toErrors = (payload: object) =>
+      validate(plainToInstance(UpdateUserDto, payload), {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
+
+    it('should accept a boolean isActive', async () => {
+      expect(await toErrors({ isActive: true })).toHaveLength(0);
+      expect(await toErrors({ isActive: false })).toHaveLength(0);
+    });
+
+    it('should reject a non-boolean isActive', async () => {
+      const errors = await toErrors({ isActive: 'yes' });
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0].property).toBe('isActive');
     });
   });
 

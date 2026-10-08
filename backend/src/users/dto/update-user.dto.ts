@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsEnum,
   IsInt,
+  IsBoolean,
   MinLength,
   MaxLength,
   Matches,
@@ -50,4 +51,9 @@ export class UpdateUserDto {
   @Type(() => Number)
   @IsInt()
   custodianId?: number | null;
+
+  @ApiPropertyOptional({ description: 'Indica si el usuario está activo' })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
