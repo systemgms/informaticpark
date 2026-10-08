@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { BackButton } from '@/components/back-button';
+import { GovHeader } from '@/components/gov-header';
 import { api } from '@/lib/api';
 import { PublicCustodian } from '@/lib/types';
 import { usePaginatedList } from '@/hooks/use-paginated-list';
@@ -27,17 +28,16 @@ export default function PublicCustodiansPage() {
   } = usePaginatedList<PublicCustodian>({ fetchPage: fetchCustodians });
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b px-4 py-4 sm:px-6">
-        <div className="flex items-center gap-3">
-          <BackButton href="/" variant="ghost" />
-          <div className="min-w-0">
-            <h1 className="tracking-tight text-xl font-semibold">Parque Informático</h1>
-            <p className="text-sm text-muted-foreground">Gobernación Provincial de Morona Santiago</p>
-            <p className="text-sm font-medium">Custodios registrados</p>
-          </div>
+    <div className="gov-theme min-h-screen bg-background">
+      <GovHeader />
+
+      <div className="container mx-auto flex items-center gap-3 px-4 pt-6">
+        <BackButton href="/" variant="ghost" />
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight">Parque Informático</h1>
+          <p className="text-sm font-medium text-muted-foreground">Custodios registrados</p>
         </div>
-      </header>
+      </div>
 
       <div className="container mx-auto space-y-6 px-4 py-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

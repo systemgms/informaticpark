@@ -66,6 +66,24 @@ describe('PublicCustodiansPage', () => {
     await waitFor(() => expect(getAllMock).toHaveBeenCalledWith({ page: 2, limit: 20, search: '' }));
   });
 
+  it('applies the gov-theme scope and renders the government header', () => {
+    const { container } = render(<PublicCustodiansPage />);
+    expect((container.firstElementChild as HTMLElement).classList.contains('gov-theme')).toBe(true);
+    expect(screen.getByAltText('Gobierno del Ecuador')).toBeDefined();
+  });
+
+  it('shows the institution line once, in the header', () => {
+    render(<PublicCustodiansPage />);
+    expect(screen.getAllByText(/Gobernación/)).toHaveLength(1);
+  });
+
+  it('keeps the title block with a back link to the landing page', () => {
+    render(<PublicCustodiansPage />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Parque Informático');
+    expect(screen.getByText('Custodios registrados')).toBeDefined();
+    expect(screen.getByRole('link', { name: 'Volver' }).getAttribute('href')).toBe('/');
+  });
+
   it('does not nest a main landmark (the root layout provides it)', async () => {
     const { container } = render(<PublicCustodiansPage />);
     await waitFor(() => expect(getAllMock).toHaveBeenCalled());
