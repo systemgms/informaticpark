@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter as FontSans, JetBrains_Mono as FontMono } from 'next/font/google';
+import { Inter as FontSans, JetBrains_Mono as FontMono, Open_Sans as FontGov } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import './globals.css';
 import { AuthProvider } from '@/components/auth-provider';
@@ -7,6 +7,7 @@ import { AuthGuard } from '@/components/auth-guard';
 import { BrandProvider } from '@/components/brand-provider';
 import { ToastProvider } from '@/components/ui/toast';
 import { Navbar } from '@/components/navbar';
+import { MainContainer } from '@/components/main-container';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -17,6 +18,11 @@ const fontMono = FontMono({
   subsets: ['latin'],
   weight: '400',
   variable: '--font-mono',
+});
+
+const fontGov = FontGov({
+  subsets: ['latin'],
+  variable: '--font-gov',
 });
 
 export const metadata: Metadata = {
@@ -31,16 +37,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={cn('min-h-screen bg-background font-sans antialiased', fontSans.variable, fontMono.variable)}>
+      <body
+        className={cn(
+          'min-h-screen bg-background font-sans antialiased',
+          fontSans.variable,
+          fontMono.variable,
+          fontGov.variable,
+        )}
+      >
         <BrandProvider>
           <AuthProvider>
             <AuthGuard>
               <ToastProvider>
                 <Navbar />
-                <main className="container mx-auto py-8 px-4">
-                  {/* Children rendered directly - error handling at higher level */}
-                  {children}
-                </main>
+                <MainContainer>{children}</MainContainer>
               </ToastProvider>
             </AuthGuard>
           </AuthProvider>

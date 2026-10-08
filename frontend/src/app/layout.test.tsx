@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import config from '../../tailwind.config';
 
 vi.mock('next/font/google', () => ({
   Inter: vi.fn(() => ({ variable: 'inter-var' })),
+  Open_Sans: vi.fn((options: { variable: string }) => ({ variable: `gov-var-${options.variable}` })),
   JetBrains_Mono: vi.fn((options: { variable: string; weight: string }) => ({
     variable: `mono-var-${options.variable}-${options.weight}`,
   })),
@@ -30,6 +33,51 @@ describe('RootLayout fonts', () => {
     const className = (body?.props as { className: string }).className;
     expect(className).toContain('inter-var');
     expect(className).toContain('mono-var---font-mono-400');
+  });
+
+  it('wires the Open Sans government font variable into the body className', () => {
+    const tree = RootLayout({ children: null }) as React.ReactElement;
+    const body = findBody(tree);
+    const className = (body?.props as { className: string }).className;
+    expect(className).toContain('gov-var---font-gov');
+  });
+});
+
+describe('gov-theme scoping', () => {
+  const css = readFileSync(join(__dirname, 'globals.css'), 'utf8');
+
+  function injectStyles() {
+    const style = document.createElement('style');
+    style.textContent = css.replace(/@tailwind[^;]*;/g, '').replace(/@layer base/g, '@media all');
+    document.head.appendChild(style);
+    return style;
+  }
+
+  it('overrides the inherited root --primary only for .gov-theme descendants', () => {
+    const style = injectStyles();
+    document.documentElement.style.setProperty('--primary', '1 2% 3%');
+    const theme = document.createElement('div');
+    theme.className = 'gov-theme';
+    const inner = document.createElement('span');
+    theme.appendChild(inner);
+    const outside = document.createElement('div');
+    document.body.appendChild(theme);
+    document.body.appendChild(outside);
+
+    try {
+      expect(getComputedStyle(outside).getPropertyValue('--primary').trim()).toBe('1 2% 3%');
+      expect(getComputedStyle(theme).getPropertyValue('--primary').trim()).toBe('238 44% 27%');
+      expect(getComputedStyle(inner).getPropertyValue('--primary').trim()).toBe('238 44% 27%');
+    } finally {
+      document.documentElement.style.removeProperty('--primary');
+      style.remove();
+      theme.remove();
+      outside.remove();
+    }
+  });
+
+  it('applies the Open Sans variable as the font family inside .gov-theme', () => {
+    expect(css).toMatch(/\.gov-theme\s*{[^}]*font-family:\s*var\(--font-gov\)/);
   });
 });
 

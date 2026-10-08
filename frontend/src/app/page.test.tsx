@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import LandingPage from './page';
 import { api } from '@/lib/api';
 
@@ -36,7 +36,7 @@ describe('LandingPage', () => {
 
   it('renders the institution name', () => {
     render(<LandingPage />);
-    expect(screen.getAllByText(/Gobernación Provincial de Morona Santiago/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Gobernación de la Provincia de Morona Santiago/).length).toBeGreaterThan(0);
   });
 
   it('shows "Iniciar sesión" linking to /login for an anonymous visitor', () => {
@@ -82,6 +82,44 @@ describe('LandingPage', () => {
     await waitFor(() => expect(api.public.assets.getAll).toHaveBeenCalled());
     expect(screen.queryByText(/42/)).toBeNull();
     expect(screen.queryByText(/8/)).toBeNull();
+  });
+
+  it('applies the gov-theme scope to the page wrapper', () => {
+    const { container } = render(<LandingPage />);
+    expect((container.firstElementChild as HTMLElement).classList.contains('gov-theme')).toBe(true);
+  });
+
+  it('renders the government header', () => {
+    render(<LandingPage />);
+    const header = screen.getAllByRole('banner')[0];
+    expect(within(header).getByText('Gobernación de la Provincia de Morona Santiago')).toBeDefined();
+    const logos = screen.getAllByAltText('Gobierno del Ecuador');
+    expect(logos[0].getAttribute('src')).toBe('/brand/gobierno-ecuador-white.svg');
+  });
+
+  it('shows the navy logo and institution name in the footer', () => {
+    const { container } = render(<LandingPage />);
+    const footer = container.querySelector('footer') as HTMLElement;
+    const logo = footer.querySelector('img') as HTMLImageElement;
+    expect(logo.getAttribute('src')).toBe('/brand/gobierno-ecuador-navy.svg');
+    expect(footer.textContent).toContain('Gobernación de la Provincia de Morona Santiago');
+  });
+
+  it('keeps the app name as the hero heading', () => {
+    brandMock.mockReturnValue({ brand: { appName: 'Inventario GPMS', logoUrl: null } });
+    render(<LandingPage />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Inventario GPMS');
+  });
+
+  it('shows the brand logo in the hero when one is set', () => {
+    brandMock.mockReturnValue({ brand: { appName: 'X', logoUrl: '/logo.png' } });
+    render(<LandingPage />);
+    expect(screen.getByAltText('Logotipo de la aplicación').getAttribute('src')).toBe('/logo.png');
+  });
+
+  it('contains no em dash', () => {
+    const { container } = render(<LandingPage />);
+    expect(container.textContent).not.toContain('\u2014');
   });
 
   it('does not nest a main landmark (the root layout provides it)', () => {
