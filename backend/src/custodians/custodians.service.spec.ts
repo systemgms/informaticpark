@@ -161,6 +161,20 @@ describe('CustodiansService', () => {
       expect(result).toEqual(mockCustodian);
     });
 
+    it('should include only assets that are not deleted', async () => {
+      prisma.custodian.findUnique.mockResolvedValue(mockCustodian);
+
+      await service.findOne(1);
+
+      expect(prisma.custodian.findUnique).toHaveBeenCalledWith({
+        where: { id: 1, isDeleted: false },
+        include: {
+          assets: { where: { isDeleted: false } },
+          geoLocation: true,
+        },
+      });
+    });
+
     it('should throw NotFoundException if custodian not found', async () => {
       prisma.custodian.findUnique.mockResolvedValue(null);
 

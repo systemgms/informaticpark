@@ -137,7 +137,7 @@ export class CustodiansService {
     const custodian = await this.prisma.custodian.findUnique({
       where: { id, isDeleted: false },
       include: {
-        assets: true,
+        assets: { where: { isDeleted: false } },
         geoLocation: true,
       },
     });
