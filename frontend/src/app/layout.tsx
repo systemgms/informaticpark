@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter as FontSans } from 'next/font/google';
+import { Inter as FontSans, JetBrains_Mono as FontMono } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import './globals.css';
 import { AuthProvider } from '@/components/auth-provider';
@@ -11,6 +11,12 @@ import { Navbar } from '@/components/navbar';
 const fontSans = FontSans({
   subsets: ['latin'],
   variable: '--font-sans',
+});
+
+const fontMono = FontMono({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-mono',
 });
 
 export const metadata: Metadata = {
@@ -25,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={cn('min-h-screen bg-background font-sans antialiased', fontSans.variable)}>
+      <body className={cn('min-h-screen bg-background font-sans antialiased', fontSans.variable, fontMono.variable)}>
         <BrandProvider>
           <AuthProvider>
             <AuthGuard>
