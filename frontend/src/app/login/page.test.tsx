@@ -32,4 +32,12 @@ describe('LoginPage', () => {
     const alert = await waitFor(() => screen.getByRole('alert'));
     expect(alert.textContent).toContain('Credenciales incorrectas');
   });
+
+  it('renders the page title semibold with tight tracking', () => {
+    render(<LoginPage />);
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading.className).toContain('font-semibold');
+    expect(heading.className).toContain('tracking-tight');
+    expect(heading.className).not.toContain('font-bold');
+  });
 });

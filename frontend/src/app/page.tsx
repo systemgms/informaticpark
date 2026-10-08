@@ -33,7 +33,7 @@ export default function LandingPage() {
         setCounts({ assets: assetsResponse.meta.total, custodians: custodiansResponse.meta.total });
       })
       .catch(() => {
-        // Los conteos son informativos: la página funciona igual sin ellos.
+        // Counts are informational; the page works without them.
       });
     return () => {
       isCancelled = true;
@@ -60,7 +60,7 @@ export default function LandingPage() {
 
       <div className="flex-1">
         <section className="mx-auto max-w-2xl space-y-4 px-4 py-10 text-center sm:py-16">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{appName}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{appName}</h1>
           <p className="text-lg font-medium text-muted-foreground">{INSTITUTION_NAME}</p>
           <p className="text-muted-foreground">
             Sistema de inventario de activos informáticos de la institución, abierto a consulta pública.
@@ -93,7 +93,7 @@ export default function LandingPage() {
 
         <section className="mx-auto grid max-w-xl grid-cols-1 gap-4 px-4 pb-12 sm:grid-cols-2 sm:pb-16">
           <Link href="/public/assets" className="group">
-            <Card className="h-full transition-all hover:border-primary/30 hover:shadow-md">
+            <Card className="h-full transition-all hover:border-primary/30 hover:shadow-float">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
                   <div className="shrink-0 rounded-xl bg-indigo-50 p-2.5 text-indigo-600">
@@ -111,7 +111,7 @@ export default function LandingPage() {
           </Link>
 
           <Link href="/public/custodians" className="group">
-            <Card className="h-full transition-all hover:border-primary/30 hover:shadow-md">
+            <Card className="h-full transition-all hover:border-primary/30 hover:shadow-float">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
                   <div className="shrink-0 rounded-xl bg-violet-50 p-2.5 text-violet-600">

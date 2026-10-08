@@ -3,10 +3,10 @@ import React from 'react';
 import config from '../../tailwind.config';
 
 vi.mock('next/font/google', () => ({
-  Inter: () => ({ variable: 'inter-var' }),
-  JetBrains_Mono: (options: { variable: string; weight: string }) => ({
+  Inter: vi.fn(() => ({ variable: 'inter-var' })),
+  JetBrains_Mono: vi.fn((options: { variable: string; weight: string }) => ({
     variable: `mono-var-${options.variable}-${options.weight}`,
-  }),
+  })),
 }));
 
 import RootLayout from './layout';

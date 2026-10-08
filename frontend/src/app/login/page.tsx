@@ -44,7 +44,7 @@ export default function LoginPage() {
               <LayoutDashboard className="w-8 h-8 text-primary" />
             )}
           </div>
-          <h1 className="text-2xl font-bold">{brand?.appName || 'Parque Informático'}</h1>
+          <h1 className="tracking-tight text-2xl font-semibold">{brand?.appName || 'Parque Informático'}</h1>
           <p className="text-sm text-muted-foreground">Gobernación Provincial de Morona Santiago</p>
         </div>
 

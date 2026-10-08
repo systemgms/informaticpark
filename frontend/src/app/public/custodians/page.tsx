@@ -32,7 +32,7 @@ export default function PublicCustodiansPage() {
         <div className="flex items-center gap-3">
           <BackButton href="/" variant="ghost" />
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold">Parque Informático</h1>
+            <h1 className="tracking-tight text-xl font-semibold">Parque Informático</h1>
             <p className="text-sm text-muted-foreground">Gobernación Provincial de Morona Santiago</p>
             <p className="text-sm font-medium">Custodios registrados</p>
           </div>

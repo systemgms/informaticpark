@@ -266,7 +266,7 @@ export default function AssetMovementHistoryPage() {
         <div className="flex items-center gap-4">
           <BackButton href={`/admin/assets/${assetId}`} />
           <div className="min-w-0">
-            <h1 className="break-words text-3xl font-bold">Historial de traspasos</h1>
+            <h1 className="tracking-tight break-words text-3xl font-semibold">Historial de traspasos</h1>
             <p className="break-words text-muted-foreground">
               {asset.assetName}
               {asset.code ? ` (${asset.code})` : ''}

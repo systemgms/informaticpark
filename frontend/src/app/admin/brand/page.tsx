@@ -101,7 +101,7 @@ export default function BrandAdminPage() {
       <div className="flex items-center gap-4">
         <Palette className="w-8 h-8 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Personalizar marca</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Personalizar marca</h1>
           <p className="text-muted-foreground text-sm mt-1">Cambia colores, nombre, logo y favicon del sistema.</p>
         </div>
       </div>
@@ -278,7 +278,7 @@ export default function BrandAdminPage() {
                   <ImageIcon className="w-10 h-10 text-muted-foreground" />
                 )}
                 <div>
-                  <h2 className="text-xl font-bold" style={{ color: formData.primaryColor }}>
+                  <h2 className="tracking-tight text-xl font-semibold" style={{ color: formData.primaryColor }}>
                     {formData.appName || 'Parque Informático'}
                   </h2>
                   <p className="text-sm text-muted-foreground">Panel administrativo</p>

@@ -102,7 +102,7 @@ export function Navbar() {
           <Link
             href="/dashboard"
             aria-label={brand?.appName || 'Parque Informático'}
-            className="flex min-h-11 min-w-11 items-center gap-2 font-bold text-base shrink-0"
+            className="flex min-h-11 min-w-11 items-center gap-2 font-semibold text-base shrink-0"
           >
             {brand?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo URL is admin-uploaded/dynamic; next/image optimization needs extra loader config on the Cloudflare Workers deploy target

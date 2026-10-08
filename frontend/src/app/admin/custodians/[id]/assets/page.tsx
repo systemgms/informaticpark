@@ -106,7 +106,7 @@ export default function CustodianAssetsPage() {
         <BackButton href="/admin/custodians" variant="ghost" />
         {/* basis-48 lets the actions wrap below the title instead of squeezing it */}
         <div className="min-w-0 flex-1 basis-48">
-          <h1 className="break-words text-2xl font-bold md:text-3xl">{custodian.fullName}</h1>
+          <h1 className="tracking-tight break-words text-2xl font-semibold md:text-3xl">{custodian.fullName}</h1>
           <p className="break-words text-sm text-muted-foreground">{custodian.identifier}</p>
           {custodian.unit && <p className="break-words text-sm text-muted-foreground">{custodian.unit}</p>}
         </div>

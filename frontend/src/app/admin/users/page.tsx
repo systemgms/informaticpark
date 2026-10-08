@@ -45,7 +45,7 @@ export default function UsersAdminPage() {
     <div className="space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Usuarios</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Usuarios</h1>
           <p className="mt-1 text-sm text-muted-foreground">Gestiona los accesos y roles del sistema.</p>
         </div>
         <Button asChild className="w-full cursor-pointer sm:w-auto">
