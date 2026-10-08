@@ -84,6 +84,43 @@ describe('LandingPage', () => {
     expect(screen.queryByText(/8/)).toBeNull();
   });
 
+  it('applies the gov-theme scope to the page wrapper', () => {
+    const { container } = render(<LandingPage />);
+    expect((container.firstElementChild as HTMLElement).classList.contains('gov-theme')).toBe(true);
+  });
+
+  it('renders the government header', () => {
+    render(<LandingPage />);
+    expect(screen.getByText('Gobernación de la Provincia de Morona Santiago')).toBeDefined();
+    const logos = screen.getAllByAltText('Gobierno del Ecuador');
+    expect(logos[0].getAttribute('src')).toBe('/brand/gobierno-ecuador-white.svg');
+  });
+
+  it('shows the navy logo and institution name in the footer', () => {
+    const { container } = render(<LandingPage />);
+    const footer = container.querySelector('footer') as HTMLElement;
+    const logo = footer.querySelector('img') as HTMLImageElement;
+    expect(logo.getAttribute('src')).toBe('/brand/gobierno-ecuador-navy.svg');
+    expect(footer.textContent).toContain('Gobernación Provincial de Morona Santiago');
+  });
+
+  it('keeps the app name as the hero heading', () => {
+    brandMock.mockReturnValue({ brand: { appName: 'Inventario GPMS', logoUrl: null } });
+    render(<LandingPage />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Inventario GPMS');
+  });
+
+  it('shows the brand logo in the hero when one is set', () => {
+    brandMock.mockReturnValue({ brand: { appName: 'X', logoUrl: '/logo.png' } });
+    render(<LandingPage />);
+    expect(screen.getByAltText('Logotipo de la aplicación').getAttribute('src')).toBe('/logo.png');
+  });
+
+  it('contains no em dash', () => {
+    const { container } = render(<LandingPage />);
+    expect(container.textContent).not.toContain('\u2014');
+  });
+
   it('does not nest a main landmark (the root layout provides it)', () => {
     const { container } = render(<LandingPage />);
     expect(container.querySelector('main')).toBeNull();
