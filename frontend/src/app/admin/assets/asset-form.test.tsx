@@ -160,3 +160,18 @@ describe('AssetForm canonical location matching', () => {
     expect(updateMock.mock.calls[0][1]).toEqual(expect.objectContaining({ locationId: 42 }));
   });
 });
+
+describe('AssetForm identifier inputs', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    custodiansGetAllMock.mockResolvedValue({ data: [], meta: { total: 0, page: 1, limit: 100, totalPages: 0 } });
+    locationsGetAllUnpaginatedMock.mockResolvedValue([]);
+  });
+
+  it('shows the asset code and serial number in monospace', async () => {
+    const { getByLabelText } = render(<AssetForm />);
+    await waitFor(() => expect(getByLabelText(/código de activo/i)).toBeDefined());
+    expect(getByLabelText(/código de activo/i).className).toContain('font-mono');
+    expect(getByLabelText(/número de serie/i).className).toContain('font-mono');
+  });
+});

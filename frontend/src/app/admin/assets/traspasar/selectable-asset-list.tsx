@@ -1,5 +1,6 @@
 'use client';
 
+import { TechnicalValue } from '@/components/technical-value';
 import { Asset } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
@@ -77,7 +78,9 @@ export function SelectableAssetList({
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{asset.assetName}</p>
-                    <p className="font-mono text-xs text-muted-foreground">{asset.code || EMPTY_FIELD}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <TechnicalValue value={asset.code} />
+                    </p>
                   </div>
                   <SelectionIndicator isSelected={isSelected} />
                 </div>
@@ -154,8 +157,8 @@ export function SelectableAssetList({
                       <TableCell>
                         <SelectionIndicator isSelected={isSelected} />
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {asset.code || EMPTY_FIELD}
+                      <TableCell className="text-xs text-muted-foreground">
+                        <TechnicalValue value={asset.code} />
                       </TableCell>
                       <TableCell className="font-medium">{asset.assetName}</TableCell>
                       <TableCell className="text-muted-foreground">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { TechnicalValue } from '@/components/technical-value';
 import { api } from '@/lib/api';
 import { Custodian, Asset } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -47,7 +48,11 @@ function AssetsPageSkeleton() {
   );
 }
 
-function AssetCard({ asset }: { asset: Asset }) {
+interface AssetCardProps {
+  asset: Asset;
+}
+
+function AssetCard({ asset }: AssetCardProps) {
   return (
     <Card>
       <CardContent className="space-y-1 p-4">
@@ -59,11 +64,15 @@ function AssetCard({ asset }: { asset: Asset }) {
         </Link>
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
           <dt className="text-muted-foreground">Código</dt>
-          <dd className="min-w-0 break-words font-mono">{asset.code ?? EMPTY_FIELD}</dd>
+          <dd className="min-w-0 break-words">
+            <TechnicalValue value={asset.code} />
+          </dd>
           <dt className="text-muted-foreground">Marca y modelo</dt>
           <dd className="min-w-0 break-words">{[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}</dd>
           <dt className="text-muted-foreground">Serie</dt>
-          <dd className="min-w-0 break-words">{asset.serialNumber ?? EMPTY_FIELD}</dd>
+          <dd className="min-w-0 break-words">
+            <TechnicalValue value={asset.serialNumber} />
+          </dd>
           <dt className="text-muted-foreground">Ubicación</dt>
           <dd className="min-w-0 break-words">{asset.location ?? EMPTY_FIELD}</dd>
         </dl>
@@ -106,8 +115,8 @@ export default function CustodianAssetsPage() {
         <BackButton href="/admin/custodians" variant="ghost" />
         {/* basis-48 lets the actions wrap below the title instead of squeezing it */}
         <div className="min-w-0 flex-1 basis-48">
-          <h1 className="break-words text-2xl font-bold md:text-3xl">{custodian.fullName}</h1>
-          <p className="break-words text-sm text-muted-foreground">{custodian.identifier}</p>
+          <h1 className="tracking-tight break-words text-2xl font-semibold md:text-3xl">{custodian.fullName}</h1>
+          <p className="break-words font-mono text-sm text-muted-foreground">{custodian.identifier}</p>
           {custodian.unit && <p className="break-words text-sm text-muted-foreground">{custodian.unit}</p>}
         </div>
         <Button asChild variant="outline" size="sm" className="sm:ml-auto">
@@ -157,7 +166,9 @@ export default function CustodianAssetsPage() {
                 ) : (
                   assets.map((asset) => (
                     <TableRow key={asset.id} className="hover:bg-muted/50">
-                      <TableCell>{asset.code ?? EMPTY_FIELD}</TableCell>
+                      <TableCell className="text-xs">
+                        <TechnicalValue value={asset.code} />
+                      </TableCell>
                       <TableCell className="font-medium">
                         <Link href={`/admin/assets/${asset.id}`} className="hover:underline">
                           {asset.assetName}
@@ -165,7 +176,9 @@ export default function CustodianAssetsPage() {
                       </TableCell>
                       <TableCell>{asset.brand ?? EMPTY_FIELD}</TableCell>
                       <TableCell>{asset.model ?? EMPTY_FIELD}</TableCell>
-                      <TableCell>{asset.serialNumber ?? EMPTY_FIELD}</TableCell>
+                      <TableCell className="text-xs">
+                        <TechnicalValue value={asset.serialNumber} />
+                      </TableCell>
                       <TableCell>{asset.location ?? EMPTY_FIELD}</TableCell>
                     </TableRow>
                   ))

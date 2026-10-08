@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { TechnicalValue } from '@/components/technical-value';
 import { Asset, AssetCondition, ASSET_CONDITION_LABELS } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -107,9 +108,13 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{asset.assetName}</p>
-                    <p className="font-mono text-xs text-muted-foreground">{asset.code || EMPTY_FIELD}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <TechnicalValue value={asset.code} />
+                    </p>
                   </div>
-                  <p className="font-mono text-sm">{formatValue(asset.currentValue)}</p>
+                  <p className="text-sm">
+                    <TechnicalValue value={asset.currentValue != null ? formatValue(asset.currentValue) : null} />
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
@@ -182,8 +187,8 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
               ) : (
                 assets.map((asset) => (
                   <TableRow key={asset.id} className="transition-colors hover:bg-muted/40">
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {asset.code || EMPTY_FIELD}
+                    <TableCell className="text-xs text-muted-foreground">
+                      <TechnicalValue value={asset.code} />
                     </TableCell>
                     <TableCell className="font-medium">{asset.assetName}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -193,7 +198,9 @@ export function AssetList({ assets, isLoading, error, isAdmin, hasSearch, onDele
                     <TableCell>
                       <ConditionBadge condition={asset.condition} />
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{formatValue(asset.currentValue)}</TableCell>
+                    <TableCell className="text-sm">
+                      <TechnicalValue value={asset.currentValue != null ? formatValue(asset.currentValue) : null} />
+                    </TableCell>
                     <TableCell className="text-right">
                       <AssetActions asset={asset} isAdmin={isAdmin} onDeleteClick={onDeleteClick} />
                     </TableCell>

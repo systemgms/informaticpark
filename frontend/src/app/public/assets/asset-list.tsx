@@ -1,5 +1,6 @@
 'use client';
 
+import { TechnicalValue } from '@/components/technical-value';
 import { PublicAsset } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
@@ -57,7 +58,9 @@ export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicA
               <CardContent className="space-y-2 p-4">
                 <div>
                   <p className="font-medium">{asset.assetName}</p>
-                  <p className="font-mono text-xs text-muted-foreground">{asset.code || EMPTY_FIELD}</p>
+                  <p className="text-xs text-muted-foreground">
+                    <TechnicalValue value={asset.code} />
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {[asset.brand, asset.model].filter(Boolean).join(' ') || EMPTY_FIELD}
@@ -114,8 +117,8 @@ export function PublicAssetList({ assets, isLoading, error, hasSearch }: PublicA
               ) : (
                 assets.map((asset) => (
                   <TableRow key={asset.id} className="transition-colors hover:bg-muted/40">
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {asset.code || EMPTY_FIELD}
+                    <TableCell className="text-xs text-muted-foreground">
+                      <TechnicalValue value={asset.code} />
                     </TableCell>
                     <TableCell className="font-medium">{asset.assetName}</TableCell>
                     <TableCell className="text-muted-foreground">

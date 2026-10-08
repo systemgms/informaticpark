@@ -19,7 +19,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
         <main className="flex min-h-screen items-center justify-center p-4">
           <div role="alert" className="w-full max-w-md rounded-lg bg-card p-8 text-center shadow-xl">
             <AlertTriangle className="mx-auto mb-4 h-10 w-10 text-destructive" aria-hidden="true" />
-            <h1 className="mb-2 text-2xl font-bold">Ocurrió un error inesperado</h1>
+            <h1 className="tracking-tight mb-2 text-2xl font-semibold">Ocurrió un error inesperado</h1>
             <p className="mb-6 text-muted-foreground">
               No pudimos cargar la aplicación. Intenta de nuevo en unos segundos.
             </p>

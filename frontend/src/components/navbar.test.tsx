@@ -37,6 +37,22 @@ describe('Navbar mobile menu', () => {
     expect(screen.queryByRole('navigation', { name: 'Menú principal' })).toBeNull();
   });
 
+  // md starts at 768px, which includes touch tablets, so the desktop links
+  // also need the 44px touch target.
+  it('gives the desktop navigation links a 44px touch target', () => {
+    setUser('ADMIN');
+    render(<Navbar />);
+
+    // The mobile menu is closed, so every match is a desktop link.
+    const desktopLinks = screen.getAllByRole('link', {
+      name: /Usuarios|Custodios|Activos|Traspasar|Ubicaciones|Marca/,
+    });
+    expect(desktopLinks.length).toBe(6);
+    for (const link of desktopLinks) {
+      expect(link.className).toContain('min-h-11');
+    }
+  });
+
   it('opens the panel with the admin links and flips the toggle state', () => {
     setUser('ADMIN');
     render(<Navbar />);

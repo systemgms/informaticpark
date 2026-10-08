@@ -3,15 +3,24 @@
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
-export default function AdminError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+interface AdminErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+
+export default function AdminError({ error, reset }: AdminErrorProps) {
   return (
     <div role="alert" className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-6">
       <AlertCircle className="w-12 h-12 text-destructive" />
-      <h2 className="text-xl font-semibold">Algo salió mal</h2>
+      <h2 className="tracking-tight text-xl font-semibold">Algo salió mal</h2>
       <p className="text-muted-foreground text-center max-w-md">
         Ocurrió un error inesperado. Por favor, intenta de nuevo.
       </p>
-      {error.digest && <p className="text-xs text-muted-foreground">Código de referencia: {error.digest}</p>}
+      {error.digest && (
+        <p className="text-xs text-muted-foreground">
+          Código de referencia: <span className="font-mono">{error.digest}</span>
+        </p>
+      )}
       <Button onClick={reset} variant="outline">
         Intentar de nuevo
       </Button>

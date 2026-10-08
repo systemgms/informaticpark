@@ -114,4 +114,20 @@ describe('CustodianAssetsPage', () => {
       expect(screen.getAllByText('Este custodio no tiene equipos asignados.').length).toBeGreaterThan(0),
     );
   });
+
+  it('renders technical identifiers in monospace', async () => {
+    getByIdMock.mockResolvedValue(custodian);
+    const { container } = render(<CustodianAssetsPage />);
+
+    await screen.findByRole('heading', { name: 'Ana Torres' });
+    expect(screen.getByText('SIN-CEDULA-1234567890').className).toContain('font-mono');
+    const table = container.querySelector('table')!;
+    const cells = Array.from(table.querySelectorAll('td'));
+    const codeCell = cells.find((td) => td.textContent === 'EQ-001');
+    const serialCell = cells.find((td) => td.textContent === 'SN2');
+    expect(codeCell?.querySelector('span')?.className).toContain('font-mono');
+    expect(serialCell?.querySelector('span')?.className).toContain('font-mono');
+    const serialDd = Array.from(container.querySelectorAll('dd')).find((dd) => dd.textContent === 'SN2');
+    expect(serialDd?.querySelector('span')?.className).toContain('font-mono');
+  });
 });

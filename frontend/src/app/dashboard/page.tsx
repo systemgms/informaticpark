@@ -49,7 +49,9 @@ interface StatCardProps {
 
 function StatCard({ href, icon: Icon, color, label, value, sub, isLoading }: StatCardProps) {
   const content = (
-    <Card className={href ? 'hover:shadow-md hover:border-primary/30 transition-all cursor-pointer h-full' : 'h-full'}>
+    <Card
+      className={href ? 'hover:shadow-float hover:border-primary/30 transition-all cursor-pointer h-full' : 'h-full'}
+    >
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -57,7 +59,7 @@ function StatCard({ href, icon: Icon, color, label, value, sub, isLoading }: Sta
             {isLoading ? (
               <Skeleton className="h-9 w-24 mt-1" />
             ) : (
-              <p className="text-4xl font-bold mt-1 tabular-nums">{value}</p>
+              <p className="text-4xl font-semibold mt-1 tabular-nums">{value}</p>
             )}
             {sub && <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{sub}</p>}
           </div>
@@ -185,7 +187,7 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">{isAdmin ? 'Panel de administración' : 'Mis activos'}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{isAdmin ? 'Panel de administración' : 'Mis activos'}</h1>
         <p className="text-muted-foreground mt-1">Gobernación Provincial de Morona Santiago</p>
       </div>
 

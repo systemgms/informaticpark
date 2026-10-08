@@ -270,7 +270,9 @@ export function AssetForm({ assetId }: AssetFormProps) {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex flex-wrap items-center gap-4">
         <BackButton href="/admin/assets" />
-        <h1 className="min-w-0 break-words text-3xl font-bold">{isEdit ? 'Editar activo' : 'Nuevo activo'}</h1>
+        <h1 className="tracking-tight min-w-0 break-words text-3xl font-semibold">
+          {isEdit ? 'Editar activo' : 'Nuevo activo'}
+        </h1>
         {isEdit && (
           <Button asChild variant="outline" className="ml-auto">
             <Link href={`/admin/assets/${assetId}/historial`}>
@@ -361,6 +363,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   <Input
                     id="code"
                     value={formData.code}
+                    className="font-mono"
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   />
                 </div>
@@ -385,6 +388,7 @@ export function AssetForm({ assetId }: AssetFormProps) {
                   <Input
                     id="serialNumber"
                     value={formData.serialNumber}
+                    className="font-mono"
                     onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
                   />
                 </div>

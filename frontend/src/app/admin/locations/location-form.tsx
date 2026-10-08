@@ -109,7 +109,9 @@ export function LocationForm({ locationId }: LocationFormProps) {
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex flex-wrap items-center gap-4">
         <BackButton href="/admin/locations" />
-        <h1 className="min-w-0 break-words text-3xl font-bold">{isEdit ? 'Editar ubicación' : 'Nueva ubicación'}</h1>
+        <h1 className="tracking-tight min-w-0 break-words text-3xl font-semibold">
+          {isEdit ? 'Editar ubicación' : 'Nueva ubicación'}
+        </h1>
       </div>
 
       <Card>

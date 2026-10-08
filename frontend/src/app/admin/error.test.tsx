@@ -21,4 +21,10 @@ describe('AdminError', () => {
     const { container } = render(<AdminError error={new Error('x')} reset={() => {}} />);
     expect(container.textContent).not.toContain('Código de referencia');
   });
+
+  it('renders the digest in a monospace element', () => {
+    render(<AdminError error={error} reset={() => {}} />);
+    const digest = screen.getByText('dig123');
+    expect(digest.className).toContain('font-mono');
+  });
 });

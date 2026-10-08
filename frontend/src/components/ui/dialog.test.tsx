@@ -15,4 +15,18 @@ describe('DialogContent', () => {
     expect(screen.getByText('Cerrar')).toBeDefined();
     expect(screen.queryByText('Close')).toBeNull();
   });
+
+  it('uses the modal elevation shadow instead of shadow-lg', () => {
+    render(
+      <Dialog open>
+        <DialogContent>
+          <DialogTitle>Titulo</DialogTitle>
+          <DialogDescription>Descripcion</DialogDescription>
+        </DialogContent>
+      </Dialog>,
+    );
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.className).toContain('shadow-modal');
+    expect(dialog.className).not.toContain('shadow-lg');
+  });
 });

@@ -121,7 +121,7 @@ export default function BulkTransferPage() {
       <div className="flex flex-wrap items-center gap-4">
         <BackButton href="/admin/assets" />
         <div className="min-w-0">
-          <h1 className="break-words text-3xl font-bold tracking-tight">Traspaso masivo</h1>
+          <h1 className="break-words text-3xl font-semibold tracking-tight">Traspaso masivo</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Selecciona uno o más activos para traspasar simultáneamente.
           </p>
