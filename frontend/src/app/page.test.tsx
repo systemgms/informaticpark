@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import LandingPage from './page';
 import { api } from '@/lib/api';
 
@@ -36,7 +36,7 @@ describe('LandingPage', () => {
 
   it('renders the institution name', () => {
     render(<LandingPage />);
-    expect(screen.getAllByText(/Gobernación Provincial de Morona Santiago/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Gobernación de la Provincia de Morona Santiago/).length).toBeGreaterThan(0);
   });
 
   it('shows "Iniciar sesión" linking to /login for an anonymous visitor', () => {
@@ -91,7 +91,8 @@ describe('LandingPage', () => {
 
   it('renders the government header', () => {
     render(<LandingPage />);
-    expect(screen.getByText('Gobernación de la Provincia de Morona Santiago')).toBeDefined();
+    const header = screen.getAllByRole('banner')[0];
+    expect(within(header).getByText('Gobernación de la Provincia de Morona Santiago')).toBeDefined();
     const logos = screen.getAllByAltText('Gobierno del Ecuador');
     expect(logos[0].getAttribute('src')).toBe('/brand/gobierno-ecuador-white.svg');
   });
@@ -101,7 +102,7 @@ describe('LandingPage', () => {
     const footer = container.querySelector('footer') as HTMLElement;
     const logo = footer.querySelector('img') as HTMLImageElement;
     expect(logo.getAttribute('src')).toBe('/brand/gobierno-ecuador-navy.svg');
-    expect(footer.textContent).toContain('Gobernación Provincial de Morona Santiago');
+    expect(footer.textContent).toContain('Gobernación de la Provincia de Morona Santiago');
   });
 
   it('keeps the app name as the hero heading', () => {

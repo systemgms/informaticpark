@@ -16,7 +16,7 @@ interface InventoryCounts {
   custodians: number | null;
 }
 
-const INSTITUTION_NAME = 'Gobernación Provincial de Morona Santiago';
+const INSTITUTION_NAME = 'Gobernación de la Provincia de Morona Santiago';
 
 function formatRecordCount(count: number): string {
   return `${count} ${count === 1 ? 'registrado' : 'registrados'}`;
