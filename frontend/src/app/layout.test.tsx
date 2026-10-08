@@ -61,7 +61,8 @@ describe('gov-theme scoping', () => {
     const inner = document.createElement('span');
     theme.appendChild(inner);
     const outside = document.createElement('div');
-    document.body.append(theme, outside);
+    document.body.appendChild(theme);
+    document.body.appendChild(outside);
 
     try {
       expect(getComputedStyle(outside).getPropertyValue('--primary').trim()).toBe('1 2% 3%');
