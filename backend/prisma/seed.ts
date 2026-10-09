@@ -8,14 +8,17 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   // ADMIN inicial
   const adminEmail = 'admin@example.com';
-  const adminPasswordPlain = 'Admin123!';
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!adminPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD is required to seed the admin user.');
+  }
 
   const existingAdmin = await prisma.user.findFirst({
     where: { email: adminEmail },
   });
 
   if (!existingAdmin) {
-    const hashed = await bcrypt.hash(adminPasswordPlain, 10);
+    const hashed = await bcrypt.hash(adminPassword, 10);
 
     await prisma.user.create({
       data: {
@@ -84,4 +87,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-
