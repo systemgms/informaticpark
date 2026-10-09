@@ -1,36 +1,10 @@
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import * as bcrypt from 'bcrypt';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // ADMIN inicial
-  const adminEmail = 'admin@example.com';
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
-  if (!adminPassword) {
-    throw new Error('SEED_ADMIN_PASSWORD is required to seed the admin user.');
-  }
-
-  const existingAdmin = await prisma.user.findFirst({
-    where: { email: adminEmail },
-  });
-
-  if (!existingAdmin) {
-    const hashed = await bcrypt.hash(adminPassword, 10);
-
-    await prisma.user.create({
-      data: {
-        name: 'Administrador',
-        email: adminEmail,
-        password: hashed,
-        role: Role.ADMIN,
-        isActive: true,
-      },
-    });
-  }
-
   // Custodio de ejemplo
   const custodian = await prisma.custodian.upsert({
     where: { identifier: 'CUST-001' },
@@ -55,28 +29,21 @@ async function main() {
   });
 
   // Activo de ejemplo
-  const adminUser = await prisma.user.findFirst({
-    where: { email: adminEmail },
+  await prisma.asset.upsert({
+    where: { code: 'ACT-0001' },
+    update: {},
+    create: {
+      code: 'ACT-0001',
+      assetName: 'Computadora portátil',
+      brand: 'Dell',
+      model: 'XPS 13',
+      serialNumber: 'SN-123456',
+      location: 'Oficina Central',
+      physicalLocation: 'Piso 1',
+      note: 'Activo de ejemplo creado por seed',
+      custodianId: custodian.id,
+    },
   });
-
-  if (adminUser) {
-    await prisma.asset.upsert({
-      where: { code: 'ACT-0001' },
-      update: {},
-      create: {
-        code: 'ACT-0001',
-        assetName: 'Computadora portátil',
-        brand: 'Dell',
-        model: 'XPS 13',
-        serialNumber: 'SN-123456',
-        location: 'Oficina Central',
-        physicalLocation: 'Piso 1',
-        note: 'Activo de ejemplo creado por seed',
-        custodianId: custodian.id,
-        createdByUserId: adminUser.id,
-      },
-    });
-  }
 }
 
 main()
