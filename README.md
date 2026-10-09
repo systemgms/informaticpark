@@ -98,7 +98,7 @@ cd ../frontend && bun install
 bun run prisma:migrate
 ```
 
-Si desea crear el usuario administrador inicial, ejecutar:
+Si desea cargar datos de ejemplo (custodio, activo y marca por defecto), ejecutar:
 
 ```shell
 bun run prisma:seed
