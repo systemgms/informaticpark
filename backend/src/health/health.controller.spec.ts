@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { IS_PUBLIC_KEY } from '../auth/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 import { HealthController } from './health.controller';
+import { HealthService } from './health.service';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -14,7 +15,7 @@ describe('HealthController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
-      providers: [{ provide: PrismaService, useValue: prisma }],
+      providers: [HealthService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     controller = module.get<HealthController>(HealthController);

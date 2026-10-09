@@ -263,7 +263,7 @@ export class MovementsService {
     });
   }
 
-  async findPendingForCustodian(custodianId: number) {
+  findPendingForCustodian(custodianId: number) {
     return this.prisma.assetMovement.findMany({
       where: { toCustodianId: custodianId, status: 'PENDIENTE' },
       include: {
