@@ -190,7 +190,7 @@ export class UsersService {
     });
   }
 
-  async count(includeInactive = false, search?: string) {
+  count(includeInactive = false, search?: string) {
     return this.prisma.user.count({
       where: this.buildWhere(includeInactive, search),
     });

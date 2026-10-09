@@ -19,7 +19,7 @@ export class LocationsService {
     );
   }
 
-  async create(dto: CreateLocationDto) {
+  create(dto: CreateLocationDto) {
     return this.prisma.location.create({ data: dto });
   }
 
@@ -58,7 +58,7 @@ export class LocationsService {
     };
   }
 
-  async findAllWithoutPagination() {
+  findAllWithoutPagination() {
     const limit = Math.min(this.maxExportLimit, 1000); // Cap at 1000 max to prevent abuse
     return this.prisma.location.findMany({
       where: { isDeleted: false },

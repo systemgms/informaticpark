@@ -7,6 +7,5 @@ import { JwtConfigModule } from '../auth/jwt-config.module';
   imports: [JwtConfigModule],
   controllers: [LocationsController],
   providers: [LocationsService],
-  exports: [LocationsService],
 })
 export class LocationsModule {}

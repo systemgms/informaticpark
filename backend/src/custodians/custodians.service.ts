@@ -125,7 +125,7 @@ export class CustodiansService {
     };
   }
 
-  async findOptions() {
+  findOptions() {
     return this.prisma.custodian.findMany({
       where: { isDeleted: false },
       select: { id: true, fullName: true },
