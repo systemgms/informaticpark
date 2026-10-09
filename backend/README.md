@@ -83,6 +83,7 @@ El archivo `backend/.env.example` contiene valores únicamente para desarrollo l
 | `bun run test:cov` | Generar cobertura |
 | `bun run prisma:migrate` | Crear/aplicar migraciones en desarrollo |
 | `bun run prisma:seed` | Cargar datos iniciales |
+| `bun run create:admin` | Crear el administrador inicial (`ADMIN_EMAIL`, `ADMIN_PASSWORD`) |
 | `bun run prisma:generate` | Regenerar Prisma Client |
 
 ## Base de datos con Docker
