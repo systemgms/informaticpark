@@ -10,6 +10,13 @@ import {
   MaxLength,
   Matches,
 } from 'class-validator';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MIN_LENGTH_MESSAGE,
+  PASSWORD_PATTERN,
+  PASSWORD_PATTERN_MESSAGE,
+} from '../password-policy';
 import { Transform, Type } from 'class-transformer';
 
 export class CreateUserDto {
@@ -28,12 +35,9 @@ export class CreateUserDto {
 
   @ApiProperty({ example: 'Clave123!', minLength: 8 })
   @IsString()
-  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
-  @MaxLength(100)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
-    message:
-      'La contraseña debe contener al menos una mayúscula, una minúscula y un número',
-  })
+  @MinLength(PASSWORD_MIN_LENGTH, { message: PASSWORD_MIN_LENGTH_MESSAGE })
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  @Matches(PASSWORD_PATTERN, { message: PASSWORD_PATTERN_MESSAGE })
   password!: string;
 
   @ApiPropertyOptional({ enum: ['ADMIN', 'USER'] })

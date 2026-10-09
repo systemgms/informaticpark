@@ -104,6 +104,14 @@ Si desea cargar datos de ejemplo (custodio, activo y marca por defecto), ejecuta
 bun run prisma:seed
 ```
 
+Para crear el usuario administrador inicial, ejecutar:
+
+```shell
+ADMIN_EMAIL="admin@example.com" ADMIN_PASSWORD="Admin123!" bun run create:admin
+```
+
+La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número. Contra una base remota el script exige `--allow-remote` y `CONFIRM_REMOTE_IMPORT=yes`.
+
 <a name="uso-ancla"></a>
 ## ▶️ Uso
 

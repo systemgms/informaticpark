@@ -24,7 +24,8 @@
     "prisma:seed": "bun run prisma/seed.ts",
     "prisma:generate": "prisma generate",
     "import:survey": "bun run scripts/import-survey.ts",
-    "normalize:locations": "bun run scripts/normalize-locations.ts"
+    "normalize:locations": "bun run scripts/normalize-locations.ts",
+    "create:admin": "bun run scripts/create-admin.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.7",
