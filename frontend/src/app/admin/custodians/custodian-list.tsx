@@ -25,6 +25,18 @@ interface CustodianActionsProps {
   onDeleteClick: (id: number) => void;
 }
 
+function CustodianNameLink({ custodian, className }: { custodian: Custodian; className?: string }) {
+  return (
+    <Link
+      href={`/admin/custodians/${custodian.id}/assets`}
+      className={`rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${className ?? ''}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {custodian.fullName}
+    </Link>
+  );
+}
+
 function CustodianActions({ custodian, onDeleteClick }: CustodianActionsProps) {
   return (
     <div className="flex items-center justify-end gap-1">
@@ -84,7 +96,9 @@ export function CustodianList({ custodians, isLoading, error, hasSearch, onDelet
               onClick={() => router.push(`/admin/custodians/${custodian.id}/assets`)}
             >
               <CardContent className="space-y-2 p-4">
-                <p className="font-medium">{custodian.fullName}</p>
+                <p className="font-medium">
+                  <CustodianNameLink custodian={custodian} />
+                </p>
                 <p className="font-mono text-xs text-muted-foreground">{custodian.identifier}</p>
                 <p className="text-sm text-muted-foreground">{custodian.unit || EMPTY_FIELD}</p>
                 <div className="flex justify-end pt-1" onClick={(e) => e.stopPropagation()}>
@@ -145,7 +159,9 @@ export function CustodianList({ custodians, isLoading, error, hasSearch, onDelet
                     className="cursor-pointer transition-colors hover:bg-muted/40"
                     onClick={() => router.push(`/admin/custodians/${custodian.id}/assets`)}
                   >
-                    <TableCell className="font-medium">{custodian.fullName}</TableCell>
+                    <TableCell className="font-medium">
+                      <CustodianNameLink custodian={custodian} />
+                    </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{custodian.identifier}</TableCell>
                     <TableCell className="text-muted-foreground">{custodian.unit || EMPTY_FIELD}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>

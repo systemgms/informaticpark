@@ -16,15 +16,15 @@ interface ToastContextType {
 }
 
 const TOAST_ICONS: Record<ToastType, React.ReactNode> = {
-  success: <CheckCircle className="w-4 h-4 text-green-600" />,
-  error: <AlertCircle className="w-4 h-4 text-red-600" />,
-  info: <Info className="w-4 h-4 text-blue-600" />,
+  success: <CheckCircle className="w-4 h-4 text-success" />,
+  error: <AlertCircle className="w-4 h-4 text-destructive" />,
+  info: <Info className="w-4 h-4 text-info" />,
 };
 
 const TOAST_BG_COLORS: Record<ToastType, string> = {
-  success: 'bg-green-50 border-green-200',
-  error: 'bg-red-50 border-red-200',
-  info: 'bg-blue-50 border-blue-200',
+  success: 'bg-success-subtle border-success-border',
+  error: 'bg-destructive-subtle border-destructive-border',
+  info: 'bg-info-subtle border-info-border',
 };
 
 const ToastContext = createContext<ToastContextType>({ toast: () => {} });

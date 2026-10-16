@@ -90,7 +90,7 @@ export default function LoginPage() {
               <Button className="w-full cursor-pointer" type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin motion-reduce:animate-pulse" />
                     Iniciando sesión...
                   </span>
                 ) : (

@@ -86,7 +86,7 @@ export default function LandingPage() {
 
         <section className="mx-auto grid max-w-xl grid-cols-1 gap-4 px-4 pb-12 sm:grid-cols-2 sm:pb-16">
           <Link href="/public/assets" className="group">
-            <Card className="h-full transition-all hover:border-primary/30 hover:shadow-float">
+            <Card className="h-full transition-colors hover:border-primary/50">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
                   <div className="shrink-0 rounded-xl bg-[#272965]/10 p-2.5 text-[#272965]">
@@ -104,7 +104,7 @@ export default function LandingPage() {
           </Link>
 
           <Link href="/public/custodians" className="group">
-            <Card className="h-full transition-all hover:border-primary/30 hover:shadow-float">
+            <Card className="h-full transition-colors hover:border-primary/50">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
                   <div className="shrink-0 rounded-xl bg-[#27516D]/10 p-2.5 text-[#27516D]">

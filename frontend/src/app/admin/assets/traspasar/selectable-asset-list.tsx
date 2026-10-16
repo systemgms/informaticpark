@@ -154,8 +154,17 @@ export function SelectableAssetList({
                       className={`cursor-pointer transition-colors hover:bg-muted/40 ${isSelected ? 'bg-primary/5' : ''}`}
                       onClick={() => onToggleSelect(asset)}
                     >
-                      <TableCell>
-                        <SelectionIndicator isSelected={isSelected} />
+                      <TableCell className="w-12">
+                        <label className="-m-3 flex h-11 w-11 cursor-pointer items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => onToggleSelect(asset)}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Seleccionar ${asset.assetName}`}
+                            className="h-4 w-4 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          />
+                        </label>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         <TechnicalValue value={asset.code} />

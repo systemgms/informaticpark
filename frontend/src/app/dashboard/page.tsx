@@ -50,7 +50,7 @@ interface StatCardProps {
 function StatCard({ href, icon: Icon, color, label, value, sub, isLoading }: StatCardProps) {
   const content = (
     <Card
-      className={href ? 'hover:shadow-float hover:border-primary/30 transition-all cursor-pointer h-full' : 'h-full'}
+      className={href ? 'hover:border-primary/50 transition-colors cursor-pointer h-full' : 'h-full'}
     >
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
@@ -88,9 +88,9 @@ interface AlertCardProps {
 function AlertCard({ label, value }: AlertCardProps) {
   if (value === 0) return null;
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm">
-      <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0" />
-      <span className="text-yellow-800">
+    <div className="flex items-center gap-3 rounded-lg border border-warning-border bg-warning-subtle px-4 py-3 text-sm">
+      <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+      <span className="text-warning-text">
         <span className="font-semibold">{value}</span> {label}
       </span>
     </div>
@@ -199,7 +199,7 @@ export default function HomePage() {
             <StatCard
               href="/admin/assets"
               icon={Package}
-              color="text-indigo-600 bg-indigo-50"
+              color="text-primary bg-accent"
               label="Activos"
               value={adminStats?.assets ?? 0}
               sub="Total de bienes registrados"
@@ -207,7 +207,7 @@ export default function HomePage() {
             />
             <StatCard
               icon={DollarSign}
-              color="text-emerald-600 bg-emerald-50"
+              color="text-primary bg-accent"
               label="Valor total del parque"
               value={isLoading ? EMPTY_FIELD : fmt(adminStats?.totalValue ?? 0)}
               sub="Suma del valor actual de todos los activos"
@@ -216,7 +216,7 @@ export default function HomePage() {
             <StatCard
               href="/admin/custodians"
               icon={Building2}
-              color="text-violet-600 bg-violet-50"
+              color="text-primary bg-accent"
               label="Custodios"
               value={adminStats?.custodians ?? 0}
               sub="Responsables de activos registrados"
@@ -225,7 +225,7 @@ export default function HomePage() {
             <StatCard
               href="/admin/users"
               icon={Users}
-              color="text-blue-600 bg-blue-50"
+              color="text-primary bg-accent"
               label="Usuarios"
               value={adminStats?.users ?? 0}
               sub="Cuentas de acceso al sistema"
@@ -234,7 +234,7 @@ export default function HomePage() {
             <StatCard
               href="/admin/locations"
               icon={MapPin}
-              color="text-orange-600 bg-orange-50"
+              color="text-primary bg-accent"
               label="Ubicaciones"
               value={adminStats?.locations ?? 0}
               sub="Cantones y parroquias registradas"
@@ -255,7 +255,7 @@ export default function HomePage() {
             <StatCard
               href="/admin/assets"
               icon={Package}
-              color="text-indigo-600 bg-indigo-50"
+              color="text-primary bg-accent"
               label="Mis activos"
               value={custodianStats?.assets ?? 0}
               sub="Bienes bajo tu custodia"
@@ -263,7 +263,7 @@ export default function HomePage() {
             />
             <StatCard
               icon={DollarSign}
-              color="text-emerald-600 bg-emerald-50"
+              color="text-primary bg-accent"
               label="Valor total"
               value={isLoading ? EMPTY_FIELD : fmt(custodianStats?.totalValue ?? 0)}
               sub="Valor actual de tus activos"
@@ -273,7 +273,7 @@ export default function HomePage() {
 
           {!isLoading && pendingMovements.length > 0 && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-yellow-700">
+              <div className="flex items-center gap-2 text-warning-text">
                 <Clock className="w-4 h-4" />
                 <span className="font-semibold text-sm">
                   {pendingMovements.length} traspaso{pendingMovements.length > 1 ? 's' : ''} pendiente
@@ -285,18 +285,18 @@ export default function HomePage() {
                   <Link
                     key={m.id}
                     href={`/admin/assets/${m.assetId}/historial`}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 hover:bg-yellow-100 transition-colors"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-warning-border bg-warning-subtle px-4 py-3 hover:bg-warning-border/40 transition-colors"
                   >
                     <div className="text-sm">
-                      <span className="font-medium text-yellow-900">
+                      <span className="font-medium text-warning-text">
                         {m.asset?.assetName ?? `Activo #${m.assetId}`}
                       </span>
-                      {m.asset?.code && <span className="text-yellow-700 ml-2 font-mono text-xs">{m.asset.code}</span>}
-                      <p className="text-yellow-700 text-xs mt-0.5">
+                      {m.asset?.code && <span className="text-warning-text ml-2 font-mono text-xs">{m.asset.code}</span>}
+                      <p className="text-warning-text text-xs mt-0.5">
                         Enviado por: {m.registeredBy?.name ?? EMPTY_FIELD}
                       </p>
                     </div>
-                    <span className="text-xs text-yellow-700 shrink-0 inline-flex items-center gap-1">
+                    <span className="text-xs text-warning-text shrink-0 inline-flex items-center gap-1">
                       Ver traspaso <ArrowRight className="h-3 w-3" aria-hidden="true" />
                     </span>
                   </Link>

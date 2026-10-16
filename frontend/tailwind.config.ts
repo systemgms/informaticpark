@@ -42,6 +42,30 @@ const config = {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+          subtle: 'hsl(var(--destructive-subtle))',
+          border: 'hsl(var(--destructive-border))',
+          text: 'hsl(var(--destructive-text))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+          subtle: 'hsl(var(--success-subtle))',
+          border: 'hsl(var(--success-border))',
+          text: 'hsl(var(--success-text))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+          subtle: 'hsl(var(--warning-subtle))',
+          border: 'hsl(var(--warning-border))',
+          text: 'hsl(var(--warning-text))',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))',
+          subtle: 'hsl(var(--info-subtle))',
+          border: 'hsl(var(--info-border))',
+          text: 'hsl(var(--info-text))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',

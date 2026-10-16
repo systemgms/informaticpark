@@ -14,10 +14,10 @@ import { Package, Pencil, Trash2 } from 'lucide-react';
 import { EMPTY_FIELD } from '@/lib/display';
 
 const CONDITION_BADGE_CLASSES: Record<AssetCondition, string> = {
-  [AssetCondition.BUENO]: 'border-transparent bg-green-100 text-green-800 hover:bg-green-100',
-  [AssetCondition.REGULAR]: 'border-transparent bg-orange-100 text-orange-800 hover:bg-orange-100',
-  [AssetCondition.MALO]: 'border-transparent bg-red-100 text-red-800 hover:bg-red-100',
-  [AssetCondition.EN_MANTENIMIENTO]: 'border-transparent bg-amber-100 text-amber-800 hover:bg-amber-100',
+  [AssetCondition.BUENO]: 'border-transparent bg-success-subtle text-success-text hover:bg-success-subtle',
+  [AssetCondition.REGULAR]: 'border-transparent bg-warning-subtle text-warning-text hover:bg-warning-subtle',
+  [AssetCondition.MALO]: 'border-transparent bg-destructive-subtle text-destructive-text hover:bg-destructive-subtle',
+  [AssetCondition.EN_MANTENIMIENTO]: 'border-transparent bg-info-subtle text-info-text hover:bg-info-subtle',
 };
 
 function ConditionBadge({ condition }: { condition: AssetCondition }) {

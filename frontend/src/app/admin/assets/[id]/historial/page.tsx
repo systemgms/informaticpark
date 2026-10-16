@@ -37,9 +37,9 @@ interface StatusConfigEntry {
 }
 
 const STATUS_CONFIG: Record<MovementStatus, StatusConfigEntry> = {
-  PENDIENTE: { label: 'Pendiente', icon: Clock, class: 'text-yellow-700 bg-yellow-50 border-yellow-200' },
-  COMPLETADO: { label: 'Completado', icon: CheckCircle, class: 'text-green-700 bg-green-50 border-green-200' },
-  RECHAZADO: { label: 'Rechazado', icon: XCircle, class: 'text-red-700 bg-red-50 border-red-200' },
+  PENDIENTE: { label: 'Pendiente', icon: Clock, class: 'text-warning-text bg-warning-subtle border-warning-border' },
+  COMPLETADO: { label: 'Completado', icon: CheckCircle, class: 'text-success-text bg-success-subtle border-success-border' },
+  RECHAZADO: { label: 'Rechazado', icon: XCircle, class: 'text-destructive-text bg-destructive-subtle border-destructive-border' },
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -435,7 +435,7 @@ export default function AssetMovementHistoryPage() {
                             </span>
                             <StatusBadge status={m.status} />
                             {m.groupId && (
-                              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded border text-blue-700 bg-blue-50 border-blue-200">
+                              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded border text-info-text bg-info-subtle border-info-border">
                                 <Users className="w-3 h-3" />
                                 Grupo
                               </span>

@@ -1,19 +1,20 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { BrandSettings } from "@/lib/types";
-import { api } from "@/lib/api";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { BrandSettings } from '@/lib/types';
+import { api } from '@/lib/api';
+import { pickReadableText } from '@/lib/color';
 
 interface BrandContextType {
   brand: BrandSettings | null;
-  loading: boolean;
+  isLoading: boolean;
   refresh: () => Promise<void>;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
 
 function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
-  const sanitized = hex.replace("#", "");
+  const sanitized = hex.replace('#', '');
   if (!/^[0-9A-Fa-f]{6}$/.test(sanitized)) return null;
 
   const r = parseInt(sanitized.slice(0, 2), 16) / 255;
@@ -46,13 +47,20 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
   return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
+const LIGHT_FOREGROUND = '0 0% 100%';
+const DARK_FOREGROUND = '0 0% 9%';
+
+function readableForeground(backgroundHex: string): string {
+  return pickReadableText(backgroundHex) === 'dark' ? DARK_FOREGROUND : LIGHT_FOREGROUND;
+}
+
 function applyBrandMeta(brand: BrandSettings) {
-  if (typeof document === "undefined") return;
+  if (typeof document === 'undefined') return;
   document.title = brand.appName;
 }
 
 function applyBrandCss(brand: BrandSettings) {
-  if (typeof document === "undefined") return;
+  if (typeof document === 'undefined') return;
   const root = document.documentElement;
 
   const primary = hexToHsl(brand.primaryColor);
@@ -60,41 +68,30 @@ function applyBrandCss(brand: BrandSettings) {
   const accent = hexToHsl(brand.accentColor);
 
   if (primary) {
-    root.style.setProperty("--primary", `${primary.h} ${primary.s}% ${primary.l}%`);
-    root.style.setProperty(
-      "--ring",
-      `${primary.h} ${primary.s}% ${primary.l}%`
-    );
-    // foreground primario siempre blanco para simplificar; se puede mejorar con luminosidad
-    root.style.setProperty("--primary-foreground", "0 0% 100%");
+    root.style.setProperty('--primary', `${primary.h} ${primary.s}% ${primary.l}%`);
+    root.style.setProperty('--ring', `${primary.h} ${primary.s}% ${primary.l}%`);
+    root.style.setProperty('--primary-foreground', readableForeground(brand.primaryColor));
   }
 
   if (secondary) {
-    root.style.setProperty(
-      "--secondary",
-      `${secondary.h} ${secondary.s}% ${secondary.l}%`
-    );
-    root.style.setProperty(
-      "--secondary-foreground",
-      "0 0% 100%"
-    );
+    root.style.setProperty('--secondary', `${secondary.h} ${secondary.s}% ${secondary.l}%`);
+    root.style.setProperty('--secondary-foreground', readableForeground(brand.secondaryColor));
   }
 
   if (accent) {
+    root.style.setProperty('--accent', `${accent.h} ${accent.s}% ${accent.l}%`);
     root.style.setProperty(
-      "--accent",
-      `${accent.h} ${accent.s}% ${accent.l}%`
-    );
-    root.style.setProperty(
-      "--accent-foreground",
-      `${accent.h} ${accent.s}% ${Math.max(20, accent.l - 40)}%`
+      '--accent-foreground',
+      pickReadableText(brand.accentColor) === 'light'
+        ? LIGHT_FOREGROUND
+        : `${accent.h} ${accent.s}% ${Math.min(accent.l, 20)}%`,
     );
   }
 }
 
 export function BrandProvider({ children }: { children: React.ReactNode }) {
   const [brand, setBrand] = useState<BrandSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const load = async () => {
     try {
@@ -105,7 +102,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Fall back to defaults silently; auth guard handles redirects if needed
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -113,17 +110,13 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     load();
   }, []);
 
-  return (
-    <BrandContext.Provider value={{ brand, loading, refresh: load }}>
-      {children}
-    </BrandContext.Provider>
-  );
+  return <BrandContext.Provider value={{ brand, isLoading, refresh: load }}>{children}</BrandContext.Provider>;
 }
 
 export const useBrand = () => {
   const context = useContext(BrandContext);
   if (context === undefined) {
-    throw new Error("useBrand must be used within a BrandProvider");
+    throw new Error('useBrand must be used within a BrandProvider');
   }
   return context;
 };
