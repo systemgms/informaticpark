@@ -50,7 +50,7 @@ interface StatCardProps {
 function StatCard({ href, icon: Icon, color, label, value, sub, isLoading }: StatCardProps) {
   const content = (
     <Card
-      className={href ? 'hover:shadow-float hover:border-primary/30 transition-all cursor-pointer h-full' : 'h-full'}
+      className={href ? 'hover:border-primary/50 transition-colors cursor-pointer h-full' : 'h-full'}
     >
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
