@@ -1,0 +1,473 @@
+{
+  "meta": {
+    "scenario": "e1-individual",
+    "baseUrl": "https://informaticpark-nine.vercel.app/api",
+    "vus": 1,
+    "iterations": 30
+  },
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 322866.19264
+  },
+  "metrics": {
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 181,
+        "fails": 0
+      },
+      "thresholds": {
+        "rate>0.99": {
+          "ok": true
+        }
+      }
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 877352,
+        "rate": 2717.3857777616836
+      }
+    },
+    "http_req_blocked": {
+      "values": {
+        "avg": 2.2136949613259667,
+        "min": 0.000173,
+        "med": 0.000728,
+        "max": 214.949268,
+        "p(90)": 0.001058,
+        "p(95)": 0.001224
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_duration": {
+      "thresholds": {
+        "p(95)<500": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 259.190126,
+        "max": 519.335477,
+        "p(90)": 412.512067,
+        "p(95)": 453.416698,
+        "avg": 283.3428475082874,
+        "min": 183.880169
+      }
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 0,
+        "avg": 0.2689799447513812,
+        "min": 0,
+        "med": 0,
+        "max": 25.128802,
+        "p(90)": 0
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 283.3428475082874,
+        "min": 183.880169,
+        "med": 259.190126,
+        "max": 519.335477,
+        "p(90)": 412.512067,
+        "p(95)": 453.416698
+      }
+    },
+    "http_req_duration{endpoint:assets_stats}": {
+      "contains": "time",
+      "values": {
+        "p(95)": 475.06753235,
+        "avg": 382.42010763333315,
+        "min": 183.880169,
+        "med": 429.4031945,
+        "max": 480.643864,
+        "p(90)": 471.67312630000004
+      },
+      "thresholds": {
+        "p(95)<500": {
+          "ok": true
+        }
+      },
+      "type": "trend"
+    },
+    "http_req_duration{endpoint:assets_list}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 262.7920363,
+        "min": 244.635177,
+        "med": 258.41401,
+        "max": 339.035065,
+        "p(90)": 271.3420062,
+        "p(95)": 294.52451534999994
+      },
+      "thresholds": {
+        "p(95)<500": {
+          "ok": true
+        }
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 1
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 0.560603755134615,
+        "count": 181
+      }
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 17563,
+        "rate": 54.39714779795162
+      }
+    },
+    "http_req_failed{endpoint:assets_list}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 30
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_duration{endpoint:custodian_assets}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 264.0019509666667,
+        "min": 246.3895,
+        "med": 258.62493700000005,
+        "max": 373.890164,
+        "p(90)": 266.6296957,
+        "p(95)": 293.09368244999985
+      },
+      "thresholds": {
+        "p(95)<500": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 0.04768,
+        "med": 0.356329,
+        "max": 7.103833,
+        "p(90)": 1.952854,
+        "p(95)": 3.190118,
+        "avg": 0.816391287292818
+      }
+    },
+    "http_req_duration{endpoint:assets_detail}": {
+      "thresholds": {
+        "p(95)<500": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 272.776113,
+        "p(90)": 265.4859451,
+        "p(95)": 267.4580847,
+        "avg": 258.7360060666666,
+        "min": 248.341439,
+        "med": 257.70560950000004
+      }
+    },
+    "http_req_failed{endpoint:assets_search}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 30
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 0.050154,
+        "med": 0.122412,
+        "max": 0.351476,
+        "p(90)": 0.22061,
+        "p(95)": 0.240483,
+        "avg": 0.1383935745856354
+      }
+    },
+    "http_req_failed{endpoint:custodian_assets}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 30
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_duration{endpoint:assets_search}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 258.503685,
+        "max": 284.928182,
+        "p(90)": 271.14230549999996,
+        "p(95)": 274.2446174,
+        "avg": 260.80283373333333,
+        "min": 250.996899
+      },
+      "thresholds": {
+        "p(95)<500": {
+          "ok": true
+        }
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 30,
+        "rate": 0.09291774946982569
+      }
+    },
+    "http_req_tls_handshaking": {
+      "values": {
+        "p(95)": 0,
+        "avg": 1.7871287955801103,
+        "min": 0,
+        "med": 0,
+        "max": 161.827926,
+        "p(90)": 0
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_waiting": {
+      "contains": "time",
+      "values": {
+        "avg": 282.3880626464089,
+        "min": 183.458407,
+        "med": 258.61729,
+        "max": 518.588597,
+        "p(90)": 412.240612,
+        "p(95)": 453.071601
+      },
+      "type": "trend"
+    },
+    "http_req_failed{endpoint:assets_stats}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 30
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      }
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 1
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 181
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_failed{endpoint:public_assets}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 30
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      }
+    },
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 10737.583941166666,
+        "min": 9747.425147,
+        "med": 10680.616597,
+        "max": 11980.839777,
+        "p(90)": 11446.2536311,
+        "p(95)": 11649.6282234
+      }
+    },
+    "http_req_failed{endpoint:assets_detail}": {
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      },
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 30
+      }
+    },
+    "http_req_duration{endpoint:public_assets}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 261.0437665,
+        "max": 283.373241,
+        "p(90)": 278.5298769,
+        "p(95)": 280.0464592,
+        "avg": 263.4377293666667,
+        "min": 250.775114
+      },
+      "thresholds": {
+        "p(95)<500": {
+          "ok": true
+        }
+      }
+    }
+  },
+  "setup_data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoic3lzdGVtcHdhQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImN1c3RvZGlhbklkIjpudWxsLCJpYXQiOjE3OTIzNzc4MjYsImV4cCI6MTc5MjM4MTQyNn0.SVLr5b8ZEP6iSiWU-Ywg2ziTLofOa4hM3-MOm7OrzFI"
+  },
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [
+      {
+        "checks": [
+          {
+            "name": "login: status 201",
+            "path": "::setup::login: status 201",
+            "id": "9b8593569f5e07b80f9197e70da1523e",
+            "passes": 1,
+            "fails": 0
+          }
+        ],
+        "name": "setup",
+        "path": "::setup",
+        "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+        "groups": []
+      }
+    ],
+    "checks": [
+      {
+        "name": "assets/stats: status 200",
+        "path": "::assets/stats: status 200",
+        "id": "91f13209da5ec902ec08b65891f64f8f",
+        "passes": 30,
+        "fails": 0
+      },
+      {
+        "passes": 30,
+        "fails": 0,
+        "name": "assets list: status 200",
+        "path": "::assets list: status 200",
+        "id": "89ad2437fd1303f76f72d033b0721cfb"
+      },
+      {
+        "name": "assets search: status 200",
+        "path": "::assets search: status 200",
+        "id": "982733f38a1b209991e70b78e5221c1f",
+        "passes": 30,
+        "fails": 0
+      },
+      {
+        "name": "asset detail: status 200",
+        "path": "::asset detail: status 200",
+        "id": "90fba64ea00b926c7e42dd29bf4103b6",
+        "passes": 30,
+        "fails": 0
+      },
+      {
+        "path": "::custodian assets: status 200",
+        "id": "50d57aacb3827b399435b247470d78c1",
+        "passes": 30,
+        "fails": 0,
+        "name": "custodian assets: status 200"
+      },
+      {
+        "path": "::public assets: status 200",
+        "id": "c1484d828e354a980495c81a4ad1c43a",
+        "passes": 30,
+        "fails": 0,
+        "name": "public assets: status 200"
+      }
+    ]
+  },
+  "options": {
+    "summaryTimeUnit": "",
+    "noColor": false,
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+escenario,vus,iteraciones,repeticiones,peticiones_por_rep,peticiones_iguales,latencia_avg_media_ms,latencia_avg_desv_ms,latencia_p95_media_ms,tasa_error_pct,checks_pct,avg_por_rep_ms
+e1-individual,1,30,5,181,si,12.77,2.53,15.5,0,100,9.32 / 11.26 / 15.68 / 14.44 / 13.15
+e2-carga-ligera,10,100,5,601,si,11.9,0.96,18.69,0,100,12.74 / 12.46 / 11.91 / 12.11 / 10.29
+e3-carga-moderada,50,400,5,2401,si,8.64,0.57,15.18,0,100,9.17 / 8.62 / 8.28 / 7.9 / 9.23
+e4-sostenida,20,600,5,3601,si,6.35,0.87,11.1,0,100,7.3 / 7.19 / 6.17 / 5.75 / 5.33
