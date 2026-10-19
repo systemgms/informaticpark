@@ -1,24 +1,19 @@
 // E3 — 50 usuarios concurrentes (mm1 §3.14, Tabla 3.14.1).
+// Repetition runs use a fixed number of iterations (see repetitions.js); the
+// 20s ramp-up of the single-run version is dropped because the iteration count,
+// not the time window, defines the workload.
 // Metrics of interest: throughput (req/s) and 5xx errors at peak load. A
 // short ramp-up (20s) avoids opening 50 sockets in the same instant, which
 // would measure connection-storm behavior rather than sustained peak
 // throughput; the peak of 50 VUs is held for 2 minutes so p95/throughput are
 // measured on a stable plateau, then ramped down.
 import { login, runJourney, xffForVU } from './journey.js';
-import { buildHandleSummary, buildEndpointThresholds } from './summary.js';
+import { buildEndpointThresholds } from './summary.js';
+import { sharedIterations, buildRepetitionSummary } from './repetitions.js';
 
 export const options = {
   scenarios: {
-    e3_carga_moderada: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '20s', target: 50 }, // ramp-up to peak
-        { duration: '2m', target: 50 }, // sustained peak (recorded as VUs=50)
-        { duration: '10s', target: 0 }, // ramp-down
-      ],
-      gracefulRampDown: '10s',
-    },
+    e3_carga_moderada: sharedIterations('e3'),
   },
   thresholds: {
     // Relaxed vs. E1/E2: 50 concurrent users on a single local machine that
@@ -44,4 +39,4 @@ export default function (data) {
   runJourney(data.token, __VU);
 }
 
-export const handleSummary = buildHandleSummary('e3-carga-moderada');
+export const handleSummary = buildRepetitionSummary('e3-carga-moderada', 'e3');

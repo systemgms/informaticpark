@@ -4,15 +4,12 @@
 // once in T2 and kept running across E1-E4), not a serverless/edge
 // deployment that scales from zero -- see README "Limitaciones locales".
 import { login, runJourney, xffForVU } from './journey.js';
-import { buildHandleSummary, buildEndpointThresholds } from './summary.js';
+import { buildEndpointThresholds } from './summary.js';
+import { sharedIterations, buildRepetitionSummary } from './repetitions.js';
 
 export const options = {
   scenarios: {
-    e2_carga_ligera: {
-      executor: 'constant-vus',
-      vus: 10,
-      duration: '2m',
-    },
+    e2_carga_ligera: sharedIterations('e2'),
   },
   thresholds: {
     http_req_failed: ['rate<0.01'],
@@ -34,4 +31,4 @@ export default function (data) {
   runJourney(data.token, __VU);
 }
 
-export const handleSummary = buildHandleSummary('e2-carga-ligera');
+export const handleSummary = buildRepetitionSummary('e2-carga-ligera', 'e2');

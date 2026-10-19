@@ -3,15 +3,12 @@
 // zero contention. This is the baseline every other scenario is compared
 // against.
 import { login, runJourney, xffForVU } from './journey.js';
-import { buildHandleSummary, buildEndpointThresholds } from './summary.js';
+import { buildEndpointThresholds } from './summary.js';
+import { sharedIterations, buildRepetitionSummary } from './repetitions.js';
 
 export const options = {
   scenarios: {
-    e1_individual: {
-      executor: 'constant-vus',
-      vus: 1,
-      duration: '2m',
-    },
+    e1_individual: sharedIterations('e1'),
   },
   thresholds: {
     // Tighter than the shared default: a single user on an otherwise idle
@@ -38,4 +35,4 @@ export default function (data) {
   runJourney(data.token, __VU);
 }
 
-export const handleSummary = buildHandleSummary('e1-individual');
+export const handleSummary = buildRepetitionSummary('e1-individual', 'e1');

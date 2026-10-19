@@ -2,15 +2,12 @@
 // Metric of interest: availability over a sustained window (does the error
 // rate/latency stay flat, or does it degrade/leak over 5 minutes?).
 import { login, runJourney, xffForVU } from './journey.js';
-import { buildHandleSummary, buildEndpointThresholds } from './summary.js';
+import { buildEndpointThresholds } from './summary.js';
+import { sharedIterations, buildRepetitionSummary } from './repetitions.js';
 
 export const options = {
   scenarios: {
-    e4_sostenida: {
-      executor: 'constant-vus',
-      vus: 20,
-      duration: '5m',
-    },
+    e4_sostenida: sharedIterations('e4'),
   },
   thresholds: {
     http_req_failed: ['rate<0.01'],
@@ -32,4 +29,4 @@ export default function (data) {
   runJourney(data.token, __VU);
 }
 
-export const handleSummary = buildHandleSummary('e4-sostenida');
+export const handleSummary = buildRepetitionSummary('e4-sostenida', 'e4');
