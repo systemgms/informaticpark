@@ -21,38 +21,6 @@ Infopark es una aplicación web, con API REST en NestJS y panel de administraci�
 
 ¿Quieres más detalles? Consulta la [📚 Wiki del proyecto](https://github.com/systemgms/informaticpark/wiki).
 
-## 📸 Capturas
-
-Los datos mostrados son de demostración.
-
-### Inicio de sesión
-
-![Inicio de sesión](docs/screenshots/login.png)
-
-### Panel de administración
-
-![Panel de administración](docs/screenshots/dashboard.png)
-
-### Activos
-
-![Listado de activos](docs/screenshots/assets.png)
-
-### Traspaso masivo
-
-![Traspaso masivo de activos](docs/screenshots/transfer.png)
-
-### Custodios
-
-![Listado de custodios](docs/screenshots/custodians.png)
-
-### Ubicaciones
-
-![Listado de ubicaciones](docs/screenshots/locations.png)
-
-### Consulta pública de activos
-
-![Consulta pública de activos](docs/screenshots/public-assets.png)
-
 <a name="instalacion-ancla"></a>
 ## ⚙️ Instalación
 
