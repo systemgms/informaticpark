@@ -1,9 +1,9 @@
 ## 📂 Navegación rápida
 
+- [📘 Manual de Usuario](https://github.com/systemgms/informaticpark/wiki)
 - [🛠 Instalación](#instalacion-ancla)
 - [🚀 Uso](#uso-ancla)
 - [☁️ Despliegue](DEPLOYMENT.md)
-- [📘 Manuales de usuario](#manuales-ancla)
 
 ## 📌 Infopark
 
@@ -18,6 +18,8 @@ Infopark es una aplicación web, con API REST en NestJS y panel de administraci�
 - Consultar bienes y custodios desde páginas públicas, sin iniciar sesión.
 - Administrar usuarios del sistema con roles de administrador y usuario.
 - Personalizar la marca de la aplicación (nombre, colores y logo).
+
+¿Quieres más detalles? Consulta la [📚 Wiki del proyecto](https://github.com/systemgms/informaticpark/wiki).
 
 ## 📸 Capturas
 
@@ -140,14 +142,6 @@ bun run lint
 ```
 
 Ejecutar ambos comandos dentro de `backend/` o `frontend/`.
-
-<a name="manuales-ancla"></a>
-## 📘 Manuales de usuario
-
-La [wiki del proyecto](https://github.com/systemgms/informaticpark/wiki) incluye los manuales con capturas paso a paso, según el rol:
-
-- 👑 [Manual de Administrador](https://github.com/systemgms/informaticpark/wiki/Manual-de-Administrador)
-- 👤 [Manual para Usuario](https://github.com/systemgms/informaticpark/wiki/Manual-para-Usuario)
 
 ## 🛠 Tecnologías principales
 
