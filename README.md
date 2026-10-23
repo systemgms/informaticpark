@@ -3,6 +3,7 @@
 - [🛠 Instalación](#instalacion-ancla)
 - [🚀 Uso](#uso-ancla)
 - [☁️ Despliegue](DEPLOYMENT.md)
+- [📘 Manuales de usuario](#manuales-ancla)
 
 ## 📌 Infopark
 
@@ -139,6 +140,14 @@ bun run lint
 ```
 
 Ejecutar ambos comandos dentro de `backend/` o `frontend/`.
+
+<a name="manuales-ancla"></a>
+## 📘 Manuales de usuario
+
+La [wiki del proyecto](https://github.com/systemgms/informaticpark/wiki) incluye los manuales con capturas paso a paso, según el rol:
+
+- 👑 [Manual de Administrador](https://github.com/systemgms/informaticpark/wiki/Manual-de-Administrador)
+- 👤 [Manual para Usuario](https://github.com/systemgms/informaticpark/wiki/Manual-para-Usuario)
 
 ## 🛠 Tecnologías principales
 
